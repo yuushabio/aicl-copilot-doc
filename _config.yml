@@ -2,4 +2,8 @@ title: AICL Co-pilot
 description: Official documentation for the AICL Co-pilot Framework
 theme: just-the-docs
 
+# Color scheme supports "light" (default) and "dark"
+color_scheme: dark
+
+
 url: https://yuushabio.github.io/aicl-copilot
