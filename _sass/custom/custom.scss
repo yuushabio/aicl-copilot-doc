@@ -1,20 +1,33 @@
-// .side-bar {
-//   @include mq(lg) {
-//     width: calc((70% - #{$nav-width + $content-width}) / 2 + #{$nav-width});
-//   }
-// }
+.side-bar {
+  @include mq(lg) {
+    width: calc((70% - #{$nav-width + $content-width}) / 2 + #{$nav-width});
+  }
+}
 
-// .main {
-//   @include mq(md) {
-//     position: relative;
-//     max-width: 100rem;
-//     margin-left: auto;
-//   }
+@media (min-width: 50em){
+    .side-bar + .main {
+        margin-left: Max(
+      #{$nav-width},
+      calc((70% - #{$nav-width + $content-width}) / 2 + #{$nav-width})
+    );
+    }
+}
+
+.main {
+  @include mq(md) {
+    position: relative;
+    max-width: 70rem;
+    margin-left: $nav-width-md;
+  }
   
-//   @include mq(lg) {
-//     // stylelint-disable function-name-case
-//     // disable for Max(), we want to use the CSS max() function
-//     margin-left: auto
-//     // stylelint-enable function-name-case
-//   }
-// }
+  @include mq(lg) {
+    // stylelint-disable function-name-case
+    // disable for Max(), we want to use the CSS max() function
+    max-width: 100em;
+    margin-left: Max(
+      #{$nav-width},
+      calc((70% - #{$nav-width + $content-width}) / 2 + #{$nav-width})
+    );
+    // stylelint-enable function-name-case
+  }
+}
