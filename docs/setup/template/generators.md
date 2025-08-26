@@ -1,5 +1,5 @@
 ---
-title: Generator
+title: Generators
 parent: Templates
 nav_order: 1
 ---
@@ -8,17 +8,16 @@ nav_order: 1
 
 This serves as a template for creating generators
 
-# S-Cell Generator Template
+## S-Cell Generator Template
 
 ```python
-import copy
 from bin.core.copilot import Project
 from bin.core.scellengine import TSCell
 
 project = Project()                 # create project instance
 
-library_name = "generator_library"  # specify library
-view_name ="view_name"              # specify view name
+library_name = "generator_library"  # specify library: top directory where layout is stored
+view_name ="view_name"              # specify view name: file name for generated layout (GDSII)
 
 project.set_process('ihpSG13G2')    # set active process technology
 
@@ -27,8 +26,8 @@ try:
     input_pair = TSCell()                   # Create a simple Transistor S-Cell
 
     """ Generate or Preview the layout"""
-    project.generate_layout(input_pair, library_name, view_name) # generate 
-    project.preview_layout(input_pair)      #preview
+    project.generate_layout(input_pair, library_name, view_name)    # generate layout
+    project.preview_layout(input_pair)                              # preview
 except Exception as exp:
     print(exp)
 

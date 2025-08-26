@@ -53,7 +53,7 @@ nmos_linear_pair = {
 
 ```
 
-# Module Generator Template
+# Module Parameters Template
 
 ```python
 from bin.utilities.pcellutils import COMPOSER, GATE_POLY_CONNECT, ROUTE_METAL_LAYER
