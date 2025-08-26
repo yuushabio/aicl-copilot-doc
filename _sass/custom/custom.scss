@@ -1,0 +1,20 @@
+.side-bar {
+  @include mq(lg) {
+    width: calc((70% - #{$nav-width + $content-width}) / 2 + #{$nav-width});
+  }
+}
+
+.main {
+  @include mq(md) {
+    position: relative;
+    max-width: calc(80% + $content-width);
+    margin-left: 40em;
+  }
+
+  @include mq(lg) {
+    // stylelint-disable function-name-case
+    // disable for Max(), we want to use the CSS max() function
+    margin-left: 40em
+    // stylelint-enable function-name-case
+  }
+}
