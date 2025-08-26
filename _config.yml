@@ -1,6 +1,9 @@
 title: AICL Co-pilot Documentation
 description: Official documentation for the AICL Co-pilot Framework
-theme: just-the-docs
+remote_theme: pmarsceill/just-the-docs  #just-the-docs
+
+plugins:
+  - jekyll-remote-theme
 
 # Color scheme supports "light" (default) and "dark"
 color_scheme: light
