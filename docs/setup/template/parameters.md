@@ -4,22 +4,22 @@ parent: Templates
 nav_order: 2
 ---
 
-# Generator
+# Parameters
 
-This serves as a template for creating generators
+This is a tmeplate for defining S-Cell and Module parameters. The parameters can be used to instantiate and  configure S-Cell and Modules when running a generator. 
 
-# S-Cell Parameters Template
+{: .note }
+The full list of parameters and acceptable values used in the template are documented in the API Documentaion page.
+
+## S-Cell Parameters Template
 
 ```python
 from bin.utilities.commoncentroidutils import COMMON_CENTROID_PATTERNS
 from bin.utilities.pcellutils import COMPOSER, GATE_POLY_CONNECT, ROUTE_METAL_LAYER
 from bin.utilities.router_enums import ROUTE_REFERENCE_POS
 
-""" Define S-Cell Parameters"""
-
-# defined parameters can be used to instantiate S-Cell when running a generator
-nmos_linear_pair = {
-    'name': 'lin_input_pair_n',
+""" Defining S-Cell Parameters"""
+scell_parameters = {
     'specs': {
         'type': 'LNM',
         'fingerWidth': 2.0,
@@ -53,13 +53,13 @@ nmos_linear_pair = {
 
 ```
 
-# Module Parameters Template
+## Module Parameters Template
 
 ```python
 from bin.utilities.pcellutils import COMPOSER, GATE_POLY_CONNECT, ROUTE_METAL_LAYER
 from bin.utilities.router_enums import ROUTE_REFERENCE_POS
 
-ota_terminal_parameters = {
+module_routing_parameters = {
     'config': {'relay': {'min_num_of_vias': 2, 'min_with': 0.4}, 'top_net': {'min_num_of_vias': 2, 'min_width': 0.5}},
     'signals': [
         {
