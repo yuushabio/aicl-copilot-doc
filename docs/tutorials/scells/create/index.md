@@ -13,7 +13,7 @@ The simplest way to create an S-Cell is to instantiate an object of the `TSCell`
 nmos_scell = TSCell()
 ```
 
-<img src="{{site.baseurl | prepend: site.url}}/assets/images/scell_default_lay.png" alt="default S-Cell layout" width='200'/>
+<img src="{{site.baseurl | prepend: site.url}}assets/images/scell_default_lay.png" alt="default S-Cell layout" width='200'/>
 
 The `TSCell` class accepts 2 arguements. The first is name (string) which is the name of the S-Cell and the second is parameters (dict) which is used to configure the properties of the S-Cell.
 
