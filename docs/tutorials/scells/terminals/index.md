@@ -41,7 +41,4 @@ terminal_parameters = {
 }
 ```
 
-
-{:refdef: style="text-align: left;"}
-![default S-Cell layout](/assets/images/scell_terminals_lay.png){:width="700"}
-{: refdef}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_terminals_lay.png){:width="700" ; style="float: left"; margin-right: 10em;}

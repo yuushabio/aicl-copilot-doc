@@ -42,7 +42,7 @@ linear_composer = {
 }
 ```
 
-![default S-Cell layout](/assets/images/scell_linear_dummy_lay.png){:width="300" ; style="float: left"; margin-right: 10em;} | ![default S-Cell layout](/assets/images/scell_linear_implant_lay.png){:width="300" ; style="float: left"; margin-right: 10em;}
+![S-Cell parameters['composer']]({{site.baseurl}}/assets/images/scell_linear_dummy_lay.png){:width="300" ; style="float: left"; margin-right: 10em} | ![S-Cell parameters['composer']]({{site.baseurl}}/assets/images/scell_linear_implant_lay.png){:width="300" ; style="float: left"; margin-right: 10em}
 
 
 ## Interdigitated Layout Composer
@@ -64,7 +64,7 @@ interdigitated_composer = {
 }
 ```
 
-![default S-Cell layout](/assets/images/scell_interdigitated_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_interdigitated_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}
 
 ## Common-centroid Layout Composer
 This allows transistors in the S-Cell be laid out in a way that achieves symmetry in both the vertical and horizontal direction. This is only possible if the terminals of the transistor devices share a common pin. The type of pattern, number of devices, number of fingers are constraints that determine whether an S-Cell can use the common-centroid composer.
@@ -87,4 +87,4 @@ com_cent_composer = {
 }
 ```
 
-![default S-Cell layout](/assets/images/scell_comcent_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_comcent_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}

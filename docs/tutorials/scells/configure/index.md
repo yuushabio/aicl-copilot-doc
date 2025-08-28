@@ -36,4 +36,4 @@ scell_config_parameter = {
 }
 ```
 
-![default S-Cell layout](/assets/images/scell_options_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_options_lay.png){:width="500" ; style="float: left"; margin-right: 10em;}

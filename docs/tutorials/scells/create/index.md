@@ -54,6 +54,4 @@ nmos_parameters = {
 }
 ```
 
-{:refdef: style="text-align: left;"}
-![default S-Cell layout](/assets/images/scell_options_lay.png){:width="300"}
-{: refdef}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_options_lay.png){:width="300" ; style="float: left"}

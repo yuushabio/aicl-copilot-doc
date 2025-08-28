@@ -9,6 +9,4 @@ grand_parent: Generators
 # 5-Transistor OTA
 
 
-{:refdef: style="text-align: left;"}
-![default S-Cell layout](/assets/images/ota_5t.svg){:width="800"}
-{: refdef}
+![S-Cell parameters['config']]({{site.baseurl}}/assets/images/ota_5t.svg){:width="800" ; style="float: left"; margin-right: 10em;}
