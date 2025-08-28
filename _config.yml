@@ -9,7 +9,8 @@ theme: just-the-docs
 # Color scheme supports "light" (default) and "dark"
 color_scheme: light
 
-url: https://yuushabio.github.io/aicl-copilot-doc
+url: https://yuushabio.github.io/
+baseurl:aicl-copilot-doc
 
 defaults:
   - scope:
