@@ -5,7 +5,6 @@ grand_parent: Tutorials
 nav_order: 1
 ---
 
-
 # Creating an S-Cell
 
 The simplest way to create an S-Cell is to instantiate an object of the `TSCell` class. This uses default parameters derived from the current process technolgy for the instantiation.
@@ -14,9 +13,7 @@ The simplest way to create an S-Cell is to instantiate an object of the `TSCell`
 nmos_scell = TSCell()
 ```
 
-{:refdef: style="text-align: left;"}
-![default S-Cell layout](/assets/images/scell_default_lay.png){:width="200"}
-{: refdef}
+<img src="{{site.baseurl | prepend: site.url}}/assets/images/scell_default_lay.png" alt="default S-Cell layout" width='200'/>
 
 The `TSCell` class accepts 2 arguements. The first is name (string) which is the name of the S-Cell and the second is parameters (dict) which is used to configure the properties of the S-Cell.
 
