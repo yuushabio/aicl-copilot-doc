@@ -7,7 +7,7 @@ nav_order: 3
 
 
 # Configure
-The config key in the S-Cell `parameters` arguement (`parameters['config']`)is used to define peripheral properties of the S-Cell which include options like dummy fingers, dummy rows, guard rings, etc.
+The config key in the S-Cell `parameters` arguement (`parameters['config']`) is used to define peripheral properties of the S-Cell which include options like dummy fingers, dummy rows, guard rings, etc.
 
 ```python
 scell_config_parameter = {

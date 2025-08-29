@@ -8,8 +8,7 @@ nav_order: 4
 
 # Terminals
 
-The simplest say to create an S-Cell is to instantiate an object of the `TSCell` class. This uses default parameters derived from the current process technolgy for the instantiation.
-
+The terminals key in the S-Cell `parameters` arguement (`parameters['terminals']`) is used to define signals and power properties of the S-Cell. Signals can have absolute or relative placement and properties such are wire layer, width and number of vias can be configured as required. Devices in the S-cell can have their pins connnected depending on the netlist or requirements of the user.
 
 ```python
 terminal_parameters = {
@@ -40,5 +39,7 @@ terminal_parameters = {
         }
 }
 ```
+
+Device pins that are not defined in signals are automatically connected to `VDD` for PMOS S-cells and `VSS` for NMOS S-cells. The power terminal can also be configure to change wire layer, width, etc.
 
 ![S-Cell parameters['config']]({{site.baseurl}}/assets/images/scell_terminals_lay.png){:width="700" ; style="float: left"; margin-right: 10em;}
