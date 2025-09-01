@@ -1,5 +1,5 @@
 ---
-title: Generate
+title: Preview and Generate
 parent: Tutorials
 nav_order: 4
 ---

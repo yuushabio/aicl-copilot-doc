@@ -1,7 +1,8 @@
 ---
 title: Process Technology
+nav_order: 2
 parent: Setup
-nav_order: 3
 ---
+
 
 # Process Technology
