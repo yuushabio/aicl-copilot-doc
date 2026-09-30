@@ -4,6 +4,37 @@ layout: home
 nav_order: 1
 ---
 
-This is the official documentation for the Analog Integrated Circuit Layout (AICL) Co-pilot framework.
+# AICL Co-pilot
 
-Note: The content of this documentation is constantly changing and being update due to the early nature of the framework. Hence, please review the documentation periodically to stay up-to-date on the requirements on using the tool.
+AICL Co-pilot (Analog Integrated Circuit Layout Co-pilot) is a Python framework for generating analog IC layouts. This site documents **AICL Co-pilot core** ([`aicl-copilot-core`](https://github.com/yuushabio/aicl-copilot-core)), the open-source (GPLv3) engine. It provides:
+
+- parameterised device generators (S-Cells) for transistors, resistors and capacitors;
+- hierarchical M-Cells, built by hand or from a SPICE netlist;
+- placers and routers for M-Cells;
+- GDS export, DRC/LVS/PEX, ngspice simulation and xschem schematics.
+
+Everything a technology needs is read from YAML process templates. The core package ships the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) open PDK.
+
+```python
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+copilot = AiclCopilot(process_tech='ihpSG13G2')
+nmos = TSCell(name='nmos')                           # a default NMOS transistor S-Cell
+copilot.generate_layout(nmos, 'my_library', 'nmos')   # writes my_library/nmos.gds
+copilot.preview_layout(nmos)                          # opens the layout viewer
+```
+
+## Where to start
+
+| | |
+|:--|:--|
+| [Introduction]({{ site.baseurl }}/docs/getting-started/introduction.html) | What the framework is and how the package is organised. |
+| [Design Flow]({{ site.baseurl }}/docs/getting-started/design-flow.html) | The steps from a device to a verified, simulated layout. |
+| [Installation]({{ site.baseurl }}/docs/setup/install.html) | Installing the package, `config.env` and the external tools. |
+| [Tutorials]({{ site.baseurl }}/docs/tutorials/) | Step-by-step guides for S-Cells, M-Cells, netlists, verification and simulation. |
+| [Generator Templates]({{ site.baseurl }}/docs/setup/template/generators.html) | Complete generator scripts to copy. |
+| [API Reference]({{ site.baseurl }}/docs/api/) | Classes, methods and enums. |
+
+{: .note }
+AICL Co-pilot is under active development, and its interfaces still change between releases. The examples on this site were checked against the current version of the core package. If an example no longer works, please open an issue on [GitHub](https://github.com/yuushabio/aicl-copilot-core/issues).

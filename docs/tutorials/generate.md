@@ -1,21 +1,76 @@
 ---
 title: Preview and Generate
 parent: Tutorials
-nav_order: 4
+nav_order: 5
 ---
 
-## Previewing a Cell
+# Preview and Generate
 
-S-cells and Modules can be previewed using the `Project.preview_layout` method. This method accepts one arguement which is the cell being previewed.
+## Previewing a cell
+
+`AiclCopilot.preview_layout(cell, enable_culling=True, wheel_zoom=True)` opens the layout viewer for an S-Cell, an M-Cell or an abstract module:
+
+- `enable_culling=True` leaves contacts and vias out of the drawing, which keeps large layouts responsive. Pass `False` to see them.
+- `wheel_zoom` lets the mouse wheel zoom. The toolbar's zoom tool works either way, and the viewer has a checkbox for it.
+
+The viewer is a Qt window. The script continues when the window is closed.
+
+To use the display data without opening a window, call `get_layout_primitives(cell)`. It returns a dictionary with the fields `polygons`, `labels`, `layer_maps`, the canvas size and its origin.
+
+## Generating a layout
+
+`AiclCopilot.generate_layout(cell, library_name, view_name)` writes the layout of an S-Cell or M-Cell as a GDSII file. The file can be opened in KLayout or any other layout editor. For `ihpSG13G2`, the export goes through the open-source design bridge. The bridge maps every layer to its GDS number and datatype using the process template's `gds_mapping.yaml`.
+
+The file is written to `$AICL_COP_LAY_DIR/<library_name>/<view_name>.gds`. `AICL_COP_LAY_DIR` is set by `AiclCopilot`:
+
+- `<project_directory>/layouts` when you pass `project_directory=` to the constructor.
+- `~/.aicl_copilot/layouts` otherwise.
+
+The GDS top cell is named `view_name`.
 
 ```python
-project.preview_layout(ota_module)
+import os
+
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+copilot = AiclCopilot(process_tech='ihpSG13G2')
+
+nmos_scell = TSCell(name='input_nmos', parameters={
+    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
+})
+
+copilot.preview_layout(nmos_scell)
+copilot.generate_layout(nmos_scell, library_name='tutorial_library', view_name='input_nmos')
+
+gds_path = os.path.join(os.environ['AICL_COP_LAY_DIR'], 'tutorial_library', 'input_nmos.gds')
+print(gds_path, os.path.isfile(gds_path))
+
+manifest = copilot.get_export_manifest()
+print(manifest.polygon_count, 'polygons written:', dict(manifest.written_by_layer))
 ```
 
-## Generating a Cell
+`get_export_manifest()` reports what the last export wrote:
 
-The layout of S-cells and Modules can be generated and saved for viewing in an exteranl application. The layout is saved as a GDSII file and can be opened with layout editors such as Klayout. Generating a layout required calling the `Project.generate_layout` method and passing the cell, library, and view name as arguements.
+- `polygon_count`: the number of polygons.
+- `written_by_layer`: the polygons on each layer.
+- `suppressed`: layers the process leaves out of the GDS on purpose.
+- `unmapped`: geometry on layers with no GDS mapping.
 
-```python
-project.generate_layout(ota_module, library_name, view_name)
-```
+The verification commands check the manifest too. They refuse to run a rule deck over a file that has lost its devices.
+
+M-Cells are generated the same way, flattened into one top cell. An abstract module cannot be generated (see [Abstract Module]({% link docs/tutorials/abstract-module/index.md %})).
+
+## Next steps
+
+- [Verification]({% link docs/tutorials/verification/index.md %}): DRC, LVS and PEX export the layout themselves, so `generate_layout` is not needed first.
+- [Schematic]({% link docs/tutorials/schematic/index.md %}): an xschem schematic of the same cell.
