@@ -12,8 +12,10 @@ nav_order: 1
 Every script starts by creating an `AiclCopilot` for a process technology. The Co-pilot loads the process templates and makes the chosen process the active context. Every cell you create afterwards is built against it.
 
 ```python
+# The copilot class from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 ```
 
@@ -25,12 +27,17 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 A `TSCell` created without arguments uses the process defaults: one minimum-size NMOS device named `dev_0`. `preview_layout` opens the layout viewer on the cell.
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# No arguments: one minimum-size NMOS with the process defaults
 nmos_scell = TSCell()
+
+# Open the layout viewer on the cell
 copilot.preview_layout(nmos_scell)
 ```
 
@@ -58,31 +65,41 @@ Each entry in `devices` has:
 The example below builds one NMOS with four fingers and names two terminals. The `composer` section selects the linear composer (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Describe the cell: one NMOS device M1 with 4 fingers, and its nets
 nmos_parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
-        'finger_width': 2.0,
-        'length': 0.5,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
         'devices': [
             {'names': ['M1'], 'number_of_fingers': [4]},
         ],
     },
+    # Place the fingers side by side in one row
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    # Name the gate and drain nets; the source goes to VSS by itself
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
 
+# Build the cell from the description
 nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
+
+# Show it, including contacts and vias
 copilot.preview_layout(nmos_scell, enable_culling=False)
 ```
 
@@ -95,24 +112,31 @@ The source pin is not named in `terminals`, so it is tied to `VSS`. `enable_cull
 Put several names in one `devices` entry to build devices that share diffusion, such as a differential pair with a common source. Use separate entries to build devices that sit side by side with a separator between them. The next example builds a PMOS pair with a common source, three fingers per device.
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Describe the cell: a PMOS pair M1/M2 in one entry, so they share diffusion
 pair_parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
-        'finger_width': 2.0,
-        'length': 0.5,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
         'devices': [
+            # One finger count for two names: both devices get 3 fingers
             {'names': ['M1', 'M2'], 'number_of_fingers': [3]},
         ],
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    # Separate gates and drains; both sources join the v_tail net
     'terminals': [
         {'name': 'v_in_p', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_in_n', 'pins': [['M2', TRANSISTOR_PIN_TYPE.GATE]]},
@@ -122,6 +146,7 @@ pair_parameters = {
     ],
 }
 
+# Build the cell and show it
 pair_scell = TSCell(name='input_pair', parameters=pair_parameters)
 copilot.preview_layout(pair_scell)
 ```

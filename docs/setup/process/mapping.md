@@ -64,12 +64,15 @@ The device instance parameters (for example `w`, `l`, `ng` and `m` on a MOSFET) 
 ## Checking the mapping
 
 ```python
+# The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
+# Start the copilot and read the device mapping (devices.yaml)
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 mapping = copilot.getDeviceMappings
 
-for transistor_type, classes in mapping['Transistors']['MOSFET'].items():
-    for alias, device in classes.items():
-        print(f"{transistor_type:5s} {alias:22s} -> {device}")
+# The MOSFET part: for each type, the class alias and its PDK device name
+mosfet_mapping = mapping['Transistors']['MOSFET']
+print('NMOS:', mosfet_mapping['NMOS'])
+print('PMOS:', mosfet_mapping['PMOS'])
 ```

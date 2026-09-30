@@ -117,32 +117,49 @@ See [Cells]({{ site.baseurl }}/docs/api/cells.html#netlist-hierarchy) for the gr
 ## Example
 
 ```python
+# The copilot and the transistor S-Cell generator from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-scell = TSCell(name='nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# --- 1. A 4-finger NMOS with gate, drain and source/bulk nets ---
+parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'terminals': [
         {'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
         {'name': 'VSS', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
-})
+}
+scell = TSCell(name='nmos', parameters=parameters)
 
-copilot.generate_layout(scell, 'doc_examples', 'nmos')          # layouts/doc_examples/nmos.gds
+# --- 2. Export the layout: layouts/doc_examples/nmos.gds ---
+copilot.generate_layout(scell, 'doc_examples', 'nmos')
 
-if copilot.verification.available('drc').available:
+# --- 3. Run DRC and LVS, but only if the tools are set up ---
+drc_status = copilot.verification.available('drc')
+if drc_status.available:
     drc = copilot.run_drc(scell, 'doc_examples', 'nmos')
     print(drc.summary())
     lvs = copilot.run_lvs(scell, 'doc_examples', 'nmos')
     print(lvs.summary())
 
-if copilot.schematic.available()[0]:
+# --- 4. Draw a schematic, but only if xschem is set up ---
+# available() gives back a pair: (is it available?, a message)
+schematic_status = copilot.schematic.available()
+schematic_ready = schematic_status[0]
+if schematic_ready:
     schematic = copilot.generate_schematic(scell, 'doc_examples')
     print('schematic written to', schematic.path)
 ```

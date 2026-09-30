@@ -28,15 +28,20 @@ Without `device_separator`, the composer uses an implant separator for every gap
 ### Dummy separator
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -49,6 +54,7 @@ parameters = {
     },
     'composer': {
         'composer_type': TRANSISTOR_COMPOSER.LINEAR,
+        # Join the two devices with 2 dummy gate fingers
         'device_separator': [[DEVICE_SEPARATOR.DUMMY, 2]],
     },
     'terminals': [
@@ -59,6 +65,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it with contacts and vias
 scell = TSCell(name='dummy_separated', parameters=parameters)
 copilot.preview_layout(scell, enable_culling=False)
 ```
@@ -70,15 +77,20 @@ copilot.preview_layout(scell, enable_culling=False)
 Replace the separator with `[DEVICE_SEPARATOR.IMPLANT, 0.5]` to break the diffusion between the devices and keep them 0.5 µm apart:
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -91,6 +103,7 @@ parameters = {
     },
     'composer': {
         'composer_type': TRANSISTOR_COMPOSER.LINEAR,
+        # Break the diffusion and keep the devices 0.5 um apart
         'device_separator': [[DEVICE_SEPARATOR.IMPLANT, 0.5]],
     },
     'terminals': [
@@ -101,6 +114,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it with contacts and vias
 scell = TSCell(name='implant_separated', parameters=parameters)
 copilot.preview_layout(scell, enable_culling=False)
 ```
@@ -114,14 +128,19 @@ Set `number_of_rows` to stack the linear arrangement several times. Each row has
 The composer also switches to several rows by itself when `finger_width` is wider than the process allows.
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# A common-source NMOS pair with 4 um fingers, 2 fingers per device
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -131,10 +150,11 @@ parameters = {
             {'names': ['M1', 'M2'], 'number_of_fingers': [2]},
         ],
     },
+    # Stack the row twice; each row gets half the finger width (2 um)
     'composer': {
         'composer_type': TRANSISTOR_COMPOSER.LINEAR,
         'number_of_rows': 2,
-        'row_spacing': 0.5,
+        'row_spacing': 0.5,         # um, minimum gap between the rows
     },
     'terminals': [
         {'name': 'v_in_p', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
@@ -144,6 +164,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it
 scell = TSCell(name='two_row_pair', parameters=parameters)
 copilot.preview_layout(scell)
 ```

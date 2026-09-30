@@ -48,14 +48,19 @@ Values that are left out come from the process defaults. A width below the layer
 The differential pair below names every net and gives the source pins a common `v_tail` net. The two bulk pins get an explicit `VSS` terminal, typed as `GROUND`.
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. Describe the differential pair ---
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -66,25 +71,39 @@ parameters = {
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'settings': {'guard_ring': {'enable': True}},
     'terminals': [
+        # Gate inputs: Metal2 wires above the gates
         {'name': 'v_in_p', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]],
          'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
         {'name': 'v_in_n', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.GATE]],
          'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
+        # Drain outputs: wider wires with 2 vias, and a Metal3 top wire on each side
         {'name': 'v_out_n', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]],
          'base_wire': {'layer': 'Metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
          'top_wire': {'layer': 'Metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_LEFT}},
         {'name': 'v_out_p', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]],
          'base_wire': {'layer': 'Metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
          'top_wire': {'layer': 'Metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_RIGHT}},
+        # Both sources on one tail net
         {'name': 'v_tail', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE], ['M2', TRANSISTOR_PIN_TYPE.SOURCE]],
          'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.SD_CENTER_DOWN}},
+        # Both bulks on an explicit ground terminal
         {'name': 'VSS', 'type': TERMINAL_TYPE.GROUND,
          'pins': [['M1', TRANSISTOR_PIN_TYPE.BULK], ['M2', TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
 
+# --- 2. Build the cell and check its terminals ---
 pair_scell = TSCell(name='input_pair', parameters=parameters)
-print([terminal.get_name() for terminal in pair_scell.get_terminals()])
+
+# How many terminals the cell has (6: the nets named above)
+terminals = pair_scell.get_terminals()
+print('Number of terminals:', len(terminals))
+
+# Look up one terminal by its name
+vss_terminal = pair_scell.get_terminal('VSS')
+print('Found terminal:', vss_terminal.get_name())
+
+# Show the cell with contacts and vias
 copilot.preview_layout(pair_scell, enable_culling=False)
 ```
 
@@ -102,14 +121,19 @@ A device pin that no terminal lists is joined to the power terminal of the cell:
 When the power terminal is not in `terminals`, it is created. It may also be listed with an empty `pins` list, to set its wire only:
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# One NMOS with 2 fingers
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -121,10 +145,12 @@ parameters = {
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        # The power terminal with no pins: it only sets where the VSS rail runs
         {'name': 'VSS', 'pins': [], 'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_BOTTOM, 'offset': 0.5}},
     ],
 }
 
+# Build the cell and show it
 nmos_scell = TSCell(name='nmos_switch', parameters=parameters)
 copilot.preview_layout(nmos_scell)
 ```

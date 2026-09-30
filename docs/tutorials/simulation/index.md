@@ -35,41 +35,61 @@ A `Testbench` (`aicl_core.bin.simulation.testbench`) is an xschem schematic arou
 
 ## Pre-layout simulation of the 5T OTA
 
-`run_simulation` writes the cell's netlist under `view_name` before the testbench can be built. The testbench is therefore passed as a *function* of the DUT netlist path, and `run_simulation` calls it once the netlist exists.
+`run_simulation` writes the cell's netlist under `view_name` before the testbench can be built. The testbench is therefore passed as a *function* of the DUT netlist path, and `run_simulation` calls it once the netlist exists. In the listing, that function is `ota_testbench`, defined with `def`: it only passes the DUT netlist, together with the bench settings above it, to `testbench.build`.
 
 ```python
+# Python's standard module for file paths and environment variables
 import os
 
+# The copilot and the testbench builder from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota-5t.spice')
+# --- 1. Build the 5T OTA from its netlist ---
+work_directory = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_directory, 'templates', 'netlists', 'ota-5t.spice')
 circuit = copilot.create_circuit_from_netlist('ota_5t', netlist_path, 'ihpSG13G2')
 grouper = copilot.create_circuit_device_grouper(circuit)
-ota = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper).build_mcell()
+atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
+ota = atomic.build_mcell()
 
-library_name, view_name = 'tutorial_library', 'ota_5t'
-testbench_directory = os.path.join(os.environ['AICL_COP_PROJECT_DIR'], 'testbenches', view_name)
+# --- 2. Describe the testbench ---
+# Where the testbench schematic is written
+project_directory = os.environ['AICL_COP_PROJECT_DIR']
+testbench_directory = os.path.join(project_directory, 'testbenches', 'ota_5t')
+
+# Which OTA port plays which role in the bench
+roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
+
+# Supply, input common mode, load capacitance and the frequency band (Hz)
+params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
+
+# Bias for the other ports: 20 uA into ibias_20u from vdd, and 1.5 V on d_ena
+fixed = {'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
 
 
+# A small function that builds the testbench around the DUT netlist.
+# run_simulation calls it once it has written the OTA's netlist.
 def ota_testbench(dut_netlist):
-    return testbench.build(
-        'ota_se', dut_netlist, testbench_directory,
-        roles={'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'},
-        params={'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)},
-        fixed={'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}},
-    )
+    return testbench.build('ota_se', dut_netlist, testbench_directory,
+                           roles=roles, params=params, fixed=fixed)
 
 
-result = copilot.run_simulation(ota_testbench, cell=ota, library_name=library_name, view_name=view_name)
+# --- 3. Simulate and read the metrics ---
+result = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library', view_name='ota_5t')
 print(result.summary())
 
+# Metrics can only be read from a run that completed
 if result.completed:
-    print('gain  %.1f dB' % result.metric('gain_db'))
-    print('UGB   %.1f MHz' % (result.metric('ugb_hz') / 1e6))
-    print('PM    %.1f deg' % result.metric('pm_deg'))
+    gain_db = result.metric('gain_db')
+    ugb_mhz = result.metric('ugb_hz') / 1e6        # Hz to MHz
+    phase_margin_deg = result.metric('pm_deg')
+    print('gain  %.1f dB' % gain_db)
+    print('UGB   %.1f MHz' % ugb_mhz)
+    print('PM    %.1f deg' % phase_margin_deg)
 ```
 
 With the typical corner, this gives about 31.6 dB of gain, 32 MHz UGB and 53° phase margin into 50 fF.
@@ -90,33 +110,58 @@ To simulate an existing netlist instead of a cell, pass `netlist='path/to/dut.sp
 `corner` selects a process corner from the template's `simulation.yaml`. For `ihpSG13G2` the corners are `tt` (default), `ss`, `ff`, `sf`, `fs` and `mc` (mismatch statistics).
 
 ```python
+# Python's standard module for file paths and environment variables
 import os
 
+# The copilot and the testbench builder from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota-5t.spice')
+# --- 1. Build the 5T OTA from its netlist ---
+work_directory = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_directory, 'templates', 'netlists', 'ota-5t.spice')
 circuit = copilot.create_circuit_from_netlist('ota_5t', netlist_path, 'ihpSG13G2')
-ota = copilot.create_atomic_hierarchy_from_circuit(circuit, copilot.create_circuit_device_grouper(circuit)).build_mcell()
+grouper = copilot.create_circuit_device_grouper(circuit)
+atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
+ota = atomic.build_mcell()
 
-testbench_directory = os.path.join(os.environ['AICL_COP_PROJECT_DIR'], 'testbenches', 'ota_5t')
+# --- 2. Describe the testbench ---
+# Where the testbench schematic is written
+project_directory = os.environ['AICL_COP_PROJECT_DIR']
+testbench_directory = os.path.join(project_directory, 'testbenches', 'ota_5t')
+
+# Which OTA port plays which role in the bench
+roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
+
+# Supply, input common mode, load capacitance and the frequency band (Hz)
+params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
+
+# Bias for the other ports: 20 uA into ibias_20u from vdd, and 1.5 V on d_ena
+fixed = {'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
 
 
+# A small function that builds the testbench around the DUT netlist.
+# run_simulation calls it once it has written the OTA's netlist.
 def ota_testbench(dut_netlist):
-    return testbench.build(
-        'ota_se', dut_netlist, testbench_directory,
-        roles={'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'},
-        params={'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)},
-        fixed={'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}},
-    )
+    return testbench.build('ota_se', dut_netlist, testbench_directory,
+                           roles=roles, params=params, fixed=fixed)
 
 
-for corner in ('tt', 'ss', 'ff'):
-    result = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library',
-                                    view_name='ota_5t', corner=corner)
-    print(result.summary())
+# --- 3. Simulate once per corner: typical, slow-slow and fast-fast ---
+result_tt = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library',
+                                   view_name='ota_5t', corner='tt')
+print(result_tt.summary())
+
+result_ss = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library',
+                                   view_name='ota_5t', corner='ss')
+print(result_ss.summary())
+
+result_ff = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library',
+                                   view_name='ota_5t', corner='ff')
+print(result_ff.summary())
 ```
 
 ## Post-layout simulation
@@ -137,42 +182,66 @@ It returns a `PostLayoutResult`:
 A layout that is not LVS-clean stops the flow before PEX. The cell must be placed and routed first:
 
 ```python
+# Python's standard module for file paths and environment variables
 import os
 
+# The copilot and the testbench builder from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota-5t.spice')
+# --- 1. Build the 5T OTA from its netlist ---
+work_directory = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_directory, 'templates', 'netlists', 'ota-5t.spice')
 circuit = copilot.create_circuit_from_netlist('ota_5t', netlist_path, 'ihpSG13G2')
-ota = copilot.create_atomic_hierarchy_from_circuit(circuit, copilot.create_circuit_device_grouper(circuit)).build_mcell()
+grouper = copilot.create_circuit_device_grouper(circuit)
+atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
+ota = atomic.build_mcell()
+
+# Place and route the OTA; post-layout simulation needs a finished layout
 PlaceAndRouteManager.place_and_route_cell(ota, 'CUSTOM_RPS_PLACER', 'RMST_ROUTER',
                                           placer_constraints={'padding': 0.5}, placer_options={'seed': 120})
 
-testbench_directory = os.path.join(os.environ['AICL_COP_PROJECT_DIR'], 'testbenches', 'ota_5t')
+# --- 2. Describe the testbench ---
+# Where the testbench schematic is written
+project_directory = os.environ['AICL_COP_PROJECT_DIR']
+testbench_directory = os.path.join(project_directory, 'testbenches', 'ota_5t')
+
+# Which OTA port plays which role in the bench
+roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
+
+# Supply, input common mode, load capacitance and the frequency band (Hz)
+params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
+
+# Bias for the other ports: 20 uA into ibias_20u from vdd, and 1.5 V on d_ena
+fixed = {'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
 
 
+# A small function that builds the testbench around the DUT netlist.
+# run_simulation calls it once it has written the OTA's netlist.
 def ota_testbench(dut_netlist):
-    return testbench.build(
-        'ota_se', dut_netlist, testbench_directory,
-        roles={'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'},
-        params={'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)},
-        fixed={'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}},
-    )
+    return testbench.build('ota_se', dut_netlist, testbench_directory,
+                           roles=roles, params=params, fixed=fixed)
 
 
+# --- 3. Simulate before and after layout: LVS, PEX, then the extracted netlist ---
 result = copilot.run_simulation(ota_testbench, cell=ota, library_name='tutorial_library',
                                 view_name='ota_5t', post_layout=True)
 
+# The pre-layout (schematic) result is always there
 print(result.pre.summary())
+
+# The post-layout result is missing when a stage stopped the flow
 if result.post is None:
     print('post-layout stopped:', result.message)
 else:
     print(result.post.summary())
-    for metric, (before, after, change) in result.deltas().items():
-        print(metric, before, after, change)
+    # For each metric: (pre-layout value, post-layout value, relative change)
+    deltas = result.deltas()
+    print(deltas)
 ```
 
 {: .note }

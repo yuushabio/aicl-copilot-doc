@@ -61,45 +61,72 @@ A layout is built bottom-up: device S-Cells first, then M-Cells that contain the
 This script builds an inverter from two transistor S-Cells, places and routes it, and writes the GDS file. It then runs DRC and LVS if KLayout and the PDK are configured (see [Installation]({{ site.baseurl }}/docs/setup/install.html)).
 
 ```python
+# The copilot and the two cell types (S-Cell and M-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import CELL_ABUT_SIDE
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Helpers for x/y positions and for place-and-route, from the core package
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
-# 0. Load the process.
+# --- 0. Load the process ---
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-# 1. Device S-Cells. The source and bulk go to the supply named for each transistor type.
-nmos = TSCell(name='mn', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
-    'terminals': [{'name': 'in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-                  {'name': 'out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-                  {'name': 'VSS', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]}],
-})
-pmos = TSCell(name='mp', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 4.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
-    'terminals': [{'name': 'in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-                  {'name': 'out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-                  {'name': 'VDD', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]}],
-})
+# --- 1. Device S-Cells ---
+# The NMOS: 2 fingers; source and bulk go to VSS
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+    'terminals': [
+        {'name': 'in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'VSS', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='mn', parameters=nmos_parameters)
 
-# 2. The M-Cell and its nets.
+# The PMOS: twice as wide; source and bulk go to VDD
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 4.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+    'terminals': [
+        {'name': 'in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'VDD', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='mp', parameters=pmos_parameters)
+
+# --- 2. The M-Cell and its nets ---
+# Each net says which sub-cell terminals it joins, and on which metal its top wire runs
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
 inverter.set_terminal_parameters([
-    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3}, 'components': {'mn': {'terminal': 'in'}, 'mp': {'terminal': 'in'}}},
-    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3}, 'components': {'mn': {'terminal': 'out'}, 'mp': {'terminal': 'out'}}},
-    {'name': 'VSS', 'top_wire': {'layer': 'Metal3', 'width': 0.3}, 'components': {'mn': {'terminal': 'VSS'}}},
-    {'name': 'VDD', 'top_wire': {'layer': 'Metal3', 'width': 0.3}, 'components': {'mp': {'terminal': 'VDD'}}},
+    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+     'components': {'mn': {'terminal': 'in'}, 'mp': {'terminal': 'in'}}},
+    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+     'components': {'mn': {'terminal': 'out'}, 'mp': {'terminal': 'out'}}},
+    {'name': 'VSS', 'top_wire': {'layer': 'Metal3', 'width': 0.3},
+     'components': {'mn': {'terminal': 'VSS'}}},
+    {'name': 'VDD', 'top_wire': {'layer': 'Metal3', 'width': 0.3},
+     'components': {'mp': {'terminal': 'VDD'}}},
 ])
 
-# 3 + 4. Place the PMOS above the NMOS, then route every net.
+# --- 3 + 4. Place the PMOS 1 um above the NMOS, then route every net ---
 placement = [
     {'cell_name': 'mn', 'position': Coord(0, 0)},
     {'cell_name': 'mp', 'use_reference': True, 'reference_cell_name': 'mn',
@@ -109,14 +136,17 @@ place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     inverter, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placement)
 print('routed:', route_result.successful, '| failed:', route_result.failed)
 
-# 5. Preview and export.
+# --- 5. Preview and export: layouts/design_flow/inverter.gds ---
 copilot.preview_layout(inverter)
 copilot.generate_layout(inverter, 'design_flow', 'inverter')
 
-# 6. Verify, if the tools are configured.
-if copilot.verification.available('drc').available:
-    print(copilot.run_drc(inverter, 'design_flow', 'inverter').summary())
-    print(copilot.run_lvs(inverter, 'design_flow', 'inverter').summary())
+# --- 6. Verify, but only if the tools are set up ---
+drc_status = copilot.verification.available('drc')
+if drc_status.available:
+    drc = copilot.run_drc(inverter, 'design_flow', 'inverter')
+    print(drc.summary())
+    lvs = copilot.run_lvs(inverter, 'design_flow', 'inverter')
+    print(lvs.summary())
 ```
 
 Simulation needs a testbench; see the [simulation tutorial]({{ site.baseurl }}/docs/tutorials/simulation/).

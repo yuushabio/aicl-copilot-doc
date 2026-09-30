@@ -23,23 +23,35 @@ The recipe goes through these steps:
 5. It checks the result with DRC and LVS, and exports GDS.
 
 ```python
+# Copilot, cell classes and helpers from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.verification.results import RunStatus
 
-library_name, view_name = 'generators', 'cs_amp'
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
+
+# Where the layout goes: library 'generators', cell 'cs_amp'
+library_name = 'generators'
+view_name = 'cs_amp'
+
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-# 1. S-Cells ---------------------------------------------------------------------------------
-input_nmos = TSCell(name='input_nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# --- 1. The two S-Cells ---
+# Input device: one NMOS with 4 fingers; gate = v_in, drain = v_out, source and bulk = vss
+input_nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
         {'name': 'v_in', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
@@ -47,11 +59,17 @@ input_nmos = TSCell(name='input_nmos', parameters={
         {'name': 'vss', 'type': TERMINAL_TYPE.GROUND,
          'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
-})
+}
+input_nmos = TSCell(name='input_nmos', parameters=input_nmos_parameters)
 
-load_pmos = TSCell(name='load_pmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# Load: one PMOS current source with 4 fingers; gate = v_bias, drain = v_out, source and bulk = vdd
+load_pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
         {'name': 'v_bias', 'type': TERMINAL_TYPE.BIAS, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
@@ -59,41 +77,57 @@ load_pmos = TSCell(name='load_pmos', parameters={
         {'name': 'vdd', 'type': TERMINAL_TYPE.SUPPLY,
          'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
-})
+}
+load_pmos = TSCell(name='load_pmos', parameters=load_pmos_parameters)
 
-# 2. M-Cell and its nets ---------------------------------------------------------------------
+# --- 2. The M-Cell and its nets ---
+# Put both S-Cells into one module
 cs_amp = MCell(name='cs_amp')
 cs_amp.add_cells([input_nmos, load_pmos])
-cs_amp.set_terminal_parameters([
+
+# Declare the module nets: which S-Cell terminals each net joins
+# (v_out gets a wider Metal3 top wire because it connects both devices)
+module_nets = [
     {'name': 'v_in', 'components': {'input_nmos': {'terminal': 'v_in'}}},
     {'name': 'v_bias', 'components': {'load_pmos': {'terminal': 'v_bias'}}},
     {'name': 'v_out', 'top_wire': {'layer': 'Metal3', 'width': 0.4},
      'components': {'input_nmos': {'terminal': 'v_out'}, 'load_pmos': {'terminal': 'v_out'}}},
     {'name': 'vdd', 'components': {'load_pmos': {'terminal': 'vdd'}}},
     {'name': 'vss', 'components': {'input_nmos': {'terminal': 'vss'}}},
-])
+]
+cs_amp.set_terminal_parameters(module_nets)
 
-# 3. and 4. Place and route ------------------------------------------------------------------
+# --- 3. and 4. Place and route ---
+# The input device sits at the origin; the load goes on top of it, centred, 0.6 um higher
 placer_constraints = [
     {'cell_name': 'input_nmos', 'use_reference': False, 'position': Coord(0, 0), 'offset': Coord(0, 0)},
     {'cell_name': 'load_pmos', 'use_reference': True, 'reference_cell_name': 'input_nmos',
      'reference_abut_side': CELL_ABUT_SIDE.top, 'reference_abut_align': CELL_ABUT_ALIGN.middle,
      'position': Coord(0, 0), 'offset': Coord(0, 0.6)},
 ]
+
+# Place with the reference placer, route with the RMST router, and list nets that failed
 place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     cs_amp, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placer_constraints)
 print('failed nets:', route_result.failed)
 
+# Show the layout, with contacts and vias drawn
 copilot.preview_layout(cs_amp, enable_culling=False)
 
-# 5. Check and export ------------------------------------------------------------------------
+# --- 5. Check and export ---
+# Run DRC and LVS and print a short summary of each
 drc = copilot.run_drc(cs_amp, library_name=library_name, view_name=view_name)
 lvs = copilot.run_lvs(cs_amp, library_name=library_name, view_name=view_name)
 print(drc.summary())
 print(lvs.summary())
 
-if drc.status is RunStatus.COMPLETED and lvs.status is RunStatus.COMPLETED and drc.clean and lvs.matched:
-    copilot.generate_layout(cs_amp, library_name, view_name)   # $AICL_COP_LAY_DIR/generators/cs_amp.gds
+# A check passes when it ran to the end and found no problem
+drc_passed = drc.status is RunStatus.COMPLETED and drc.clean
+lvs_passed = lvs.status is RunStatus.COMPLETED and lvs.matched
+
+# Write the GDS only when both checks pass ($AICL_COP_LAY_DIR/generators/cs_amp.gds)
+if drc_passed and lvs_passed:
+    copilot.generate_layout(cs_amp, library_name, view_name)
 ```
 
 ![Common-source amplifier: PMOS load above the NMOS input device, joined by the v_out net]({{site.baseurl}}/assets/images/gen_cs_amp_lay.png){: width="320"}

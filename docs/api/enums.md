@@ -70,13 +70,20 @@ Cell parameters, constraints and results use these enums. The member names are e
 ## Example
 
 ```python
+# The copilot and the transistor S-Cell generator from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# The list of cell orientations (an enum) from the core package
 from aicl_core.bin.utilities.enums.primitives import CELL_ORIENTATION
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Make a default transistor cell, then rotate it by 90 degrees and mirror it
 cell = TSCell(name='M1')
 cell.set_orientation(CELL_ORIENTATION.R90_MX)
-print(cell.get_orientation(), cell.get_rotation())     # CELL_ORIENTATION.R90_MX (90, True)
+
+# Prints: CELL_ORIENTATION.R90_MX (90, True)
+print(cell.get_orientation(), cell.get_rotation())
 ```

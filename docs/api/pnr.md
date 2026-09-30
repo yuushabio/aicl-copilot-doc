@@ -42,19 +42,28 @@ Placers and routers are registered by name. The names are exact strings.
 The registry can list them at run time:
 
 ```python
+# The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
+
+# The placer and router registries from the core package
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 from aicl_core.bin.utilities.helpers.routers import RouterManager
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# The names of every placer and router
 print('placers:', PlaceAndRouteManager.get_all_placer_names())
 print('routers:', PlaceAndRouteManager.get_all_router_names())
 
-for spec in PlacerManager.get_placer_options('CUSTOM_RPS_PLACER'):
-    print(spec.describe())
-print(RouterManager.get_router_details('ALIGN_ROUTER')['constraints'])
+# The options of one placer: name, type, default value and description
+placer_details = PlacerManager.get_placer_details('CUSTOM_RPS_PLACER')
+print(placer_details['options'])
+
+# The constraints one router accepts
+router_details = RouterManager.get_router_details('ALIGN_ROUTER')
+print(router_details['constraints'])
 ```
 
 ## PlaceAndRouteManager
@@ -126,46 +135,81 @@ from aicl_core.bin.pnr import PlaceRequest, RouteRequest, PlaceResult, RouteResu
 ## Example
 
 ```python
+# The copilot, the cell types and the routing request from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.pnr import RouteRequest
 from aicl_core.bin.routers.mcell import RectilinearMstMCellRouter
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The placer and router registries from the core package
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. Two 2-finger transistors, each with a gate net g and a drain net d ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+    'terminals': [
+        {'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
+}
+nmos = TSCell(name='mn', parameters=nmos_parameters)
 
-def device(name, transistor_class):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
-        'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-                      {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
-    })
+# The PMOS has the same parameters, only the class is different
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+    'terminals': [
+        {'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
+}
+pmos = TSCell(name='mp', parameters=pmos_parameters)
 
-
+# --- 2. The inverter M-Cell: both gates on 'in', both drains on 'out' ---
 mcell = MCell(name='inverter')
-mcell.add_cells([device('mn', TRANSISTOR_CLASS.STANDARD_NMOS), device('mp', TRANSISTOR_CLASS.STANDARD_PMOS)])
+mcell.add_cells([nmos, pmos])
 mcell.set_terminal_parameters([
-    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3}, 'components': {'mn': {'terminal': 'g'}, 'mp': {'terminal': 'g'}}},
-    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3}, 'components': {'mn': {'terminal': 'd'}, 'mp': {'terminal': 'd'}}},
+    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+     'components': {'mn': {'terminal': 'g'}, 'mp': {'terminal': 'g'}}},
+    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+     'components': {'mn': {'terminal': 'd'}, 'mp': {'terminal': 'd'}}},
 ])
 
-# Placement: a configured instance, with the constraints passed per run.
+# --- 3. Placement: a configured placer, with the constraints given for this run ---
 placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=7, simanneal_steps=200)
 place_result = PlaceAndRouteManager.place_cell(mcell, placer, constraints={'padding': 0.4})
-print(f"placed {place_result.cell_name} in {place_result.elapsed_s:.2f} s")
+place_seconds = round(place_result.elapsed_s, 2)
+print('placed', place_result.cell_name, 'in', place_seconds, 's')
 
-# Routing: a dry run of one net first, then every net with a router given by name.
-dry = RectilinearMstMCellRouter().run(mcell, RouteRequest(terminal_names=['in'], apply=False))
+# --- 4. Routing ---
+# First a dry run of the 'in' net only: apply=False checks it but draws nothing
+router = RectilinearMstMCellRouter()
+request = RouteRequest(terminal_names=['in'], apply=False)
+dry = router.run(mcell, request)
 print('dry run routed:', dry.successful)
 
+# Then route every net, with the router given by its name
 route_result = PlaceAndRouteManager.route_cell(mcell, 'RMST_ROUTER', constraints={'top_wire': {'min_width': 0.3}})
 print('routed:', route_result.successful, 'failed:', route_result.failed)
 
+# Look at the result
 copilot.preview_layout(mcell)
 ```

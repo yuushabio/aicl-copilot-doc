@@ -33,31 +33,55 @@ A missing tool does not raise. The result's `status` is `RunStatus.NOT_AVAILABLE
 ## DRC
 
 ```python
+# The copilot and the cell engines from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The status values a verification result can have
 from aicl_core.bin.verification.results import RunStatus
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-nmos_scell = TSCell(name='input_nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# Describe a small NMOS S-Cell: one device M1 with 4 fingers
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
-})
+}
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
 
-for backend in ('klayout', 'magic'):
-    drc = copilot.run_drc(nmos_scell, library_name='tutorial_library', view_name='input_nmos', backend=backend)
-    print(drc.summary())
-    if drc.status is RunStatus.COMPLETED and not drc.clean:
-        print(drc.report(limit=10))       # rules that fired, with locations
-        print(drc.counts_by_rule)
+# Run DRC with the KLayout rule deck
+drc_klayout = copilot.run_drc(nmos_scell, library_name='tutorial_library', view_name='input_nmos',
+                              backend='klayout')
+print(drc_klayout.summary())
+
+# If the run finished and found violations, show them
+if drc_klayout.status is RunStatus.COMPLETED and not drc_klayout.clean:
+    print(drc_klayout.report(limit=10))       # rules that fired, with locations
+    print(drc_klayout.counts_by_rule)
+
+# Run DRC again with the Magic rule deck and do the same checks
+drc_magic = copilot.run_drc(nmos_scell, library_name='tutorial_library', view_name='input_nmos',
+                            backend='magic')
+print(drc_magic.summary())
+
+if drc_magic.status is RunStatus.COMPLETED and not drc_magic.clean:
+    print(drc_magic.report(limit=10))
+    print(drc_magic.counts_by_rule)
 ```
 
 `DrcResult` fields and methods:
@@ -77,55 +101,105 @@ To check a GDS file that already exists, pass `gds=` (and `topcell=`) instead of
 With a cell and no `schematic`, the reference netlist is written from the cell itself. That proves the layout is what the cell describes: no router shorts, opens or missing vias. It does not prove that the cell matches your design intent. To compare against a netlist you wrote, pass it as `schematic=`. The result records which of the two was used, in `schematic_source` (`'generated'` or `'user'`).
 
 ```python
+# The copilot and the cell engines from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The Coord point type and the place-and-route helper from the core package
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+
+# The status values a verification result can have
 from aicl_core.bin.verification.results import RunStatus
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The two transistors of the inverter ---
+# NMOS: gate v_in, drain v_out, source and bulk on vss
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def inverter_transistor(name, transistor_class, rail):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# PMOS: the same, but a PMOS device with source and bulk on vdd
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
+# --- 2. The inverter M-Cell ---
 inverter = MCell(name='inverter')
-inverter.add_cells([inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss'),
-                    inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')])
+inverter.add_cells([nmos, pmos])
+
+# Its terminals, and which S-Cell terminals each one connects
 inverter.set_terminal_parameters([
     {'name': 'v_in', 'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
     {'name': 'v_out', 'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
     {'name': 'vdd', 'components': {'pmos': {'terminal': 'vdd'}}},
     {'name': 'vss', 'components': {'nmos': {'terminal': 'vss'}}},
 ])
-PlaceAndRouteManager.place_and_route_cell(inverter, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=[
-    {'cell_name': 'nmos', 'use_reference': False, 'position': Coord(0, 0), 'offset': Coord(0, 0)},
-    {'cell_name': 'pmos', 'use_reference': True, 'reference_cell_name': 'nmos',
-     'reference_abut_side': CELL_ABUT_SIDE.top, 'reference_abut_align': CELL_ABUT_ALIGN.middle,
-     'position': Coord(0, 0), 'offset': Coord(0, 0.5)},
-])
 
-for backend in ('klayout', 'magic'):
-    lvs = copilot.run_lvs(inverter, library_name='tutorial_library', view_name='inverter', backend=backend)
-    print(lvs.summary())
-    if lvs.status is RunStatus.COMPLETED:
-        print('matched:', lvs.matched, '| reference netlist:', lvs.schematic_source)
-        if not lvs.matched:
-            print(lvs.report())
+# --- 3. Place and route: NMOS at the origin, PMOS centred 0.5 um above it ---
+nmos_constraint = {'cell_name': 'nmos', 'use_reference': False,
+                   'position': Coord(0, 0), 'offset': Coord(0, 0)}
+pmos_constraint = {'cell_name': 'pmos', 'use_reference': True,
+                   'reference_cell_name': 'nmos',
+                   'reference_abut_side': CELL_ABUT_SIDE.top,
+                   'reference_abut_align': CELL_ABUT_ALIGN.middle,
+                   'position': Coord(0, 0), 'offset': Coord(0, 0.5)}
+placer_constraints = [nmos_constraint, pmos_constraint]
+PlaceAndRouteManager.place_and_route_cell(inverter, 'REFERENCE_PLACER', 'RMST_ROUTER',
+                                          placer_constraints=placer_constraints)
+
+# --- 4. LVS with KLayout ---
+lvs_klayout = copilot.run_lvs(inverter, library_name='tutorial_library', view_name='inverter',
+                              backend='klayout')
+print(lvs_klayout.summary())
+
+# If the run finished, say whether it matched; on a mismatch, show the report
+if lvs_klayout.status is RunStatus.COMPLETED:
+    print('matched:', lvs_klayout.matched, '| reference netlist:', lvs_klayout.schematic_source)
+    if not lvs_klayout.matched:
+        print(lvs_klayout.report())
+
+# --- 5. LVS with Magic and Netgen, the same checks ---
+lvs_magic = copilot.run_lvs(inverter, library_name='tutorial_library', view_name='inverter',
+                            backend='magic')
+print(lvs_magic.summary())
+
+if lvs_magic.status is RunStatus.COMPLETED:
+    print('matched:', lvs_magic.matched, '| reference netlist:', lvs_magic.schematic_source)
+    if not lvs_magic.matched:
+        print(lvs_magic.report())
 ```
 
 `LvsResult` fields and methods:
@@ -147,31 +221,46 @@ Extract parasitics only from a layout that passed LVS: parasitics of the wrong c
 - `netlist_out` and `timeout_s`.
 
 ```python
+# The copilot and the cell engines from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The status values a verification result can have
 from aicl_core.bin.verification.results import RunStatus
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-nmos_scell = TSCell(name='input_nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# Describe a small NMOS S-Cell: one device M1 with 4 fingers
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
-})
+}
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
 
+# Extract the coupling capacitances ('CC' mode) of the layout
 pex = copilot.run_pex(nmos_scell, library_name='tutorial_library', view_name='input_nmos_pex', mode='CC')
 print(pex.summary())
 
+# If the extraction ran, show the netlist file and the capacitance found
 if pex.status is RunStatus.COMPLETED and pex.extracted:
     print('extracted netlist:', pex.netlist)
-    print(pex.capacitors, 'capacitors,', pex.total_capacitance_f * 1e15, 'fF in total')
+    total_capacitance_ff = pex.total_capacitance_f * 1e15     # farad to femtofarad
+    print(pex.capacitors, 'capacitors,', total_capacitance_ff, 'fF in total')
 ```
 
 `PexResult` fields:

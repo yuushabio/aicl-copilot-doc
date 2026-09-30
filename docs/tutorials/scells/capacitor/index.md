@@ -56,32 +56,41 @@ Capacitor pins are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate)
 Four 6 µm × 6 µm MIM units as a 2 × 2 matrix:
 
 ```python
+# The copilot and the capacitor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.capacitor import CSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
 from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. Describe the capacitor ---
 parameters = {
+    # Four 6 um x 6 um unit capacitors
     'specifications': {
         'capacitor_class': CAPACITOR_CLASS.STANDARD_2T,
         'width': 6.0,
         'length': 6.0,
         'devices': [{'names': ['C1'], 'multiplier': 4}],
     },
+    # Lay the 4 units out as a 2 x 2 matrix (rows x columns = multiplier)
     'composer': {
         'composer_type': CAPACITOR_COMPOSER.LINEAR,
         'number_of_rows': 2,
         'number_of_columns': 2,
-        'row_spacing': 0.5,
-        'column_spacing': 0.5,
+        'row_spacing': 0.5,         # um
+        'column_spacing': 0.5,      # um
     },
+    # At most a 2 x 2 via array on each plate
     'settings': {
         'max_number_of_via_rows': 2,
         'max_number_of_via_cols': 2,
     },
+    # Top plate (plus) on Metal5, bottom plate (minus) on Metal3
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]],
          'base_wire': {'layer': 'Metal5', 'width': 0.5, 'offset': 0.8, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
@@ -90,6 +99,7 @@ parameters = {
     ],
 }
 
+# --- 2. Build a MIM capacitor and show it ---
 capacitor = CSCell(name='c_matrix', parameters=parameters, capacitor_tech=CAPACITOR_TECH.CMIM)
 copilot.preview_layout(capacitor, enable_culling=False)
 ```

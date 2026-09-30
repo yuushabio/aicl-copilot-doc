@@ -27,31 +27,52 @@ Both are scoped to a named library, so the same name can exist in several librar
 - Overwriting keeps the previous version as a revision, which `load(name, revision=n)` can read back.
 
 ```python
+# The copilot and the parameter library from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.library.parameterlibrary import ParameterLibrary
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The parameter sets ---
+# NMOS: 3 fingers, source and bulk on vss
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [3]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
 
-def transistor_parameters(transistor_class, fingers, rail):
-    return {
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [fingers]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    }
+# PMOS: the same, but 4 fingers with source and bulk on vdd
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
 
-
-nmos_parameters = transistor_parameters(TRANSISTOR_CLASS.STANDARD_NMOS, 3, 'vss')
-pmos_parameters = transistor_parameters(TRANSISTOR_CLASS.STANDARD_PMOS, 4, 'vdd')
-
+# Inverter M-Cell: the two transistors as children, and the nets that join them
 inverter_parameters = {
     'cells': [
         {'name': 'nmos_transistor', 'parameters': nmos_parameters},
@@ -67,14 +88,21 @@ inverter_parameters = {
     ],
 }
 
+# --- 2. Save them ---
+# Open (or create) the library 'tutorial_library' and store the three sets
 library = ParameterLibrary('tutorial_library')
 library.save('nmos_transistor', nmos_parameters, tags=['inverter'], overwrite=True)
 library.save('pmos_transistor', pmos_parameters, tags=['inverter'], overwrite=True)
 library.save('inverter', inverter_parameters, cell_class='MCell', circuit_type='CMOS inverter', overwrite=True)
 
+# --- 3. Look them up again ---
+# All names in the library, then only those tagged 'inverter'
 print(library.list_parameters())
 print(library.search(tag='inverter'))
-print(library.describe('inverter')['cell_class'])
+
+# The stored details of the inverter; print its cell class
+inverter_info = library.describe('inverter')
+print(inverter_info['cell_class'])
 ```
 
 ## Building from the library, storing the result
@@ -82,25 +110,35 @@ print(library.describe('inverter')['cell_class'])
 `build_cell(name, cell_name=None)` runs the constructor with the stored parameters, so the layout is composed by the current code. An M-Cell set is rebuilt children-first and then wired. The built cell can then be placed, routed and stored in the cell database:
 
 ```python
+# The copilot, both stores and the place-and-route helper from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.database.celldatabase import CellDatabase
 from aicl_core.bin.library.parameterlibrary import ParameterLibrary
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Build the inverter from its stored parameters
 library = ParameterLibrary('tutorial_library')
 inverter = library.build_cell('inverter', cell_name='inverter')
 
-nmos_box = inverter.get_sub_cell('nmos_transistor').get_boundbox()
-inverter.translate_sub_cells({'pmos_transistor': Coord(0, nmos_box.height + 0.3)})
+# Move the PMOS up so it sits 0.3 um above the NMOS
+nmos = inverter.get_sub_cell('nmos_transistor')
+nmos_box = nmos.get_boundbox()
+pmos_position = Coord(0, nmos_box.height + 0.3)
+inverter.translate_sub_cells({'pmos_transistor': pmos_position})
+
+# Route the nets with the RMST router
 PlaceAndRouteManager.route_cell(inverter, 'RMST_ROUTER')
 
+# Store the finished cell in the cell database and list what is in there
 database = CellDatabase('tutorial_library')
 database.save(inverter, 'inverter', description='Placed and routed inverter', tags=['inverter'], overwrite=True)
 print(database.list_cells())
 
+# Show the layout
 copilot.preview_layout(inverter)
 ```
 
@@ -109,12 +147,17 @@ copilot.preview_layout(inverter)
 `CellDatabase.load(name)` returns the stored cell exactly as it was saved, with its placement and routing, and runs no composer. Create the `AiclCopilot` with the same process first.
 
 ```python
+# The copilot and the cell database from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.database.celldatabase import CellDatabase
 
+# Start the copilot with the same process the cell was saved with
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Open the database of 'tutorial_library'
 database = CellDatabase('tutorial_library')
+
+# Only if the inverter was stored: load it, print what it holds and show it
 if database.exists('inverter'):
     inverter = database.load('inverter')
     print(inverter.get_sub_cell_names())
@@ -129,23 +172,33 @@ if database.exists('inverter'):
 Placer and router constraints are not part of a cell, but they often belong with it. A parameter set can carry them as *extras*, stored per tool namespace and per scope. A scope is a terminal or sub-cell name, and `'*'` means all. Extras are never passed to a constructor.
 
 ```python
+# The copilot, the parameter library and the place-and-route helper from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.library.parameterlibrary import ParameterLibrary
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Store a router setting with the inverter: top wires at least 0.3 um wide, for all nets (scope '*')
 library = ParameterLibrary('tutorial_library')
-library.set_extras('inverter', 'RMST_ROUTER', {'top_wire': {'min_width': 0.3}})     # scope '*'
-print(library.list_extras('inverter'))                                              # ['RMST_ROUTER']
+router_settings = {'top_wire': {'min_width': 0.3}}
+library.set_extras('inverter', 'RMST_ROUTER', router_settings)
+print(library.list_extras('inverter'))      # ['RMST_ROUTER']
 
+# Build the inverter and put the PMOS 0.3 um above the NMOS
 inverter = library.build_cell('inverter')
-nmos_box = inverter.get_sub_cell('nmos_transistor').get_boundbox()
-inverter.translate_sub_cells({'pmos_transistor': Coord(0, nmos_box.height + 0.3)})
+nmos = inverter.get_sub_cell('nmos_transistor')
+nmos_box = nmos.get_boundbox()
+pmos_position = Coord(0, nmos_box.height + 0.3)
+inverter.translate_sub_cells({'pmos_transistor': pmos_position})
 
+# Read the stored setting back (for net v_out, which falls under '*') and route with it
 constraints = library.get_extras('inverter', 'RMST_ROUTER', 'v_out')
 PlaceAndRouteManager.route_cell(inverter, 'RMST_ROUTER', constraints=constraints)
+
+# Show the layout
 copilot.preview_layout(inverter)
 ```
 

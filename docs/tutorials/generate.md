@@ -29,34 +29,50 @@ The file is written to `$AICL_COP_LAY_DIR/<library_name>/<view_name>.gds`. `AICL
 The GDS top cell is named `view_name`.
 
 ```python
+# Python's built-in module for file paths and environment variables
 import os
 
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-nmos_scell = TSCell(name='input_nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
+# A small NMOS S-Cell with 4 fingers: gate = v_in, drain = v_out
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
-})
+}
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
 
+# Look at it in the viewer, then write it as a GDS file
 copilot.preview_layout(nmos_scell)
 copilot.generate_layout(nmos_scell, library_name='tutorial_library', view_name='input_nmos')
 
-gds_path = os.path.join(os.environ['AICL_COP_LAY_DIR'], 'tutorial_library', 'input_nmos.gds')
+# Check that the file is where we expect it
+layout_directory = os.environ['AICL_COP_LAY_DIR']
+gds_path = os.path.join(layout_directory, 'tutorial_library', 'input_nmos.gds')
 print(gds_path, os.path.isfile(gds_path))
 
+# Ask what the export wrote: the polygon count, and the polygons per layer
 manifest = copilot.get_export_manifest()
-print(manifest.polygon_count, 'polygons written:', dict(manifest.written_by_layer))
+polygons_per_layer = dict(manifest.written_by_layer)
+print(manifest.polygon_count, 'polygons written:', polygons_per_layer)
 ```
 
 `get_export_manifest()` reports what the last export wrote:

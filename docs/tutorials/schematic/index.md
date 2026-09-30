@@ -19,31 +19,52 @@ Drawing needs only the PDK's xschem symbols. They are found under `AICL_PDK_ROOT
 ## Example
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-scell = TSCell(name='two_nmos', parameters={
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]},
-                                   {'names': ['M2'], 'number_of_fingers': [2]}]},
-    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR, 'device_separator': [[DEVICE_SEPARATOR.DUMMY, 2]]},
+# Describe the cell: two NMOS devices, M1 and M2, with 2 fingers each,
+# side by side with 2 dummy fingers between them
+parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [
+            {'names': ['M1'], 'number_of_fingers': [2]},
+            {'names': ['M2'], 'number_of_fingers': [2]},
+        ],
+    },
+    'composer': {
+        'composer_type': TRANSISTOR_COMPOSER.LINEAR,
+        'device_separator': [[DEVICE_SEPARATOR.DUMMY, 2]],
+    },
+    # The terminal types set the pin directions in the schematic
     'terminals': [
         {'name': 'v_gate_1', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_gate_2', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_drain_1', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
         {'name': 'v_drain_2', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
-})
+}
 
+# Create the S-Cell
+scell = TSCell(name='two_nmos', parameters=parameters)
+
+# Draw it as an xschem schematic, dummy fingers included
 schematic = copilot.generate_schematic(scell, library_name='tutorial_library', view_name='two_nmos',
                                        include_dummies=True)
 
+# Where the file went, and what is in it
 print(schematic.path)                  # .../schematics/tutorial_library/two_nmos.sch
 print(schematic.instances, 'instances, ports:', schematic.ports)
 print(schematic.symbols_used)          # PDK symbol of each device model

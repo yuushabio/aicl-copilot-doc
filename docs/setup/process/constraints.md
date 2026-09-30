@@ -159,13 +159,25 @@ Schematic generation settings, under `Schematic`.
 ## Reading the settings from Python
 
 ```python
+# The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
+# Start the copilot for the process we want to read
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# The settings from config.yaml, as nested dictionaries
 tech = copilot.getTechParameters
 print('grid:', tech['LayoutResolution'], 'um')
-print('MOSFET limits:', tech['Transistors']['MOSFET']['PCell']['Limits'])
-print('metals:', list(copilot.getMOSParameters['Connectivity']['METALS']))
+
+# The MOSFET size limits
+mosfet_settings = tech['Transistors']['MOSFET']
+print('MOSFET limits:', mosfet_settings['PCell']['Limits'])
+
+# The names of the metal layers
+connectivity = copilot.getMOSParameters['Connectivity']
+metal_names = list(connectivity['METALS'])
+print('metals:', metal_names)
+
+# The layers the layout viewer draws
 print('display layers:', copilot.get_display_layers())
 ```

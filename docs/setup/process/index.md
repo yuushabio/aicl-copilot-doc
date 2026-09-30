@@ -62,15 +62,21 @@ When an `AiclCopilot` is created, every directory under `process_templates/` is 
 | `invalid_processes` | Anything else, or a template that fails to load. The reason is logged. |
 
 ```python
+# The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
+# Start the copilot; it checks every process template it finds
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Which templates were sorted into which list, and which process is active
 print('layout processes:    ', copilot.valid_processes)
 print('simulation-only sets:', copilot.simulation_processes)
 print('invalid templates:   ', copilot.invalid_processes)
 print('active process:      ', copilot.current_process)
-print('layout resolution:   ', copilot.getTechParameters['LayoutResolution'])
+
+# One value read from the active process: the layout grid
+tech = copilot.getTechParameters
+print('layout resolution:   ', tech['LayoutResolution'])
 ```
 
 If the requested process is not valid, `AiclCopilot` logs a warning and falls back to another valid process. Check `copilot.current_process` when you add a new template.

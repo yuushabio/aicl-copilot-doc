@@ -26,52 +26,84 @@ With this many devices, the recipe leaves both the grouping and the floor-plan t
 - `simanneal_minutes=0` makes the annealer run a fixed number of steps, so the same `seed` gives the same floor-plan on every run.
 
 ```python
+# Python's built-in module for file paths and environment variables
 import os
 
+# Copilot, testbench builder, placer factory and place-and-route helper from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
-library_name, view_name = 'generators', 'ota_improved'
+# Where the layout goes: library 'generators', cell 'ota_improved'
+library_name = 'generators'
+view_name = 'ota_improved'
+
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota-improved.spice')
+# --- 1. Netlist and automatic grouping ---
+# Read the SPICE netlist that ships with core into a circuit
+work_directory = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_directory, 'templates', 'netlists', 'ota-improved.spice')
 circuit = copilot.create_circuit_from_netlist('ota_improved', netlist_path, 'ihpSG13G2')
+
+# Let the grouper find pairs, mirrors, cascodes and stacks, and turn them into S-Cells
 grouper = copilot.create_circuit_device_grouper(circuit)
 atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
 
+# Give two of the groups readable names
 atomic.rename_transistor_atomic_with_device_name('XM1', 'input_pair')
 atomic.rename_transistor_atomic_with_device_name('XM1c', 'input_cascodes')
 
+# Build the M-Cell and print its S-Cells
 ota = atomic.build_mcell()
 print(ota.get_sub_cell_names())
 
+# --- 2. Place and route ---
+# Automatic placer; a fixed seed and step count give the same floor-plan on every run
 placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=130, simanneal_minutes=0, simanneal_steps=2000)
+
+# Place with 0.8 um between cells, route with top wires at least 0.3 um wide
 place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     ota, placer, 'RMST_ROUTER',
     placer_constraints={'padding': 0.8},
     router_constraints={'top_wire': {'min_width': 0.3}})
 print('failed nets:', route_result.failed)
 
+# Show the layout
 copilot.preview_layout(ota)
 
+# --- 3. Check and simulate ---
+# Run DRC and LVS and print a short summary of each
 drc = copilot.run_drc(ota, library_name=library_name, view_name=view_name)
 lvs = copilot.run_lvs(ota, library_name=library_name, view_name=view_name)
 print(drc.summary())
 print(lvs.summary())
 
-
+# run_simulation writes the OTA netlist first, then calls this function with its path
+# to get a testbench built around exactly that netlist
 def ota_testbench(dut_netlist):
-    return testbench.build(
-        'ota_se', dut_netlist, os.path.join(os.environ['AICL_COP_PROJECT_DIR'], 'testbenches', view_name),
-        roles={'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'},
-        params={'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)},
-        fixed={'ibias_5u': {'i': 5e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}},
-    )
+    # Folder for the testbench files
+    project_directory = os.environ['AICL_COP_PROJECT_DIR']
+    testbench_directory = os.path.join(project_directory, 'testbenches', view_name)
 
+    # Which OTA pins play which testbench role
+    roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
 
-print(copilot.run_simulation(ota_testbench, cell=ota, library_name=library_name, view_name=view_name).summary())
+    # Supply, common-mode input, load capacitor and the frequency band to sweep
+    params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
+
+    # Fixed sources: 5 uA bias current from vdd, and enable tied high
+    fixed = {'ibias_5u': {'i': 5e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
+
+    # Build a single-ended OTA testbench
+    return testbench.build('ota_se', dut_netlist, testbench_directory,
+                           roles=roles, params=params, fixed=fixed)
+
+# Simulate the OTA (pre-layout) and print the measured metrics
+simulation = copilot.run_simulation(ota_testbench, cell=ota, library_name=library_name, view_name=view_name)
+print(simulation.summary())
 ```
 
 ![Cascode OTA packed by the custom RPS placer and routed by the RMST router]({{site.baseurl}}/assets/images/gen_ota_improved_lay.png){: width="760"}

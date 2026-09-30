@@ -16,13 +16,21 @@ AICL Co-pilot (Analog Integrated Circuit Layout Co-pilot) is a Python framework 
 Everything a technology needs is read from YAML process templates. The core package ships the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) open PDK.
 
 ```python
+# The copilot and the transistor S-Cell generator from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
+# Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
-nmos = TSCell(name='nmos')                           # a default NMOS transistor S-Cell
-copilot.generate_layout(nmos, 'my_library', 'nmos')   # writes my_library/nmos.gds
-copilot.preview_layout(nmos)                          # opens the layout viewer
+
+# Make a default NMOS transistor S-Cell
+nmos = TSCell(name='nmos')
+
+# Write it to a GDS file: my_library/nmos.gds
+copilot.generate_layout(nmos, 'my_library', 'nmos')
+
+# Open the layout viewer to look at it
+copilot.preview_layout(nmos)
 ```
 
 ## Where to start

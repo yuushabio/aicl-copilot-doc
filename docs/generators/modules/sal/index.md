@@ -19,14 +19,22 @@ Everything the recipe needs is already in core, so you can build a latch from yo
 3. **Checks**: `run_drc` and `run_lvs`, as in [Verification]({% link docs/tutorials/verification/index.md %}).
 4. **Simulation**: the built-in `comparator` testbench measures a clocked comparator. It reports the decision delay (`delay_ps`), the average power (`power_uw`) and the decision sign, and finds the input offset by bisection. Its roles are `vdd`, `vss`, `inp`, `inn`, `outp`, `outn` and `clk`, plus an optional `clkb`. Its parameters are `tclk`, `trise`, `cycles`, `vdiff`, `cload` and `clk_active` (see [Simulation]({% link docs/tutorials/simulation/index.md %})).
 
-The registered testbench kinds and their roles can be listed with:
+The registered testbench kinds, and the roles of the `comparator` testbench, can be listed with:
 
 ```python
+# The copilot, and the testbench module that holds the built-in testbenches
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
+# Start the copilot for the IHP process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-for kind, testbench_class in testbench.classes().items():
-    print(kind, sorted(testbench_class.roles), sorted(testbench_class.optional_roles))
+# Get all registered testbench kinds and print their names
+testbench_kinds = testbench.classes()
+print(sorted(testbench_kinds))
+
+# Pick the comparator testbench and print the roles it needs and the ones it can take
+comparator = testbench_kinds['comparator']
+print('required roles:', sorted(comparator.roles))
+print('optional roles:', sorted(comparator.optional_roles))
 ```

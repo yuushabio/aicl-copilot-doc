@@ -12,14 +12,19 @@ The `settings` section of the S-Cell parameters holds the options around the dev
 ## Guard ring, dummy fingers and dummy rows
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# One NMOS with 4 fingers, plus a 'settings' section for the extras around it
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -29,8 +34,11 @@ parameters = {
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'settings': {
+        # A guard ring, 0.2 um further out than the rule minimum
         'guard_ring': {'enable': True, 'offset': 0.2},
+        # Two dummy fingers at each end of the row
         'number_of_dummy_fingers': {'start': 2, 'end': 2},
+        # A row of dummy devices above and below the active row
         'dummy_rows': {
             'top': {'enable': True, 'offset': 0.2},
             'bottom': {'enable': True, 'offset': 0.2},
@@ -42,6 +50,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it with contacts and vias
 nmos_scell = TSCell(name='input_nmos', parameters=parameters)
 copilot.preview_layout(nmos_scell, enable_culling=False)
 ```
@@ -72,14 +81,19 @@ Dummy devices are tied to the power rail of the cell.
 The next example contacts the gates at the bottom and widens the power rail:
 
 ```python
+# The copilot and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# One PMOS with 4 fingers; the settings change the gate strap and the rail
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
@@ -89,7 +103,9 @@ parameters = {
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'settings': {
+        # Contact the gates at the bottom instead of the top
         'gate_poly': {'location': TRANSISTOR_GATE_CONNECTOR.bottom},
+        # A wider Metal1 power rail
         'power': {'base_wire': {'layer': 'Metal1', 'width': 0.4}},
     },
     'terminals': [
@@ -98,6 +114,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it with contacts and vias
 pmos_scell = TSCell(name='load_pmos', parameters=parameters)
 copilot.preview_layout(pmos_scell, enable_culling=False)
 ```

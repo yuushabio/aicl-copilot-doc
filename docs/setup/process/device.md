@@ -130,13 +130,19 @@ A template without a `bulk` block draws no body tap. Any `BULK` pins in a resist
 The loaded primitives are part of the process context:
 
 ```python
+# The copilot and the process context from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 
+# Start the copilot; this loads the process context
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 context = ContextManager.get_current_context()
 
-print('MOS layers:      ', context['mosParameters']['Primitives']['layers'])
-print('resistor layers: ', context['resistor_parameters']['primitives']['layers'])
-print('capacitor layers:', context['capacitor_parameters']['primitives']['layers'])
+# The layers each device generator draws with
+mos_primitives = context['mosParameters']['Primitives']
+resistor_primitives = context['resistor_parameters']['primitives']
+capacitor_primitives = context['capacitor_parameters']['primitives']
+print('MOS layers:      ', mos_primitives['layers'])
+print('resistor layers: ', resistor_primitives['layers'])
+print('capacitor layers:', capacitor_primitives['layers'])
 ```

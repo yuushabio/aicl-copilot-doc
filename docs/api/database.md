@@ -58,32 +58,48 @@ from aicl_core.bin.database.celldatabase import CellDatabase
 ## Example
 
 ```python
+# The copilot and the transistor S-Cell generator from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# The two stores: finished cells (CellDatabase) and parameter sets (ParameterLibrary)
 from aicl_core.bin.database.celldatabase import CellDatabase
 from aicl_core.bin.library.parameterlibrary import ParameterLibrary
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot first: the cell database needs a loaded process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# A 4-finger NMOS with gate and drain nets
 parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
-                       'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-    'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-                  {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'terminals': [
+        {'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
 }
 
-# The recipe: a named parameter set.
+# --- 1. The recipe: save the parameters under a name, then rebuild a cell from it ---
 library = ParameterLibrary('doc_examples')
 library.save('nmos_4f', parameters, cell_class='TSCell', tags=['nmos'], overwrite=True)
 print('parameter sets:', library.search(tag='nmos'))
 rebuilt = library.build_cell('nmos_4f', cell_name='M_input')
 
-# The result: a realized cell, loaded back without being composed again.
+# --- 2. The result: save the finished cell, then load it back without rebuilding it ---
 database = CellDatabase('doc_examples')
 database.save(rebuilt, description='NMOS, 4 fingers', overwrite=True)
 cell = database.load('M_input')
-print('loaded', cell.get_name(), 'with bounding box', cell.get_boundbox().width, 'x', cell.get_boundbox().height)
+
+# Print the size of the loaded cell and where the database file is
+box = cell.get_boundbox()
+print('loaded', cell.get_name(), 'with bounding box', box.width, 'x', box.height)
 print('stored in', database.path())
 ```

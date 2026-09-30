@@ -100,17 +100,23 @@ A list with one dict per terminal. Pins that no terminal names get a default ter
 ### Example
 
 ```python
+# pprint prints a dictionary spread over several lines, which is easier to read
 from pprint import pprint
 
+# The copilot and the transistor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_SD_CONNECTION_TYPE
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# A PMOS pair sharing its source, with a guard ring, end dummies and the gate contact on top
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
@@ -126,6 +132,7 @@ parameters = {
         'number_of_dummy_fingers': {'start': 1, 'end': 1},
         'gate_poly': {'location': TRANSISTOR_GATE_CONNECTOR.top},
     },
+    # Both gates on v_bias, one drain net per device, and both sources on the VDD supply
     'terminals': [
         {'name': 'v_bias', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE], ['M2', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out_1', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]],
@@ -136,8 +143,14 @@ parameters = {
     ],
 }
 
+# Build the cell from the parameters
 scell = TSCell(name='pmos_mirror', parameters=parameters)
-pprint(scell.get_parameters()['settings'])      # the realized settings, with every default filled in
+
+# Print the realized settings, with every default filled in
+realized_parameters = scell.get_parameters()
+pprint(realized_parameters['settings'])
+
+# Show the layout
 copilot.preview_layout(scell)
 ```
 
@@ -159,14 +172,19 @@ The resistor technology is a constructor argument, `RSCell(..., resistor_tech=RE
 | | `base_wire` | dict | `layer`, `width`, `number_of_vias`, `offset`, `track` (`None`). |
 
 ```python
+# The copilot and the resistor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.resistor import RSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
 from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Five segments connected in parallel, with a plus and a minus net on Metal4
 parameters = {
     'specifications': {
         'resistor_class': RESISTOR_CLASS.STANDARD_N2T,
@@ -182,6 +200,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it
 scell = RSCell(name='resistor', parameters=parameters)
 copilot.preview_layout(scell)
 ```
@@ -208,14 +227,19 @@ The capacitor technology is a constructor argument, `CSCell(..., capacitor_tech=
 The unit matrix belongs in `composer` and the multiplier in `specifications['devices']`. A `multiplier` in `composer` or a `matrix` in `settings` is refused with a `ParameterError`.
 
 ```python
+# The copilot and the capacitor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.capacitor import CSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Two 5 x 5 um units side by side (1 row, 2 columns), with at most 3 x 3 vias per plate
 parameters = {
     'specifications': {
         'capacitor_class': CAPACITOR_CLASS.STANDARD_2T,
@@ -231,6 +255,7 @@ parameters = {
     ],
 }
 
+# Build the cell and show it
 scell = CSCell(name='capacitor', parameters=parameters)
 copilot.preview_layout(scell)
 ```
@@ -250,27 +275,44 @@ An M-Cell's only parameter section is `terminals`, a list of nets. It is usually
 Placement and routing constraints are not cell parameters. They are passed to the placer and router; see [Placing and routing]({{ site.baseurl }}/docs/api/pnr.html).
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell)
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The tool that places and routes an M-Cell
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. Two small transistors, each with a gate terminal g and a drain terminal d ---
+n1_parameters = {
+    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 1.0, 'length': 0.3,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
+    'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+                  {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
+}
+n1 = TSCell(name='n1', parameters=n1_parameters)
 
-def device(name, transistor_class):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 1.0, 'length': 0.3,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
-        'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-                      {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
-    })
+# The PMOS has the same parameters, only the class is different
+p1_parameters = {
+    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 1.0, 'length': 0.3,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
+    'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+                  {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
+}
+p1 = TSCell(name='p1', parameters=p1_parameters)
 
-
+# --- 2. The M-Cell and its nets ---
 mcell = MCell(name='pair')
-mcell.add_cells([device('n1', TRANSISTOR_CLASS.STANDARD_NMOS), device('p1', TRANSISTOR_CLASS.STANDARD_PMOS)])
+mcell.add_cells([n1, p1])
+
+# 'in' joins both gates, 'out' joins both drains; 'out' is critical, so it is routed first
 mcell.set_terminal_parameters([
     {'name': 'in', 'is_port': True, 'top_wire': {'layer': 'Metal4', 'width': 0.3},
      'components': {'n1': {'terminal': 'g'}, 'p1': {'terminal': 'g'}}},
@@ -278,6 +320,7 @@ mcell.set_terminal_parameters([
      'components': {'n1': {'terminal': 'd'}, 'p1': {'terminal': 'd'}}},
 ])
 
+# --- 3. Place (0.5 um apart), route, and show the layout ---
 PlaceAndRouteManager.place_and_route_cell(mcell, 'CUSTOM_RPS_PLACER', 'RMST_ROUTER', placer_constraints={'padding': 0.5})
 copilot.preview_layout(mcell)
 ```

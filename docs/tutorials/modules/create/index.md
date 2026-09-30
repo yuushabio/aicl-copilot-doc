@@ -12,40 +12,58 @@ An `MCell` is created from a name. Its sub-cells are added with `add_cell` (one 
 The inverter below uses one NMOS and one PMOS S-Cell. Each S-Cell names its terminals `v_in` and `v_out`, and ties its source and bulk to a rail terminal (`vss` or `vdd`). The M-Cell joins them in the [routing]({% link docs/tutorials/modules/route/index.md %}) step.
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def inverter_transistor(name, transistor_class, rail):
-    """One transistor of the inverter: gate v_in, drain v_out, source and bulk on the rail."""
-    return TSCell(name=name, parameters={
-        'specifications': {
-            'transistor_class': transistor_class,
-            'finger_width': 2.0,
-            'length': 0.5,
-            'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
-        },
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
-nmos = inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss')
-pmos = inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')
-
+# --- 3. The M-Cell that holds both transistors ---
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])      # or: inverter.add_cell(nmos); inverter.add_cell(pmos)
 
+# Check which sub-cells the M-Cell now contains
 print(inverter.get_sub_cell_names())  # ['nmos', 'pmos']
 ```
 

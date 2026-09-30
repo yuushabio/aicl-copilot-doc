@@ -28,13 +28,17 @@ Each engine decides how its constraints reach the levels below:
 The `REFERENCE_PLACER` dictionary has this shape:
 
 ```python
+# Coordinates (x, y) in um
 from aicl_core.bin.utilities.geometryutils import Coord
 
+# One section per M-Cell, keyed by the cell name, starting at the top cell
 placer_constraints = {
     'top_cell_name': {
+        # Entries for the sub-cells of the top cell
         'placer_constraints': [
             {'cell_name': 'sub_cell_a', 'use_reference': False, 'position': Coord(0, 0), 'offset': Coord(0, 0)},
         ],
+        # One nested section for each sub-M-Cell, with the same two keys
         'sub_modules': {
             'sub_cell_a': {'placer_constraints': [], 'sub_modules': {}},
         },
@@ -49,46 +53,85 @@ A sub-M-Cell without a section is placed with default entries, and a warning is 
 The buffer below holds two inverter M-Cells, `inv_1` and `inv_2`. The output of `inv_1` drives the input of `inv_2` through the internal net `v_mid`.
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Coordinates (x, y) in um, and the helper that runs placers and routers
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Both inverters use the same transistor parameters and the same nets
 
-def inverter_transistor(name, transistor_class, rail):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
 
+# --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
 
-def inverter(name):
-    cell = MCell(name=name)
-    cell.add_cells([inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss'),
-                    inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')])
-    cell.set_terminal_parameters([
-        {'name': 'v_in', 'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
-        {'name': 'v_out', 'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
-        {'name': 'vdd', 'components': {'pmos': {'terminal': 'vdd'}}},
-        {'name': 'vss', 'components': {'nmos': {'terminal': 'vss'}}},
-    ])
-    return cell
+# --- 3. The nets inside one inverter ---
+inverter_terminals = [
+    {'name': 'v_in', 'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
+    {'name': 'v_out', 'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
+    {'name': 'vdd', 'components': {'pmos': {'terminal': 'vdd'}}},
+    {'name': 'vss', 'components': {'nmos': {'terminal': 'vss'}}},
+]
 
+# --- 4. The two inverter M-Cells, inv_1 and inv_2 ---
+# Sub-cell names only need to be unique inside their own M-Cell,
+# so both inverters can call their transistors 'nmos' and 'pmos'
+inv_1_nmos = TSCell(name='nmos', parameters=nmos_parameters)
+inv_1_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+inv_1 = MCell(name='inv_1')
+inv_1.add_cells([inv_1_nmos, inv_1_pmos])
+inv_1.set_terminal_parameters(inverter_terminals)
 
+inv_2_nmos = TSCell(name='nmos', parameters=nmos_parameters)
+inv_2_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+inv_2 = MCell(name='inv_2')
+inv_2.add_cells([inv_2_nmos, inv_2_pmos])
+inv_2.set_terminal_parameters(inverter_terminals)
+
+# --- 5. The buffer M-Cell holds both inverters ---
 buffer = MCell(name='buffer')
-buffer.add_cells([inverter('inv_1'), inverter('inv_2')])
+buffer.add_cells([inv_1, inv_2])
+
+# The nets refer to the inverters' terminals; v_mid is internal (not a port)
 buffer.set_terminal_parameters([
     {'name': 'v_in', 'components': {'inv_1': {'terminal': 'v_in'}}},
     {'name': 'v_mid', 'is_port': False,
@@ -98,6 +141,7 @@ buffer.set_terminal_parameters([
     {'name': 'vss', 'components': {'inv_1': {'terminal': 'vss'}, 'inv_2': {'terminal': 'vss'}}},
 ])
 
+# --- 6. Placement entries for every level ---
 # The same entries serve both inverters: NMOS at the origin, PMOS on top of it.
 inverter_entries = [
     {'cell_name': 'nmos', 'use_reference': False, 'position': Coord(0, 0), 'offset': Coord(0, 0)},
@@ -106,6 +150,7 @@ inverter_entries = [
      'position': Coord(0, 0), 'offset': Coord(0, 0.5)},
 ]
 
+# Top level: inv_1 at the origin, inv_2 to its right with a 1 um gap
 placer_constraints = {
     'buffer': {
         'placer_constraints': [
@@ -121,13 +166,18 @@ placer_constraints = {
     },
 }
 
+# --- 7. Place and route each inverter, then the buffer ---
 place_result, route_result = PlaceAndRouteManager.place_and_route_hierarchical_cell(
     buffer, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placer_constraints)
 
+# Failed nets at the top level, then inside each inverter
 print('buffer failed nets:', route_result.failed)
-for name, sub_result in route_result.sub_results.items():
-    print(name, 'failed nets:', sub_result.failed)
+inv_1_result = route_result.sub_results['inv_1']
+print('inv_1', 'failed nets:', inv_1_result.failed)
+inv_2_result = route_result.sub_results['inv_2']
+print('inv_2', 'failed nets:', inv_2_result.failed)
 
+# Show the result
 copilot.preview_layout(buffer, enable_culling=False)
 ```
 

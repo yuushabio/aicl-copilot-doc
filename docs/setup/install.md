@@ -135,22 +135,27 @@ The parameter library and cell database are also stored under the home directory
 Run this from the activated environment, with `AICL_COP_WORK_DIR` set:
 
 ```python
+# The copilot and the transistor S-Cell generator from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
+# Start the copilot and show which processes it found and where it writes its output
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 print('processes:', copilot.valid_processes, '| simulation-only:', copilot.simulation_processes)
 print('output:', copilot.current_project_directory)
 
-# Which external tools can be used (these calls never raise).
+# Which external tools can be used (these calls never raise an error)
 print('DRC:       ', copilot.verification.available('drc'))
 print('LVS:       ', copilot.verification.available('lvs'))
 print('simulation:', copilot.simulation.available())
 print('schematic: ', copilot.schematic.available())
 
-cell = TSCell(name='smoke_test')                   # a default NMOS S-Cell
+# Make a default NMOS S-Cell and write it to install_check/smoke_test.gds
+cell = TSCell(name='smoke_test')
 copilot.generate_layout(cell, 'install_check', 'smoke_test')
-copilot.preview_layout(cell)                       # opens the layout viewer
+
+# Open the layout viewer to look at it
+copilot.preview_layout(cell)
 ```
 
 `preview_layout` opens the viewer window, which needs a display. On a machine without a display, use `generate_layout` and open the GDS file in KLayout.

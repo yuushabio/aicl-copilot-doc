@@ -183,22 +183,38 @@ These objects are returned by the netlist import methods of `AiclCopilot`.
 Each device group becomes one S-Cell, which is named after its devices joined with `_` (for example `XM1_XM2`). Devices that you do not group yourself are grouped by the structures the grouper finds, such as current mirrors, or they are left on their own. Rename a group's S-Cell with `rename_transistor_atomic_with_device_name` before calling `build_mcell()`.
 
 ```python
+# os is a standard Python module, used here to build a file path
 import os
 
+# The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota.spice')
 
+# --- 1. Read the netlist ---
+# The example netlist ships in the work directory under templates/netlists/
+work_dir = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_dir, 'templates', 'netlists', 'ota.spice')
 circuit = copilot.create_circuit_from_netlist('ota', netlist_path, 'ihpSG13G2')
-print('devices:', [device.name for device in circuit.devices])
 
+# Show each net of the netlist and the devices on it
+print('nets:', circuit.nets)
+
+# --- 2. Group devices into S-Cells ---
+# XM1 and XM2 go into one S-Cell, named XM1_XM2
 grouper = copilot.create_circuit_device_grouper(circuit)
-grouper.create_transistor_group(['XM1', 'XM2'])      # one S-Cell for both devices: XM1_XM2
+grouper.create_transistor_group(['XM1', 'XM2'])
 
+# Turn the groups into a hierarchy and give the XM1 group a readable name
 atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
 atomic.rename_transistor_atomic_with_device_name('XM1', 'input_pair')
+
+# Check which devices the renamed group holds
+input_pair = atomic.get_transistor_atomic('input_pair')
+print(input_pair.get_name(), input_pair.get_device_names())
+
+# --- 3. Build the M-Cell ---
 ota = atomic.build_mcell()
 print('sub-cells:', ota.get_sub_cell_names())
-print('nets:', [net['name'] for net in ota.get_terminal_parameters()])
 ```

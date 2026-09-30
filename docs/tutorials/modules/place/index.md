@@ -20,39 +20,66 @@ The examples all start from the inverter of [Create]({% link docs/tutorials/modu
 `translate_sub_cells` takes a dictionary of sub-cell name to offset (`Coord`). The example stacks the PMOS 0.3 µm above the NMOS:
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Coordinates (x, y) in um
 from aicl_core.bin.utilities.geometryutils import Coord
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def inverter_transistor(name, transistor_class, rail):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
-nmos = inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss')
-pmos = inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')
-
+# --- 3. The inverter M-Cell; both transistors start at the origin ---
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
 
+# --- 4. Move the PMOS up by the NMOS height plus a 0.3 um gap ---
 nmos_box = nmos.get_boundbox()
-inverter.translate_sub_cells({'pmos': Coord(0, nmos_box.height + 0.3)})
+pmos_offset = Coord(0, nmos_box.height + 0.3)
+inverter.translate_sub_cells({'pmos': pmos_offset})
 
+# Show the result
 copilot.preview_layout(inverter)
 ```
 
@@ -76,37 +103,63 @@ copilot.preview_layout(inverter)
 A reference must be placed before the cells that use it, and a cell cannot reference itself. A sub-cell with no entry is placed at the origin. Keys left out are filled with defaults and a warning.
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Coordinates (x, y) in um, and the helper that runs placers and routers
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def inverter_transistor(name, transistor_class, rail):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
-nmos = inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss')
-pmos = inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')
-
+# --- 3. The inverter M-Cell with both transistors ---
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
 
+# --- 4. Placement entries, applied in order ---
+# NMOS at the origin; PMOS on top of the NMOS, centred, 0.5 um higher
 placer_constraints = [
     {'cell_name': 'nmos', 'use_reference': False, 'position': Coord(0, 0), 'offset': Coord(0, 0)},
     {'cell_name': 'pmos', 'use_reference': True, 'reference_cell_name': 'nmos',
@@ -114,9 +167,11 @@ placer_constraints = [
      'position': Coord(0, 0), 'offset': Coord(0, 0.5)},
 ]
 
+# Run the reference placer and print what it reports
 place_result = PlaceAndRouteManager.place_cell(inverter, 'REFERENCE_PLACER', constraints=placer_constraints)
 print(place_result)
 
+# Show the result
 copilot.preview_layout(inverter)
 ```
 
@@ -148,40 +203,69 @@ Its **options** tune the algorithm and are given when the placer is created:
 | `visualize` | `False` | Show the solved floor-plan |
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# The helpers that run placers and create placer objects
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
+# Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def inverter_transistor(name, transistor_class, rail):
-    return TSCell(name=name, parameters={
-        'specifications': {'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-                           'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-            {'name': rail, 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
-        ],
-    })
+# --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
-nmos = inverter_transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS, 'vss')
-pmos = inverter_transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS, 'vdd')
-
+# --- 3. The inverter M-Cell with both transistors ---
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
 
+# --- 4. Create the placer with its options, then place ---
 placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=120, simanneal_steps=200)
-PlaceAndRouteManager.place_cell(inverter, placer, constraints={'padding': 0.3, 'height_limit': 10.0})
 
+# Constraints: 0.3 um around every cell, at most 10 um tall
+floorplan_constraints = {'padding': 0.3, 'height_limit': 10.0}
+PlaceAndRouteManager.place_cell(inverter, placer, constraints=floorplan_constraints)
+
+# Show the result
 copilot.preview_layout(inverter)
 ```
 

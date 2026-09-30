@@ -21,18 +21,24 @@ The templates call `preview_layout`, which opens the interactive layout viewer. 
 ## Transistor S-Cell (TSCell)
 
 ```python
+# The copilot and the transistor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK
 
-copilot = AiclCopilot(process_tech='ihpSG13G2')        # load the process before creating cells
+# Start the copilot first: the cells read the active process when they are created
+copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Where the GDS goes if you write it out
 library_name = 'generator_library'                     # directory the GDS is written into
 view_name = 'nmos_pair'                                # GDS file name and top cell
 
+# Describe the cell: two NMOS devices in a row, with a guard ring and five nets
 parameters = {
     'specifications': {
         'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
@@ -61,8 +67,10 @@ parameters = {
     ],
 }
 
+# Build the cell from the parameters
 scell = TSCell(name='nmos_pair', parameters=parameters)
 
+# Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
 # copilot.generate_layout(scell, library_name, view_name)
 ```
@@ -70,17 +78,23 @@ copilot.preview_layout(scell)
 ## Resistor S-Cell (RSCell)
 
 ```python
+# The copilot and the resistor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.resistor import RSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION, RESISTOR_TECH
 from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, RESISTOR_PIN_TYPE
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Where the GDS goes if you write it out
 library_name = 'generator_library'
 view_name = 'poly_resistor'
 
+# Describe the resistor: four poly segments in series, with a plus and a minus net
 parameters = {
     'specifications': {
         'resistor_class': RESISTOR_CLASS.STANDARD_P2T,
@@ -102,8 +116,10 @@ parameters = {
     ],
 }
 
+# Build the cell; the resistor technology says which kind of resistor to draw
 scell = RSCell(name='poly_resistor', parameters=parameters, resistor_tech=RESISTOR_TECH.POLYSILICON)
 
+# Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
 # copilot.generate_layout(scell, library_name, view_name)
 ```
@@ -111,17 +127,23 @@ copilot.preview_layout(scell)
 ## Capacitor S-Cell (CSCell)
 
 ```python
+# The copilot and the capacitor S-Cell engine
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.capacitor import CSCell
+
+# Option lists (enums) used in the parameters below
 from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
 from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, CAPACITOR_PIN_TYPE
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Where the GDS goes if you write it out
 library_name = 'generator_library'
 view_name = 'mim_capacitor'
 
+# Describe the capacitor: four unit plates in a 2 x 2 grid, with a top and a bottom net
 parameters = {
     'specifications': {
         'capacitor_class': CAPACITOR_CLASS.STANDARD_2T,
@@ -148,8 +170,10 @@ parameters = {
     ],
 }
 
+# Build the cell; the capacitor technology says which kind of capacitor to draw
 scell = CSCell(name='mim_capacitor', parameters=parameters, capacitor_tech=CAPACITOR_TECH.CMIM)
 
+# Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
 # copilot.generate_layout(scell, library_name, view_name)
 ```
@@ -159,41 +183,61 @@ copilot.preview_layout(scell)
 An M-Cell (`MCell`) holds S-Cells and other M-Cells. Its terminal parameters say which sub-cell terminals each net joins. The cells are placed with a placer and connected with a router; both are chosen by their registry name.
 
 ```python
+# The copilot and the cell engines (M-Cell and transistor S-Cell)
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.mcell import MCell
 from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) used in the parameters and placement below
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Helpers: an (x, y) point, and the tool that places and routes an M-Cell
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Where the GDS goes if you write it out
 library_name = 'generator_library'
 view_name = 'inverter'
 
+# --- 1. The two S-Cells: one NMOS and one PMOS, 4 fingers each ---
+# Each has its gate brought out as v_in and its drain as v_out
+nmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
+}
+nmos = TSCell(name='nmos', parameters=nmos_parameters)
 
-def transistor(name, transistor_class):
-    """ A single-device S-Cell with its gate and drain brought out as v_in and v_out. """
-    return TSCell(name=name, parameters={
-        'specifications': {
-            'transistor_class': transistor_class, 'finger_width': 2.0, 'length': 0.5,
-            'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
-        },
-        'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-        'terminals': [
-            {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-            {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-        ],
-    })
+# The PMOS has the same parameters, only the class is different
+pmos_parameters = {
+    'specifications': {
+        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 2.0, 'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+    ],
+}
+pmos = TSCell(name='pmos', parameters=pmos_parameters)
 
-
-nmos = transistor('nmos', TRANSISTOR_CLASS.STANDARD_NMOS)
-pmos = transistor('pmos', TRANSISTOR_CLASS.STANDARD_PMOS)
-
+# --- 2. The M-Cell that holds both transistors ---
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
+
+# Nets of the inverter: v_in joins both gates, v_out joins both drains
 inverter.set_terminal_parameters([
     {'name': 'v_in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
      'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
@@ -201,16 +245,22 @@ inverter.set_terminal_parameters([
      'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
 ])
 
-# Place the PMOS above the NMOS, then route every net of the M-Cell.
+# --- 3. Place and route ---
+# The NMOS sits at the origin; the PMOS goes on top of it, centred, 0.5 um above
 placer_constraints = [
     {'cell_name': 'nmos', 'position': Coord(0, 0)},
     {'cell_name': 'pmos', 'use_reference': True, 'reference_cell_name': 'nmos',
      'reference_abut_side': CELL_ABUT_SIDE.top, 'reference_abut_align': CELL_ABUT_ALIGN.middle, 'offset': Coord(0, 0.5)},
 ]
+
+# Place with the reference placer, then route every net with the RMST router
 place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     inverter, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placer_constraints)
+
+# Print which nets were routed and which failed
 print('routed:', route_result.successful, 'failed:', route_result.failed)
 
+# Show the layout (or write the GDS instead)
 copilot.preview_layout(inverter)
 # copilot.generate_layout(inverter, library_name, view_name)
 ```
@@ -222,29 +272,47 @@ A circuit can also start from a SPICE netlist. The netlist is parsed into a `Cir
 The template uses `templates/netlists/ota-5t.spice`, which ships with the repository. `create_circuit_from_netlist` needs an absolute path, so the template builds it from `AICL_COP_WORK_DIR` (the repository root).
 
 ```python
+# Python's built-in module for file paths and environment variables
 import os
 
+# The copilot, plus the tools that place and route cells
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
+# Start the copilot for the process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
+# Where the GDS goes if you write it out
 library_name = 'generator_library'
 view_name = 'ota_5t'
 
-netlist_path = os.path.join(os.environ['AICL_COP_WORK_DIR'], 'templates', 'netlists', 'ota-5t.spice')
+# Full path of the netlist: <repository root>/templates/netlists/ota-5t.spice
+work_dir = os.environ['AICL_COP_WORK_DIR']
+netlist_path = os.path.join(work_dir, 'templates', 'netlists', 'ota-5t.spice')
 
+# Read the netlist into a circuit
 circuit = copilot.create_circuit_from_netlist('ota_5t', netlist_path, 'ihpSG13G2')
-grouper = copilot.create_circuit_device_grouper(circuit)      # devices you do not group are grouped automatically
+
+# Group the devices; each group becomes one S-Cell (devices you do not group are grouped automatically)
+grouper = copilot.create_circuit_device_grouper(circuit)
+
+# Turn the groups into a cell hierarchy, then build the M-Cell from it
 atomic = copilot.create_atomic_hierarchy_from_circuit(circuit, grouper)
 ota = atomic.build_mcell()
 
-placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=120)   # options are fixed per placer instance
+# Make a placer; its options (here the random seed) are fixed when it is created
+placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=120)
+
+# Place and route every level of the hierarchy, keeping 0.3 um between cells
 place_result, route_result = PlaceAndRouteManager.place_and_route_hierarchical_cell(
     ota, placer, 'RMST_ROUTER', placer_constraints={'padding': 0.3})
-print('failed nets:', route_result.all_failed())
 
+# Print the nets that could not be routed (an empty list means all were routed)
+failed_nets = route_result.all_failed()
+print('failed nets:', failed_nets)
+
+# Show the layout (or write the GDS instead)
 copilot.preview_layout(ota)
 # copilot.generate_layout(ota, library_name, view_name)
 ```
