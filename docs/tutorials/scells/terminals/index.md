@@ -63,7 +63,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. Describe the differential pair ---
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1', 'M2'], 'number_of_fingers': [2]}],
@@ -93,7 +92,7 @@ parameters = {
 }
 
 # --- 2. Build the cell and check its terminals ---
-pair_scell = TSCell(name='input_pair', parameters=parameters)
+pair_scell = TSCell(name='input_pair', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # How many terminals the cell has (6: the nets named above)
 terminals = pair_scell.get_terminals()
@@ -136,7 +135,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # One NMOS with 2 fingers
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
@@ -151,7 +149,7 @@ parameters = {
 }
 
 # Build the cell and show it
-nmos_scell = TSCell(name='nmos_switch', parameters=parameters)
+nmos_scell = TSCell(name='nmos_switch', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(nmos_scell)
 ```
 

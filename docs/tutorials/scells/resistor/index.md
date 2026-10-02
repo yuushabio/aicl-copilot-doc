@@ -9,11 +9,23 @@ nav_order: 5
 
 `RSCell` (`aicl_core.bin.core.engines.resistor`) builds a poly-silicon resistor from equal segments placed side by side. The parameter dictionary has the same four sections as a transistor S-Cell.
 
+## Device class
+
+The resistor class is the `device_class` argument of `RSCell`:
+
+| `RESISTOR_CLASS` | Pins | ihpSG13G2 device |
+|:--|:--|:--|
+| `STANDARD_N2T` (default) | plus, minus | `rsil` |
+| `STANDARD_P2T` | plus, minus | `rppd` |
+| `STANDARD_P3T` | plus, minus, bulk | `rppd` |
+| `STANDARD_N3T` | plus, minus, bulk | none: refused with a `ParameterError` |
+
+The technology, `device_tech`, is `RESISTOR_TECH.POLYSILICON`, the default.
+
 ## Specifications
 
 | Key | Type | Meaning |
 |:--|:--|:--|
-| `resistor_class` | `RESISTOR_CLASS` | `STANDARD_N2T` / `STANDARD_P2T` (two terminals) or `STANDARD_N3T` / `STANDARD_P3T` (with a bulk pin) |
 | `segment_width` | float | Width of one segment (µm), at least the process minimum |
 | `length` | float | Length of one segment (µm) |
 | `devices` | list | Exactly one entry: `{'names': ['R1'], 'number_of_segments': n}` |
@@ -29,7 +41,7 @@ The resistor composer is `RESISTOR_COMPOSER.LINEAR`. It has these options:
 
 ## Settings
 
-- `bulk_tap`: `{'side': 'auto' | 'left' | 'right' | 'top' | 'bottom', 'offset': µm}` places the substrate tap of a three-terminal resistor. With `'auto'`, the tap runs along the shorter side of the resistor.
+- `bulk_tap`: `{'side': 'auto' | 'left' | 'right' | 'top' | 'bottom', 'offset': µm}` places the substrate tap of a three-terminal resistor. With `'auto'`, the tap runs along one of the two shorter sides of the resistor: the one nearer the rail of the tap's own net when the cell has one, otherwise the one nearer a ground rail (for a substrate tap) or a supply rail (for a well tap). With no rail at all, it is the left side of a wide resistor or the bottom side of a tall one.
 
 ## Terminals
 
@@ -52,10 +64,9 @@ from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-# A three-terminal resistor R1 made of 4 segments in series
+# A three-terminal resistor R1 made of 4 segments in series (the class is set below)
 parameters = {
     'specifications': {
-        'resistor_class': RESISTOR_CLASS.STANDARD_N3T,
         'segment_width': 1.0,       # um
         'length': 4.0,              # um, per segment
         'devices': [{'names': ['R1'], 'number_of_segments': 4}],
@@ -77,14 +88,14 @@ parameters = {
     ],
 }
 
-# Build the resistor and show it with contacts and vias
-resistor = RSCell(name='r_series', parameters=parameters)
+# Build it as a three-terminal P-poly resistor and show it with contacts and vias
+resistor = RSCell(name='r_series', parameters=parameters, device_class=RESISTOR_CLASS.STANDARD_P3T)
 copilot.preview_layout(resistor, enable_culling=False)
 ```
 
 ![Four poly-silicon segments connected in series, with a substrate tap along the bottom]({{site.baseurl}}/assets/images/rscell_series_lay.png){: width="420"}
 
-Change `segment_connection` to `RESISTOR_SEGMENT_CONNECTION.PARALLEL` and drop the bulk terminal to build a two-terminal parallel resistor:
+Change `segment_connection` to `RESISTOR_SEGMENT_CONNECTION.PARALLEL`, drop the bulk terminal and use a two-terminal class to build a two-terminal parallel resistor:
 
 ```python
 # The copilot and the resistor S-Cell engine from the core package
@@ -102,7 +113,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # A two-terminal resistor R1 made of 5 segments in parallel
 parameters = {
     'specifications': {
-        'resistor_class': RESISTOR_CLASS.STANDARD_N2T,
         'segment_width': 1.0,       # um
         'length': 4.185,            # um, per segment
         'devices': [{'names': ['R1'], 'number_of_segments': 5}],
@@ -119,8 +129,8 @@ parameters = {
     ],
 }
 
-# Build the resistor and show it
-resistor = RSCell(name='r_parallel', parameters=parameters)
+# Build it as a two-terminal N-poly resistor and show it
+resistor = RSCell(name='r_parallel', parameters=parameters, device_class=RESISTOR_CLASS.STANDARD_N2T)
 copilot.preview_layout(resistor)
 ```
 

@@ -22,7 +22,8 @@ Both are scoped to a named library, so the same name can exist in several librar
 
 `save(name, parameters, cell_class='', description='', circuit_type='', tags=None, overwrite=False, extras=None)` stores a parameter dictionary. Enum members inside it are kept.
 
-- `cell_class` is `TSCell`, `RSCell`, `CSCell` or `MCell`, and is inferred when omitted.
+- `cell_class` is `TSCell`, `RSCell`, `CSCell` or `MCell`, and is inferred when omitted. An S-Cell set names its device with the root keys `'device_class'` (and optionally `'device_tech'`), the same keys that `cell.get_parameters()` returns; `cell_class` is inferred from them.
+- `build_cell` passes those keys to the cell as its `device_class=` and `device_tech=` arguments (through `create_from_params`, see [Cells]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). A set saved with the old `specifications['transistor_class']` key is refused; re-save it with the root key.
 - An M-Cell parameter set holds its children: a `cells` list of `{'name', 'parameters'}` entries and the M-Cell `terminals`.
 - Overwriting keeps the previous version as a revision, which `load(name, revision=n)` can read back.
 
@@ -40,10 +41,11 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # --- 1. The parameter sets ---
-# NMOS: 3 fingers, source and bulk on vss
+# NMOS: 3 fingers, source and bulk on vss. A saved set names its device class
+# with the root key 'device_class'
 nmos_parameters = {
+    'device_class': TRANSISTOR_CLASS.STANDARD_NMOS,
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [3]}],
@@ -58,8 +60,8 @@ nmos_parameters = {
 
 # PMOS: the same, but 4 fingers with source and bulk on vdd
 pmos_parameters = {
+    'device_class': TRANSISTOR_CLASS.STANDARD_PMOS,
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],

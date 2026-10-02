@@ -11,9 +11,12 @@ The files in `primitives/` describe the geometry of one unit device: which layer
 
 | File | Primitive | Required | Reference layer |
 |:--|:--|:--:|:--|
-| `mos.yaml` | MOS transistor finger | yes | `Oxide Diffusion` |
-| `resistor.yaml` | Poly resistor segment | for RSCell | `Resistor Poly` |
-| `capacitor.yaml` | MIM capacitor unit | for CSCell | `Cap Top Dielectric` |
+| `transistor.yaml` | MOS transistor finger | yes | `Oxide Diffusion` |
+| `poly_resistor.yaml` | Poly resistor segment | for RSCell | `Resistor Poly` |
+| `mim_capacitor.yaml` | MIM capacitor unit | for CSCell | `Cap Bottom Dielectric` |
+
+{: .note }
+These files were called `mos.yaml`, `resistor.yaml` and `capacitor.yaml` before. A template with the old names is not loaded; rename the files.
 
 Every file has a single top-level key, `Primitives`.
 
@@ -27,7 +30,7 @@ Every file has a single top-level key, `Primitives`.
 | `polygons.dimensions` | `[[width, height]]` of each layer in the unit device. |
 | `polygons.distances` | `Layer A|Layer B: [[dx, dy]]`: the signed distance from layer A's lower-left corner to layer B's. |
 
-## mos.yaml
+## transistor.yaml
 
 The listings below are shortened from `ihpSG13G2`, and `...` marks the entries that were left out.
 
@@ -72,7 +75,7 @@ Primitives:
 
 The low- and high-threshold layers are added for the `LOW_VT_*` and `HIGH_VT_*` transistor classes. In `ihpSG13G2`, the high-threshold class maps to the thick-oxide devices, which are marked with `ThickGateOx`.
 
-## resistor.yaml
+## poly_resistor.yaml
 
 ```yaml
 Primitives:
@@ -82,7 +85,7 @@ Primitives:
   bulk:                                  # body tap for 3-terminal classes (or a BULK pin)
     available: True
     tap_type: 'P'                        # 'P' substrate tap, 'N' well tap
-    side: 'auto'                         # 'auto' (shorter side), bottom, top, left, right
+    side: 'auto'                         # 'auto' (shorter side, near the supply), bottom, top, left, right
     offset: 0.5
     width: {oxide_diffusion: 0.3, metal_1: 0.3, n_implant: 0.43, p_implant: 0.43, n_well: 0.78, p_well: None}
 
@@ -97,7 +100,7 @@ Primitives:
   polygons: {offsets: ..., dimensions: ..., distances: ...}
 ```
 
-## capacitor.yaml
+## mim_capacitor.yaml
 
 ```yaml
 Primitives:
@@ -105,8 +108,8 @@ Primitives:
   device_orientation: {width: 'horizontal'}   # the direction the plate width runs in
 
   layers:
-    Cap Top Dielectric: 'MIM'            # reference layer
-    Cap Bottom Dielectric: 'MIM'
+    Cap Top Dielectric: 'MIM'
+    Cap Bottom Dielectric: 'MIM'         # reference layer
     Cap Top Metal: 'TM1'
     Cap Bottom Metal: 'Metal5'
     Cap Via: 'Vmim'
@@ -121,6 +124,10 @@ Primitives:
     max_number_of_via_rows: 5
     max_number_of_via_columns: 5
 ```
+
+The capacitor's reference layer is `Cap Bottom Dielectric`: every entry of `polygons.distances` is measured from it, for example `Cap Bottom Dielectric|Cap Top Metal: [[-0.06, -0.06]]`. The keys in `characterization/CAP.yaml` use the same `Cap Bottom Dielectric|...` names. In `ihpSG13G2` both dielectric layers are `MIM`.
+
+`configuration` can also hold `extend_bottom_cap_plates: True`. In a process whose top and bottom plate are on two different layers (`Cap Top Dielectric` and `Cap Bottom Dielectric` differ), the bottom plates of a unit matrix are then joined into one plate across the gaps between the units. It is off by default and has no effect in `ihpSG13G2`, where both are `MIM`.
 
 {: .note }
 A template without a `bulk` block draws no body tap. Any `BULK` pins in a resistor or capacitor cell are then removed with a warning.

@@ -34,7 +34,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # Two NMOS devices in one devices entry, so they share the source (the tail node)
 parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
+    'specifications': {'finger_width': 2.0, 'length': 0.5,
                        'devices': [{'names': ['M1', 'M2'], 'number_of_fingers': [4]}]},
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'settings': {'guard_ring': {'enable': True}},
@@ -48,7 +48,7 @@ parameters = {
 }
 
 # Build the differential pair and show it
-diff_pair = TSCell(name='diff_pair', parameters=parameters)
+diff_pair = TSCell(name='diff_pair', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(diff_pair)
 ```
 
@@ -71,7 +71,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # M1 is the reference: its gate and drain are both on i_ref (diode connection)
 parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 1.0,
+    'specifications': {'finger_width': 2.0, 'length': 1.0,
                        'devices': [{'names': ['M1', 'M2'], 'number_of_fingers': [2, 4]}]},
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
@@ -82,7 +82,7 @@ parameters = {
 }
 
 # Build the mirror and show it
-mirror = TSCell(name='nmos_mirror', parameters=parameters)
+mirror = TSCell(name='nmos_mirror', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(mirror)
 ```
 
@@ -105,7 +105,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # M1 and M2 stacked as a cascode: M1's drain and M2's source are joined (v_mid)
 parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
+    'specifications': {'finger_width': 2.0, 'length': 0.5,
                        'devices': [{'names': ['M1', 'M2'], 'number_of_fingers': [2],
                                     'sd_connection_type': TRANSISTOR_SD_CONNECTION_TYPE.CASCODE}]},
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
@@ -118,7 +118,7 @@ parameters = {
 }
 
 # Build the cascode stack and show it
-cascode = TSCell(name='nmos_cascode', parameters=parameters)
+cascode = TSCell(name='nmos_cascode', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(cascode)
 ```
 
@@ -139,7 +139,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # The gate is the top plate; source, drain and bulk together are the bottom plate (VSS)
 parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 4.0, 'length': 1.0,
+    'specifications': {'finger_width': 4.0, 'length': 1.0,
                        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}]},
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'terminals': [
@@ -149,7 +149,7 @@ parameters = {
 }
 
 # Build the MOS capacitor and show it
-mos_cap = TSCell(name='mos_cap', parameters=parameters)
+mos_cap = TSCell(name='mos_cap', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(mos_cap)
 ```
 
@@ -170,7 +170,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # Six poly segments connected in series
 parameters = {
-    'specifications': {'resistor_class': RESISTOR_CLASS.STANDARD_N2T, 'segment_width': 1.0, 'length': 5.0,
+    'specifications': {'segment_width': 1.0, 'length': 5.0,
                        'devices': [{'names': ['R1'], 'number_of_segments': 6}]},
     'composer': {'composer_type': RESISTOR_COMPOSER.LINEAR, 'segment_spacing': 0.4,
                  'segment_connection': RESISTOR_SEGMENT_CONNECTION.SERIES},
@@ -181,7 +181,7 @@ parameters = {
 }
 
 # Build the resistor and show it
-resistor = RSCell(name='r_bias', parameters=parameters)
+resistor = RSCell(name='r_bias', parameters=parameters, device_class=RESISTOR_CLASS.STANDARD_N2T)
 copilot.preview_layout(resistor)
 ```
 
@@ -202,7 +202,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # Six unit capacitors in a 2 x 3 matrix (rows x columns = multiplier)
 parameters = {
-    'specifications': {'capacitor_class': CAPACITOR_CLASS.STANDARD_2T, 'width': 5.0, 'length': 5.0,
+    'specifications': {'width': 5.0, 'length': 5.0,
                        'devices': [{'names': ['C1'], 'multiplier': 6}]},
     'composer': {'composer_type': CAPACITOR_COMPOSER.LINEAR, 'number_of_rows': 2, 'number_of_columns': 3},
     'terminals': [
@@ -212,6 +212,6 @@ parameters = {
 }
 
 # Build the capacitor array and show it
-capacitor = CSCell(name='c_load', parameters=parameters)
+capacitor = CSCell(name='c_load', parameters=parameters, device_class=CAPACITOR_CLASS.STANDARD_2T)
 copilot.preview_layout(capacitor)
 ```

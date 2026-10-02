@@ -51,7 +51,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Describe a small NMOS S-Cell: one device M1 with 4 fingers
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -62,12 +61,13 @@ nmos_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
-# Run DRC with the KLayout rule deck
+# Run DRC with the KLayout rule decks (the main deck, then the extra ones)
 drc_klayout = copilot.run_drc(nmos_scell, library_name='tutorial_library', view_name='input_nmos',
                               backend='klayout')
 print(drc_klayout.summary())
+print('extra decks:', drc_klayout.extra_decks)
 
 # If the run finished and found violations, show them
 if drc_klayout.status is RunStatus.COMPLETED and not drc_klayout.clean:
@@ -91,6 +91,8 @@ if drc_magic.status is RunStatus.COMPLETED and not drc_magic.clean:
 - `summary()` gives one line and `report()` a readable report.
 - `caveats()` lists the ways a result is narrower than it looks.
 - `artifacts.directory` is the run directory, with the report database and the log.
+
+With the KLayout backend, `run_drc` runs every deck that `verification.yaml` lists: the main deck and then each of its `drc_extra_decks`. For `ihpSG13G2` that is `ihp-sg13g2.drc` followed by `rule_decks/sg13g2_maximal.drc`, the extra rules that IHP's own DRC flow also checks. All violations are counted together, so `clean` is `True` only when every deck passes. `extra_decks` lists the extra decks that were run, and `artifacts.extra_reports` their report files.
 
 The KLayout and Magic rule decks are not equivalent. Running both over one layout is a good way to find where they disagree.
 
@@ -125,7 +127,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # NMOS: gate v_in, drain v_out, source and bulk on vss
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -137,12 +138,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # PMOS: the same, but a PMOS device with source and bulk on vdd
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -154,7 +154,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The inverter M-Cell ---
 inverter = MCell(name='inverter')
@@ -209,7 +209,9 @@ if lvs_magic.status is RunStatus.COMPLETED:
 - `parameter_deltas`, and `checks_relaxed` when a parameter tolerance was needed for the match.
 - `checks_skipped`, and `summary()` / `report()`.
 
-The reference netlist is written in the dialect each backend's extractor expects. The same cell can therefore be compared with KLayout and with Netgen.
+The reference netlist is written in the dialect each backend's extractor expects. The same cell can therefore be compared with KLayout and with Netgen. The generated netlist is kept next to the layout, at `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.spice`.
+
+To write that netlist without running LVS, for example to hand it to another tool, call `copilot.generate_netlist(cell, library_name, view_name)`. It returns the path of the file. `style='cdl'` writes an auCdl netlist instead (see [AiclCopilot]({% link docs/api/copilot.md %}#preview-and-export)).
 
 ## PEX
 
@@ -239,7 +241,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Describe a small NMOS S-Cell: one device M1 with 4 fingers
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -250,7 +251,7 @@ nmos_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Extract the coupling capacitances ('CC' mode) of the layout
 pex = copilot.run_pex(nmos_scell, library_name='tutorial_library', view_name='input_nmos_pex', mode='CC')

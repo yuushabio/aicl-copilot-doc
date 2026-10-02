@@ -9,7 +9,7 @@ nav_order: 8
 `AiclCopilot.generate_schematic(cell, library_name='', view_name='', include_dummies=False)` draws a cell as an xschem schematic, using the PDK's symbol library. The device graph is the same one the SPICE netlist of the cell is written from, so a schematic and a netlist generated from one cell always describe the same circuit.
 
 - `library_name` defaults to `'schematics'` and `view_name` to the cell name.
-- The file is written to `$AICL_COP_SCH_DIR/<library_name>/<view_name>.sch`. When `AICL_COP_SCH_DIR` is not set, the directory is `<project>/schematics`, next to the layouts.
+- The file is written to `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.sch`. When `AICL_COP_SCH_DIR` is not set, the directory is `<project>/schematics`, next to the layouts.
 - `include_dummies=True` also draws the dummy fingers. They are left out by default because they carry no signal.
 
 ## Requirements
@@ -36,7 +36,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # side by side with 2 dummy fingers between them
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [
@@ -58,14 +57,14 @@ parameters = {
 }
 
 # Create the S-Cell
-scell = TSCell(name='two_nmos', parameters=parameters)
+scell = TSCell(name='two_nmos', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Draw it as an xschem schematic, dummy fingers included
 schematic = copilot.generate_schematic(scell, library_name='tutorial_library', view_name='two_nmos',
                                        include_dummies=True)
 
 # Where the file went, and what is in it
-print(schematic.path)                  # .../schematics/tutorial_library/two_nmos.sch
+print(schematic.path)                  # .../schematics/ihpSG13G2/tutorial_library/two_nmos.sch
 print(schematic.instances, 'instances, ports:', schematic.ports)
 print(schematic.symbols_used)          # PDK symbol of each device model
 ```

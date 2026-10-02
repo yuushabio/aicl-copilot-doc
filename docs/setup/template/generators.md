@@ -13,7 +13,7 @@ Each template follows the same pattern:
 
 1. Create an `AiclCopilot` instance for a process. Do this first: the cell engines read the active process when they are constructed.
 2. Build the cell(s) from [parameter dictionaries]({{ site.baseurl }}/docs/setup/template/parameters.html).
-3. Call `preview_layout(cell)` to view the layout, or `generate_layout(cell, library_name, view_name)` to write `<library_name>/<view_name>.gds` under the project's `layouts` directory.
+3. Call `preview_layout(cell)` to view the layout, or `generate_layout(cell, library_name, view_name)` to write `<process>/<library_name>/<view_name>.gds` under the project's `layouts` directory.
 
 {: .note }
 The templates call `preview_layout`, which opens the interactive layout viewer. To write the GDS file instead, comment out the preview line and uncomment the `generate_layout` line.
@@ -41,7 +41,6 @@ view_name = 'nmos_pair'                                # GDS file name and top c
 # Describe the cell: two NMOS devices in a row, with a guard ring and five nets
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,                           # um, per finger
         'length': 0.5,                                 # um
         'devices': [
@@ -67,8 +66,8 @@ parameters = {
     ],
 }
 
-# Build the cell from the parameters
-scell = TSCell(name='nmos_pair', parameters=parameters)
+# Build the cell from the parameters; device_class makes it an NMOS
+scell = TSCell(name='nmos_pair', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
@@ -97,7 +96,6 @@ view_name = 'poly_resistor'
 # Describe the resistor: four poly segments in series, with a plus and a minus net
 parameters = {
     'specifications': {
-        'resistor_class': RESISTOR_CLASS.STANDARD_P2T,
         'segment_width': 1.0,                          # um
         'length': 4.0,                                 # um, one segment
         'devices': [{'names': ['R1'], 'number_of_segments': 4}],
@@ -116,8 +114,9 @@ parameters = {
     ],
 }
 
-# Build the cell; the resistor technology says which kind of resistor to draw
-scell = RSCell(name='poly_resistor', parameters=parameters, resistor_tech=RESISTOR_TECH.POLYSILICON)
+# Build the cell; the class and the technology say which kind of resistor to draw
+scell = RSCell(name='poly_resistor', parameters=parameters,
+               device_class=RESISTOR_CLASS.STANDARD_P2T, device_tech=RESISTOR_TECH.POLYSILICON)
 
 # Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
@@ -146,7 +145,6 @@ view_name = 'mim_capacitor'
 # Describe the capacitor: four unit plates in a 2 x 2 grid, with a top and a bottom net
 parameters = {
     'specifications': {
-        'capacitor_class': CAPACITOR_CLASS.STANDARD_2T,
         'width': 6.0,                                  # um, one unit plate
         'length': 6.0,                                 # um
         'devices': [{'names': ['C1'], 'multiplier': 4}],
@@ -170,8 +168,9 @@ parameters = {
     ],
 }
 
-# Build the cell; the capacitor technology says which kind of capacitor to draw
-scell = CSCell(name='mim_capacitor', parameters=parameters, capacitor_tech=CAPACITOR_TECH.CMIM)
+# Build the cell; the class and the technology say which kind of capacitor to draw
+scell = CSCell(name='mim_capacitor', parameters=parameters,
+               device_class=CAPACITOR_CLASS.STANDARD_2T, device_tech=CAPACITOR_TECH.CMIM)
 
 # Show the layout (or write the GDS instead)
 copilot.preview_layout(scell)
@@ -208,7 +207,7 @@ view_name = 'inverter'
 # Each has its gate brought out as v_in and its drain as v_out
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 2.0, 'length': 0.5,
+        'finger_width': 2.0, 'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
@@ -217,12 +216,12 @@ nmos_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
-# The PMOS has the same parameters, only the class is different
+# The PMOS has the same parameters; only its device_class is different
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 2.0, 'length': 0.5,
+        'finger_width': 2.0, 'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
@@ -231,7 +230,7 @@ pmos_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The M-Cell that holds both transistors ---
 inverter = MCell(name='inverter')

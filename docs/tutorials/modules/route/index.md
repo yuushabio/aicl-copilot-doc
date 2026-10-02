@@ -50,7 +50,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -62,12 +61,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -79,7 +77,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 3. The inverter M-Cell and its nets ---
 inverter = MCell(name='inverter')
@@ -179,7 +177,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -195,7 +192,6 @@ nmos_parameters = {
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -225,8 +221,8 @@ placer_constraints = [
 ]
 
 # --- 5. First copy: build, place, and route with the ALIGN router ---
-align_nmos = TSCell(name='nmos', parameters=nmos_parameters)
-align_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+align_nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+align_pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 align_inverter = MCell(name='inverter_align')
 align_inverter.add_cells([align_nmos, align_pmos])
 align_inverter.set_terminal_parameters(inverter_terminals)
@@ -240,8 +236,8 @@ align_result = PlaceAndRouteManager.route_cell(
 print('ALIGN routed:', align_result.successful, 'failed:', align_result.failed)
 
 # --- 6. Second copy: build, place, and route with the MAGICAL router ---
-magical_nmos = TSCell(name='nmos', parameters=nmos_parameters)
-magical_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+magical_nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+magical_pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 magical_inverter = MCell(name='inverter_magical')
 magical_inverter.add_cells([magical_nmos, magical_pmos])
 magical_inverter.set_terminal_parameters(inverter_terminals)
@@ -287,7 +283,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -299,12 +294,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -316,7 +310,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 3. The inverter M-Cell and its nets ---
 inverter = MCell(name='inverter')

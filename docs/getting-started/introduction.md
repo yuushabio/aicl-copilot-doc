@@ -18,7 +18,7 @@ The core package is released under the GNU GPLv3. Layouts, netlists and other fi
 | **M-Cell** (module cell) | `MCell` | A hierarchical container of S-Cells and other M-Cells. Its nets say which sub-cell terminals are connected, and placers and routers arrange and wire it. |
 | **Abstract M-Cell** | `AbstractMCell` | An outline with terminals, used to preview a floor plan before its contents exist. |
 | **Composer** | | The algorithm that arranges devices inside an S-Cell, for example `TRANSISTOR_COMPOSER.LINEAR`. |
-| **Process template** | | The YAML description of a technology in `aicl_core/config/process_templates/<process>/`. |
+| **Process template** | | The YAML description of a technology in `aicl_core/config/process_templates/<family>/<process>/`, for example `planar/ihpSG13G2`. |
 | **Generator** | | A Python script that builds a cell and exports it. |
 
 ## Package map

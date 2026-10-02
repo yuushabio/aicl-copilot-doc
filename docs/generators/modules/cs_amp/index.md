@@ -47,7 +47,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Input device: one NMOS with 4 fingers; gate = v_in, drain = v_out, source and bulk = vss
 input_nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -60,12 +59,11 @@ input_nmos_parameters = {
          'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-input_nmos = TSCell(name='input_nmos', parameters=input_nmos_parameters)
+input_nmos = TSCell(name='input_nmos', parameters=input_nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Load: one PMOS current source with 4 fingers; gate = v_bias, drain = v_out, source and bulk = vdd
 load_pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -78,7 +76,7 @@ load_pmos_parameters = {
          'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-load_pmos = TSCell(name='load_pmos', parameters=load_pmos_parameters)
+load_pmos = TSCell(name='load_pmos', parameters=load_pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The M-Cell and its nets ---
 # Put both S-Cells into one module
@@ -125,7 +123,7 @@ print(lvs.summary())
 drc_passed = drc.status is RunStatus.COMPLETED and drc.clean
 lvs_passed = lvs.status is RunStatus.COMPLETED and lvs.matched
 
-# Write the GDS only when both checks pass ($AICL_COP_LAY_DIR/generators/cs_amp.gds)
+# Write the GDS only when both checks pass ($AICL_COP_LAY_DIR/ihpSG13G2/generators/cs_amp.gds)
 if drc_passed and lvs_passed:
     copilot.generate_layout(cs_amp, library_name, view_name)
 ```
@@ -139,6 +137,4 @@ Both checks pass on `ihpSG13G2`: KLayout DRC is clean and LVS matches.
 - **Diode-connected load**: give the PMOS gate and drain one terminal, `{'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE, TRANSISTOR_PIN_TYPE.DRAIN]]}`, and drop `v_bias`.
 - **Larger devices**: raise `number_of_fingers`. Use `number_of_rows` to keep the cell square (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 - **Guard rings**: add `'guard_ring': {'enable': True}` to each S-Cell's `settings`.
-
-{: .note }
-Dummy fingers (`number_of_dummy_fingers`) are left out on purpose. In this release, a PMOS S-Cell with dummy fingers and its own `vdd` terminal fails LVS: the dummy device of the generated netlist has no counterpart in the extracted layout.
+- **Dummy fingers**: add `'number_of_dummy_fingers': {'start': 1, 'end': 1}` to each S-Cell's `settings`. The generated LVS netlist states each cell's dummies with that cell's own device (the PMOS dummies as `sg13_lv_pmos`), so the recipe still passes DRC and LVS.

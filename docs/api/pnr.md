@@ -81,7 +81,7 @@ A set of static methods over the registries. Wherever a `placer` or `router` is 
 | `route_cell(cell, router=None, *, terminal_names=None, constraints=None, grid=None, options=None)` | `RouteResult`. Routes `terminal_names` (all nets when `None`) and attaches the terminals. |
 | `route_hierarchical_cell(cell, router=None, *, constraints=None, grid=None, options=None)` | `RouteResult` tree. Routes every sub-M-Cell first. |
 | `place_and_route_cell(cell, placer=None, router=None, *, placer_constraints=None, router_constraints=None, placer_options=None, router_options=None, grid=None)` | `(PlaceResult, RouteResult)`. The placer's symmetry is handed to the router. |
-| `place_and_route_hierarchical_cell(cell, placer=None, router=None, *, ...same keywords...)` | `(PlaceResult, RouteResult)` trees. Each sub-M-Cell is placed **and routed** before its parent is placed. |
+| `place_and_route_hierarchical_cell(cell, placer=None, router=None, *, ...same keywords...)` | `(PlaceResult, RouteResult)` trees. Each sub-M-Cell is placed **and routed** before its parent is placed. A placer that does not descend into a sub-cell (because it places that whole subtree from the parent level) places it first; that sub-cell is then routed after the parent level is placed, and before the parent is routed. |
 | `resolve_placer(placer=None, options=None)`, `resolve_router(router=None, options=None)` | An engine instance. |
 | `get_all_placer_names()`, `get_all_router_names()` | Registry names. |
 | `get_placer(name)`, `get_router(name)` | The registered class. |
@@ -116,6 +116,8 @@ from aicl_core.bin.utilities.helpers.routers import RouterManager
 | `get_symmetry(path=None, *, flat=False)` | `set_symmetry(symmetry: LevelSymmetry | None)` |
 
 To write a new engine, implement `place(cell, constraints)` (or `route(cell, terminal_names, constraints, grid=None)`), `parse_constraints(raw, cell)` and `sub_cell_constraints(cell, sub_cell, constraints)`. Declare `options_schema` as a tuple of `OptionSpec`, then register the class with `PlacerManager.register` or `RouterManager.register`.
+
+`register_level_hook(hook)` in `aicl_core.bin.placers.placer` adds a function that runs after every level that any placer places, as `hook(cell, symmetry)` (`symmetry` is the level's `LevelSymmetry` or `None`). Use it for a placement rule that every placer must keep.
 
 ## Contract types
 
@@ -156,7 +158,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. Two 2-finger transistors, each with a gate net g and a drain net d ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
@@ -166,12 +167,11 @@ nmos_parameters = {
         {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-nmos = TSCell(name='mn', parameters=nmos_parameters)
+nmos = TSCell(name='mn', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
-# The PMOS has the same parameters, only the class is different
+# The PMOS has the same parameters; only its device_class is different
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
@@ -181,7 +181,7 @@ pmos_parameters = {
         {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-pmos = TSCell(name='mp', parameters=pmos_parameters)
+pmos = TSCell(name='mp', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The inverter M-Cell: both gates on 'in', both drains on 'out' ---
 mcell = MCell(name='inverter')

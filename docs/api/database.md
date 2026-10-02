@@ -29,7 +29,7 @@ from aicl_core.bin.library.parameterlibrary import ParameterLibrary
 
 | Method | Description |
 |:--|:--|
-| `save(name, parameters, cell_class='', description='', circuit_type='', tags=None, overwrite=False, extras=None)` | Store a parameter set, with its enum members. `cell_class` (`'TSCell'`, `'RSCell'`, `'CSCell'` or `'MCell'`) is inferred from the parameters when it is left out. Overwriting keeps the old payload as a revision. Returns the stored name. |
+| `save(name, parameters, cell_class='', description='', circuit_type='', tags=None, overwrite=False, extras=None)` | Store a parameter set, with its enum members. `cell_class` (`'TSCell'`, `'RSCell'`, `'CSCell'` or `'MCell'`) is inferred from the parameters when it is left out: from the root `device_class` or `device_tech` key of an S-Cell set, or the `cells` list of an M-Cell set. Overwriting keeps the old payload as a revision. Returns the stored name. |
 | `load(name, revision=None, include_extras=False)` | The parameter dict. Extras are removed unless `include_extras` is set, so the result can be passed straight to a constructor. |
 | `build_cell(name, cell_name=None, process_tech=None)` | Construct the cell with the normal constructor, against `process_tech` (the default is the active process). An M-Cell set is rebuilt children-first, then wired. |
 | `exists(name)`, `delete(name)`, `rename(old_name, new_name)` | Manage entries. |
@@ -73,10 +73,11 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 # Start the copilot first: the cell database needs a loaded process
 copilot = AiclCopilot(process_tech='ihpSG13G2')
 
-# A 4-finger NMOS with gate and drain nets
+# A 4-finger NMOS with gate and drain nets. A saved set names its device class
+# with the root key 'device_class' (a cell built in code takes device_class= instead)
 parameters = {
+    'device_class': TRANSISTOR_CLASS.STANDARD_NMOS,
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],

@@ -26,7 +26,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Make a default NMOS transistor S-Cell
 nmos = TSCell(name='nmos')
 
-# Write it to a GDS file: my_library/nmos.gds
+# Write it to a GDS file: layouts/ihpSG13G2/my_library/nmos.gds
 copilot.generate_layout(nmos, 'my_library', 'nmos')
 
 # Open the layout viewer to look at it

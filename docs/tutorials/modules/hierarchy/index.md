@@ -75,7 +75,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -91,7 +90,6 @@ nmos_parameters = {
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -115,14 +113,14 @@ inverter_terminals = [
 # --- 4. The two inverter M-Cells, inv_1 and inv_2 ---
 # Sub-cell names only need to be unique inside their own M-Cell,
 # so both inverters can call their transistors 'nmos' and 'pmos'
-inv_1_nmos = TSCell(name='nmos', parameters=nmos_parameters)
-inv_1_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+inv_1_nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+inv_1_pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 inv_1 = MCell(name='inv_1')
 inv_1.add_cells([inv_1_nmos, inv_1_pmos])
 inv_1.set_terminal_parameters(inverter_terminals)
 
-inv_2_nmos = TSCell(name='nmos', parameters=nmos_parameters)
-inv_2_pmos = TSCell(name='pmos', parameters=pmos_parameters)
+inv_2_nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+inv_2_pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 inv_2 = MCell(name='inv_2')
 inv_2.add_cells([inv_2_nmos, inv_2_pmos])
 inv_2.set_terminal_parameters(inverter_terminals)

@@ -43,7 +43,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # A real NMOS S-Cell; we only borrow its outline and terminals
 block_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -54,7 +53,7 @@ block_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-block = TSCell(name='nmos_block', parameters=block_parameters)
+block = TSCell(name='nmos_block', parameters=block_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # The abstract module: same outline and terminals, but no devices inside
 abstract_parameters = {

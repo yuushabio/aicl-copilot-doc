@@ -14,17 +14,17 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 | Enum | Members | Used in |
 |:--|:--|:--|
-| `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS`, `HIGH_VT_PMOS` | TSCell `specifications['transistor_class']` |
-| `TRANSISTOR_TECH` | `MOSFET`, `FINFET` | `TSCell(transistor_tech=...)` |
+| `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS`, `HIGH_VT_PMOS`, `SUPER_LOW_VT_NMOS`, `SUPER_LOW_VT_PMOS`, `SRAM_NMOS`, `SRAM_PMOS` | `TSCell(device_class=...)`. The last four are FinFET threshold flavours; `ihpSG13G2` maps none of them. |
+| `TRANSISTOR_TECH` | `MOSFET`, `FINFET` | `TSCell(device_tech=...)`. The core package builds `MOSFET`. |
 | `TRANSISTOR_TYPE` | `NMOS`, `PMOS` | |
 | `TRANSISTOR_SD_CONNECTION_TYPE` | `CASCODE`, `COMMON_SOURCE`, `COMMON_DRAIN`, `SINGLE` | TSCell `specifications['devices'][i]['sd_connection_type']` |
 | `TRANSISTOR_STRUCTURE_TYPE` | `DIFFERENTIAL_PAIR`, `CURRENT_MIRROR`, `ACTIVE_LOAD`, `CROSS_COUPLED`, `CASCODE`, `MOS_CAP`, `LINEAR` | `TSCell(cell_structure=...)` |
-| `RESISTOR_CLASS` | `STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T`, `STANDARD_P3T` | RSCell `specifications['resistor_class']` |
-| `RESISTOR_TECH` | `POLYSILICON` | `RSCell(resistor_tech=...)` |
+| `RESISTOR_CLASS` | `STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T`, `STANDARD_P3T` | `RSCell(device_class=...)` |
+| `RESISTOR_TECH` | `POLYSILICON` | `RSCell(device_tech=...)` |
 | `RESISTOR_SEGMENT_CONNECTION` | `SERIES`, `PARALLEL` | RSCell `composer['segment_connection']` |
 | `RESISTOR_STRUCTURE_TYPE` | `STRAIGHT`, `MEANDER` | `RSCell(cell_structure=...)` |
-| `CAPACITOR_CLASS` | `STANDARD_2T`, `STANDARD_3T` | CSCell `specifications['capacitor_class']` |
-| `CAPACITOR_TECH` | `CMIM`, `CMOM` | `CSCell(capacitor_tech=...)` |
+| `CAPACITOR_CLASS` | `STANDARD_2T`, `STANDARD_3T` | `CSCell(device_class=...)` |
+| `CAPACITOR_TECH` | `CMIM`, `CMOM` | `CSCell(device_tech=...)`. The core package builds `CMIM`. |
 | `CAPACITOR_STRUCTURE_TYPE` | `LINEAR` | `CSCell(cell_structure=...)` |
 
 ## Composers and placement

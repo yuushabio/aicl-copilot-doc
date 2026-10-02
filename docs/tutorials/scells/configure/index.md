@@ -27,7 +27,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # One NMOS with 4 fingers, plus a 'settings' section for the extras around it
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -51,7 +50,7 @@ parameters = {
 }
 
 # Build the cell and show it with contacts and vias
-nmos_scell = TSCell(name='input_nmos', parameters=parameters)
+nmos_scell = TSCell(name='input_nmos', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(nmos_scell, enable_culling=False)
 ```
 
@@ -96,7 +95,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # One PMOS with 4 fingers; the settings change the gate strap and the rail
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -115,7 +113,7 @@ parameters = {
 }
 
 # Build the cell and show it with contacts and vias
-pmos_scell = TSCell(name='load_pmos', parameters=parameters)
+pmos_scell = TSCell(name='load_pmos', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 copilot.preview_layout(pmos_scell, enable_culling=False)
 ```
 

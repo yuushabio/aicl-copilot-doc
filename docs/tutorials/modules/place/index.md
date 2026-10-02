@@ -39,7 +39,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -51,12 +50,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -68,7 +66,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 3. The inverter M-Cell; both transistors start at the origin ---
 inverter = MCell(name='inverter')
@@ -123,7 +121,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -135,12 +132,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -152,7 +148,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 3. The inverter M-Cell with both transistors ---
 inverter = MCell(name='inverter')
@@ -223,7 +219,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -235,12 +230,11 @@ nmos_parameters = {
         {'name': 'vss', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='nmos', parameters=nmos_parameters)
+nmos = TSCell(name='nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # --- 2. The PMOS: same terminals, but a PMOS class and the vdd rail ---
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -252,7 +246,7 @@ pmos_parameters = {
         {'name': 'vdd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='pmos', parameters=pmos_parameters)
+pmos = TSCell(name='pmos', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 3. The inverter M-Cell with both transistors ---
 inverter = MCell(name='inverter')

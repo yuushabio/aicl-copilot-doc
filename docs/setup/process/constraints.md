@@ -122,6 +122,8 @@ DRC, LVS and export settings, under `Verification`.
 | `default_backend` | The checker used when `run_drc`/`run_lvs` get no `backend`: `klayout` for `ihpSG13G2`. `AICL_VERIFICATION_BACKEND` overrides it. |
 | `pdk_root_env`, `pdk_relative_path` | How the PDK is found. The variable named here (`AICL_PDK_ROOT_IHPSG13G2`) is read first, then `$AICL_PDK_ROOT/<pdk_relative_path>` (`IHP-Open-PDK/ihp-sg13g2`). |
 | `backends.klayout` | `drc_deck` and `lvs_deck` paths relative to the PDK root, `drc_defaults` (`run_mode`, `threads`), `lvs_defaults` (`combine_devices`, `top_lvl_pins`) and `parameter_tolerance` (used only for user-supplied schematics). |
+| `backends.klayout.drc_extra_decks` | Optional list of further DRC decks, relative to the PDK root, run after `drc_deck` over the same layout. Their violations count like the main deck's, so a layout is clean only when every deck passes. A listed deck that is missing makes the run an error. `ihpSG13G2` lists `rule_decks/sg13g2_maximal.drc`, the extra rules that IHP's own DRC flow also runs. The density deck is left out: its minimum-density rules are meant for a full chip. |
+| `backends.klayout.rd_names` | Optional `{name: deck name}` map for a deck that reads its `-rd` variables under other names than `input`, `topcell`, `report` and `schematic`. The IHP decks need none. |
 | `backends.magic`, `backends.netgen` | Magic `tech`, `rcfile` and `extract_tech`, and the Netgen `setup` file. |
 | `export.suppressed_layers` | Layers deliberately not written to GDS (`nSD`, `PWell`). |
 | `export.annotation_layers` | Cell outline layers. They are not mask geometry. |

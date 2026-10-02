@@ -27,6 +27,10 @@ These pages list the public classes and methods of the `aicl_core` package, with
 | `MCell` | `from aicl_core.bin.core.engines.mcell import MCell` |
 | `AbstractMCell` | `from aicl_core.bin.core.engines.abstract_mcell import AbstractMCell` |
 | `SCell`, `Cell` | `aicl_core.bin.core.engines.scell`, `aicl_core.bin.core.engines.cell` |
+| `register_cell_class`, `cell_class` | `from aicl_core.bin.core.engines.cell_classes import ...` |
+| `discover`, `template_dir`, `template_file` | `from aicl_core.bin.core.process_templates import ...` |
+| `active_config_dir` | `from aicl_core.bin.core.config_paths import active_config_dir` |
+| `layout_file`, `schematic_file` | `from aicl_core.bin.api.design_paths import ...` |
 | `Coord`, `Boundbox` | `from aicl_core.bin.utilities.geometryutils import Coord, Boundbox` |
 | `PlaceAndRouteManager` | `from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager` |
 | `PlacerManager` | `from aicl_core.bin.utilities.helpers.placers import PlacerManager` |
@@ -47,12 +51,14 @@ These pages list the public classes and methods of the `aicl_core` package, with
 ```
 aicl_core/
 ├── bin/
-│   ├── core/            AiclCopilot, the cell engines (engines/), composers, connectors, factories
+│   ├── core/            AiclCopilot, the cell engines (engines/), composers, connectors, factories,
+│   │                    process_templates.py and config_paths.py (where the templates are found)
 │   ├── netlisting/      SPICE parser, Circuit, device grouper, atomic hierarchy -> MCell
 │   ├── placers/         CUSTOM_RPS_PLACER (customrps/), REFERENCE_PLACER (reference_placer/)
 │   ├── routers/         S-Cell terminal routing (scell/), M-Cell routers (mcell/: RMST, ALIGN, MAGICAL)
 │   ├── pnr/             Requests, results, options and symmetry, shared by placers and routers
-│   ├── api/             Design bridges: GDS export (openbridge), YAML loading, layer resolution
+│   ├── api/             Design bridges: GDS export (openbridge), YAML loading, layer resolution,
+│   │                    design_paths.py (where layouts, schematics and netlists are written)
 │   ├── verification/    DRC/LVS/PEX bridge and the KLayout, Magic/Netgen and KPEX backends
 │   ├── simulation/      Simulation bridge, testbenches, the ngspice backend, post-layout flow
 │   ├── schematic/       Schematic bridge and the xschem writer
@@ -60,5 +66,5 @@ aicl_core/
 │   ├── database/        CellDatabase (HDF5 store of realized cells)
 │   ├── viewer/          The PySide6 layout viewer used by preview_layout
 │   └── utilities/       Enums, geometry, helpers (place_and_route, placers, routers), logging
-└── config/              global_defaults.yaml and process_templates/
+└── config/              global_defaults.yaml and process_templates/<family>/<process>/
 ```

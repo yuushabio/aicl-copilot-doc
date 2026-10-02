@@ -44,7 +44,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [
@@ -66,7 +65,7 @@ parameters = {
 }
 
 # Build the cell and show it with contacts and vias
-scell = TSCell(name='dummy_separated', parameters=parameters)
+scell = TSCell(name='dummy_separated', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(scell, enable_culling=False)
 ```
 
@@ -93,7 +92,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,
         'length': 0.5,
         'devices': [
@@ -115,7 +113,7 @@ parameters = {
 }
 
 # Build the cell and show it with contacts and vias
-scell = TSCell(name='implant_separated', parameters=parameters)
+scell = TSCell(name='implant_separated', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(scell, enable_culling=False)
 ```
 
@@ -143,7 +141,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # A common-source NMOS pair with 4 um fingers, 2 fingers per device
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 4.0,
         'length': 0.5,
         'devices': [
@@ -165,7 +162,7 @@ parameters = {
 }
 
 # Build the cell and show it
-scell = TSCell(name='two_row_pair', parameters=parameters)
+scell = TSCell(name='two_row_pair', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 copilot.preview_layout(scell)
 ```
 

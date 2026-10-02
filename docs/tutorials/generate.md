@@ -21,7 +21,7 @@ To use the display data without opening a window, call `get_layout_primitives(ce
 
 `AiclCopilot.generate_layout(cell, library_name, view_name)` writes the layout of an S-Cell or M-Cell as a GDSII file. The file can be opened in KLayout or any other layout editor. For `ihpSG13G2`, the export goes through the open-source design bridge. The bridge maps every layer to its GDS number and datatype using the process template's `gds_mapping.yaml`.
 
-The file is written to `$AICL_COP_LAY_DIR/<library_name>/<view_name>.gds`. `AICL_COP_LAY_DIR` is set by `AiclCopilot`:
+The file is written to `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds`, for example `layouts/ihpSG13G2/tutorial_library/input_nmos.gds`. Each process has its own folder, so the same circuit generated for two processes gives two files. `AICL_COP_LAY_DIR` is set by `AiclCopilot`:
 
 - `<project_directory>/layouts` when you pass `project_directory=` to the constructor.
 - `~/.aicl_copilot/layouts` otherwise.
@@ -47,7 +47,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # A small NMOS S-Cell with 4 fingers: gate = v_in, drain = v_out
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
@@ -58,15 +57,15 @@ nmos_parameters = {
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
     ],
 }
-nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Look at it in the viewer, then write it as a GDS file
 copilot.preview_layout(nmos_scell)
 copilot.generate_layout(nmos_scell, library_name='tutorial_library', view_name='input_nmos')
 
-# Check that the file is where we expect it
+# Check that the file is where we expect it: <layouts>/<process>/<library>/<view>.gds
 layout_directory = os.environ['AICL_COP_LAY_DIR']
-gds_path = os.path.join(layout_directory, 'tutorial_library', 'input_nmos.gds')
+gds_path = os.path.join(layout_directory, copilot.current_process, 'tutorial_library', 'input_nmos.gds')
 print(gds_path, os.path.isfile(gds_path))
 
 # Ask what the export wrote: the polygon count, and the polygons per layer

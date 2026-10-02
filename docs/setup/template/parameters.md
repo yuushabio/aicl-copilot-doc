@@ -12,12 +12,14 @@ Every cell is built from a parameter dictionary. S-Cells (`TSCell`, `RSCell`, `C
 
 | Section | S-Cell | M-Cell | Describes |
 |:--|:--:|:--:|:--|
-| `specifications` | yes | | The devices: class, dimensions, device names and fingers/segments/multiplier. |
+| `specifications` | yes | | The devices: dimensions, device names and fingers/segments/multiplier. |
 | `composer` | yes | | How the devices are arranged: the composer type and its options. |
 | `settings` | yes | | Cell-wide options: guard ring, dummies, gate poly, power wires, via limits. |
 | `terminals` | yes | yes | For an S-Cell, which device pins are joined into each terminal and how its wires are drawn. For an M-Cell, which sub-cell terminals each net connects. |
 
 Any section can be left out. A missing section or key is filled from the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html)), then from the framework defaults. A value outside the process limits (for example a length below `minLength`) is changed to the nearest valid value, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
+
+The device class (for example `TRANSISTOR_CLASS.STANDARD_PMOS`) and the device technology are not part of the dictionary. They are constructor arguments, `device_class=` and `device_tech=`; see [Device class and technology](#device-class-and-technology).
 
 All dimensions are in the process layout unit (micrometres for `ihpSG13G2`). Layer names are the framework's generic layer ids (`Metal1` ... `Metal7`), not the PDK's GDS names. The process maps them at export time.
 
@@ -38,13 +40,57 @@ The parameter values are enum members. Import them from these modules:
 
 The member lists are in the [API reference]({{ site.baseurl }}/docs/api/enums.html).
 
+## Device class and technology
+
+Each S-Cell constructor takes two device arguments:
+
+| Argument | TSCell | RSCell | CSCell |
+|:--|:--|:--|:--|
+| `device_class` | `TRANSISTOR_CLASS`, default `STANDARD_NMOS` | `RESISTOR_CLASS`, default `STANDARD_N2T` | `CAPACITOR_CLASS`, default `STANDARD_2T` |
+| `device_tech` | `TRANSISTOR_TECH`, default `MOSFET` | `RESISTOR_TECH`, default `POLYSILICON` | `CAPACITOR_TECH`, default `CMIM` |
+
+Both are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`.
+
+```python
+# The copilot and the transistor S-Cell engine
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) used below
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+
+# Start the copilot for the process
+copilot = AiclCopilot(process_tech='ihpSG13G2')
+
+# One device M1 with 2 fingers; the dictionary says nothing about NMOS or PMOS
+parameters = {
+    'specifications': {'finger_width': 2.0, 'length': 0.5,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
+}
+
+# The class is an argument of the cell
+load = TSCell(name='load', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
+print(load.get_device_class(), load.get_device_tech())
+
+# Change the class of a built cell: it is checked, then the cell is rebuilt in place
+load.set_device_class(TRANSISTOR_CLASS.HIGH_VT_PMOS)
+print(load.get_device_class())
+
+# The realized dictionary carries both as root keys
+realized = load.get_parameters()
+print(realized['device_class'], realized['device_tech'])
+```
+
+`get_device_class()` and `get_device_tech()` return the cell's values. `set_device_class(...)` and `set_device_tech(...)` check the new value against the process and rebuild the cell in place, at the same position.
+
+The cell records the two values in the dictionaries it hands out (`get_parameters()`, `get_default_user_parameters()`, the parameter library and the cell database) as the root keys `'device_class'` and `'device_tech'`. A dictionary with these keys is rebuilt with `create_from_params` (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). A constructor refuses them in `parameters`, and it also refuses the old keys `specifications['transistor_class']`, `['resistor_class']` and `['capacitor_class']`, so an old dictionary is never built silently as the default device.
+
 ## Transistor S-Cell (TSCell)
 
 ### specifications
 
 | Key | Type | Description |
 |:--|:--|:--|
-| `transistor_class` | `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS`, `HIGH_VT_PMOS`. Mapped to a PDK device by `devices.yaml`. |
 | `finger_width` | float | Width of one finger. A width above the process maximum is split over several rows (see `number_of_rows`). |
 | `length` | float | Gate length. |
 | `devices` | list of dict | Device groups, laid out in order (see below). |
@@ -119,7 +165,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # A PMOS pair sharing its source, with a guard ring, end dummies and the gate contact on top
 parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 1.5,
         'length': 0.3,
         'devices': [
@@ -144,7 +189,7 @@ parameters = {
 }
 
 # Build the cell from the parameters
-scell = TSCell(name='pmos_mirror', parameters=parameters)
+scell = TSCell(name='pmos_mirror', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # Print the realized settings, with every default filled in
 realized_parameters = scell.get_parameters()
@@ -156,12 +201,11 @@ copilot.preview_layout(scell)
 
 ## Resistor S-Cell (RSCell)
 
-The resistor technology is a constructor argument, `RSCell(..., resistor_tech=RESISTOR_TECH.POLYSILICON)`, and not a parameter.
+The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T` or `STANDARD_P3T`. The 3T classes have a `BULK` pin and draw a body tap. `ihpSG13G2` maps `STANDARD_N2T`, `STANDARD_P2T` and `STANDARD_P3T`. The technology, `device_tech=`, is `RESISTOR_TECH.POLYSILICON`.
 
 | Section | Key | Type | Description |
 |:--|:--|:--|:--|
-| `specifications` | `resistor_class` | `RESISTOR_CLASS` | `STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T` or `STANDARD_P3T`. The 3T classes have a `BULK` pin and draw a body tap. |
-| | `segment_width` | float | Width of one segment. |
+| `specifications` | `segment_width` | float | Width of one segment. |
 | | `length` | float | Length of one segment. |
 | | `devices` | list of dict | `[{'names': ['R1'], 'number_of_segments': n}]`. |
 | `composer` | `composer_type` | `RESISTOR_COMPOSER` | `LINEAR`. |
@@ -187,7 +231,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Five segments connected in parallel, with a plus and a minus net on Metal4
 parameters = {
     'specifications': {
-        'resistor_class': RESISTOR_CLASS.STANDARD_N2T,
         'segment_width': 1.0,
         'length': 4.185,
         'devices': [{'names': ['R1'], 'number_of_segments': 5}],
@@ -201,23 +244,22 @@ parameters = {
 }
 
 # Build the cell and show it
-scell = RSCell(name='resistor', parameters=parameters)
+scell = RSCell(name='resistor', parameters=parameters, device_class=RESISTOR_CLASS.STANDARD_N2T)
 copilot.preview_layout(scell)
 ```
 
 ## Capacitor S-Cell (CSCell)
 
-The capacitor technology is a constructor argument, `CSCell(..., capacitor_tech=CAPACITOR_TECH.CMIM)`, and not a parameter. `CMIM` is the default and the capacitor that `ihpSG13G2` maps.
+The class is the `device_class=` argument: `CAPACITOR_CLASS.STANDARD_2T`, or `STANDARD_3T` with a `BULK` pin. The technology, `device_tech=`, is `CAPACITOR_TECH.CMIM`, the default and the capacitor that `ihpSG13G2` maps.
 
 | Section | Key | Type | Description |
 |:--|:--|:--|:--|
-| `specifications` | `capacitor_class` | `CAPACITOR_CLASS` | `STANDARD_2T` or `STANDARD_3T` (with a `BULK` pin). |
-| | `width`, `length` | float | Size of one unit plate. A unit above the process's maximum metal area is split. |
+| `specifications` | `width`, `length` | float | Size of one unit plate. A unit above the process's maximum metal area is split. |
 | | `devices` | list of dict | `[{'names': ['C1'], 'multiplier': m}]`: `m` parallel units. |
 | `composer` | `composer_type` | `CAPACITOR_COMPOSER` | `LINEAR`. |
 | | `number_of_rows`, `number_of_columns` | int | The unit matrix. |
 | | `row_spacing`, `column_spacing` | float | Gaps between units. They are raised to the plate minimum when needed. |
-| `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `capacitor.yaml` `configuration`. |
+| `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `mim_capacitor.yaml` `configuration`. |
 | | `bulk_tap` | dict | As for RSCell. |
 | `terminals` | `name`, `pins`, `type` | | The pin types are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. |
 | | `base_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. A layer that cannot reach the plate is moved to one that can, with a warning. |
@@ -242,7 +284,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Two 5 x 5 um units side by side (1 row, 2 columns), with at most 3 x 3 vias per plate
 parameters = {
     'specifications': {
-        'capacitor_class': CAPACITOR_CLASS.STANDARD_2T,
         'width': 5.0, 'length': 5.0,
         'devices': [{'names': ['C1'], 'multiplier': 2}],
     },
@@ -256,7 +297,7 @@ parameters = {
 }
 
 # Build the cell and show it
-scell = CSCell(name='capacitor', parameters=parameters)
+scell = CSCell(name='capacitor', parameters=parameters, device_class=CAPACITOR_CLASS.STANDARD_2T)
 copilot.preview_layout(scell)
 ```
 
@@ -292,21 +333,21 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 
 # --- 1. Two small transistors, each with a gate terminal g and a drain terminal d ---
 n1_parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS, 'finger_width': 1.0, 'length': 0.3,
+    'specifications': {'finger_width': 1.0, 'length': 0.3,
                        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
     'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
                   {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
 }
-n1 = TSCell(name='n1', parameters=n1_parameters)
+n1 = TSCell(name='n1', parameters=n1_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
-# The PMOS has the same parameters, only the class is different
+# The PMOS has the same parameters; only its device_class is different
 p1_parameters = {
-    'specifications': {'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS, 'finger_width': 1.0, 'length': 0.3,
+    'specifications': {'finger_width': 1.0, 'length': 0.3,
                        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
     'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
                   {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
 }
-p1 = TSCell(name='p1', parameters=p1_parameters)
+p1 = TSCell(name='p1', parameters=p1_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The M-Cell and its nets ---
 mcell = MCell(name='pair')

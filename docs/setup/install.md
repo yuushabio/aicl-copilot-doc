@@ -32,11 +32,11 @@ pip install -e ".[pex]"     # optional: also install klayout-pex, for parasitic 
 ```
 
 {: .important }
-Install from the cloned repository, with `-e`. At startup AICL Co-pilot reads its process templates from `<AICL_COP_WORK_DIR>/aicl_core/config/`, so `AICL_COP_WORK_DIR` must point to the root of the clone.
+Install from the cloned repository, with `-e`. At startup AICL Co-pilot reads its process templates from the package's own configuration directory, `aicl_core/config/`, unless `AICL_COP_CONFIG_DIR` names another one. The example netlists in `templates/netlists/` are only in the clone, and the examples find them through `AICL_COP_WORK_DIR`.
 
 ## Set up the environment
 
-`AICL_COP_WORK_DIR` must be set before an `AiclCopilot` is created. Otherwise a `SetupException` is raised: *"AICL Co-pilot configuration directory not setup!"*. There are two ways to set it.
+`AICL_COP_WORK_DIR` is the root of the clone. The process templates are found without it, but the examples and tutorials use it to find the netlists in `templates/netlists/`, so set it before you run them. There are two ways to set it.
 
 **Option 1: source the setup script.** From the repository root, in a bash shell, run:
 
@@ -62,7 +62,8 @@ Every variable except `AICL_COP_WORK_DIR` can be left blank. A blank tool binary
 
 | Variable | Description |
 |:--|:--|
-| `AICL_COP_WORK_DIR` | Root of the clone. Required. In the example it is the placeholder `framework_root`: replace it with the absolute path, or source `.aicl_setup.bash`. |
+| `AICL_COP_WORK_DIR` | Root of the clone. The examples find `templates/netlists/` through it. In the example it is the placeholder `framework_root`: replace it with the absolute path, or source `.aicl_setup.bash`. |
+| `AICL_COP_CONFIG_DIR` | The configuration directory: `global_defaults.yaml` and `process_templates/<family>/<process>/`. When blank, the package's own `aicl_core/config` is used. Set it to keep your process templates somewhere else. The directory must exist and hold a `process_templates` folder, otherwise `AiclCopilot` raises `SetupException`. |
 | `AICL_COP_SCH_DIR` | Where generated schematics go. When blank, they go in `<project>/schematics`, next to the `layouts` directory. A value here is used for every project. |
 
 ### Verification tools
@@ -125,14 +126,16 @@ Extraction uses the KPEX backend from the optional `klayout-pex` package (`pip i
 |:--|:--|
 | `AICL_COP_HOME_DIR` | `~/.aicl_copilot`, or `aicl_home_directory` if it is given and writable. |
 | `AICL_COP_PROJECT_DIR` | `project_directory` if it is given and writable, otherwise the home directory. |
-| `AICL_COP_LAY_DIR` | `<project>/layouts`. `generate_layout(cell, library, view)` writes `<library>/<view>.gds` here. |
-| `AICL_COP_SCH_DIR` | `<project>/schematics`, unless set in `config.env`. |
+| `AICL_COP_LAY_DIR` | `<project>/layouts`. `generate_layout(cell, library, view)` writes `<process>/<library>/<view>.gds` here. |
+| `AICL_COP_SCH_DIR` | `<project>/schematics`, unless set in `config.env`. Schematics go to `<process>/<library>/<view>.sch` here. |
+
+Layouts, schematics and the netlists written next to them are kept in one folder per process. The same circuit generated for two processes then gives two files, and neither replaces the other.
 
 The parameter library and cell database are also stored under the home directory, in `library/` and `database/`.
 
 ## Check the installation
 
-Run this from the activated environment, with `AICL_COP_WORK_DIR` set:
+Run this from the activated environment:
 
 ```python
 # The copilot and the transistor S-Cell generator from the core package
@@ -150,7 +153,7 @@ print('LVS:       ', copilot.verification.available('lvs'))
 print('simulation:', copilot.simulation.available())
 print('schematic: ', copilot.schematic.available())
 
-# Make a default NMOS S-Cell and write it to install_check/smoke_test.gds
+# Make a default NMOS S-Cell and write it to layouts/ihpSG13G2/install_check/smoke_test.gds
 cell = TSCell(name='smoke_test')
 copilot.generate_layout(cell, 'install_check', 'smoke_test')
 

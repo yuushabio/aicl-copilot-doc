@@ -54,6 +54,17 @@ Cell
 | `get_guard_ring()`, `get_body_rail()` | The guard ring and body rail polygons. |
 | `get_pcell_parameters()` | The per-device PDK parameters, for p-cell based export. |
 | `get_effective_cell_defaults(cell_key)` | The merged framework and process defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`. |
+| `SCell.create_from_params(parameters=None, name=None, **kwargs)` *(class method)* | Build an S-Cell from a saved parameter dictionary. See [below](#rebuilding-from-a-parameter-dictionary). |
+
+`TSCell`, `RSCell` and `CSCell` also share the device-setting methods:
+
+| Method | Description |
+|:--|:--|
+| `get_device_class()` | The cell's `TRANSISTOR_CLASS`, `RESISTOR_CLASS` or `CAPACITOR_CLASS`. |
+| `get_device_tech()` | The cell's `TRANSISTOR_TECH`, `RESISTOR_TECH` or `CAPACITOR_TECH`. |
+| `set_device_class(device_class)` | Check the class against the process template, then rebuild the cell in place at the same position. Raises `ParameterError` when the process has no model for it. |
+| `set_device_tech(device_tech)` | The same for the technology. Raises `ParameterError` for a technology that cannot be built or that the process does not offer. |
+| `device_tech_key()` | The template key of the technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`): the section of `config.yaml` and `devices.yaml` the cell's limits and models are read from. |
 
 ## TSCell
 
@@ -61,9 +72,9 @@ Cell
 from aicl_core.bin.core.engines.transistor import TSCell
 ```
 
-`TSCell(name='TS_0', parameters=None, transistor_tech=TRANSISTOR_TECH.MOSFET, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
+`TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
 
-The cell is composed completely in the constructor. A parameter error raises `ParameterError`, and a pin that is claimed by two terminals raises `DeviceTerminalConflictPinError`.
+`device_class` is a `TRANSISTOR_CLASS` (default `STANDARD_NMOS`) and `device_tech` a `TRANSISTOR_TECH` (default `MOSFET`). The cell is composed completely in the constructor. A parameter error raises `ParameterError`, and a pin that is claimed by two terminals raises `DeviceTerminalConflictPinError`.
 
 | Method | Description |
 |:--|:--|
@@ -71,7 +82,6 @@ The cell is composed completely in the constructor. A parameter error raises `Pa
 | `get_composer_specs()` | The realized `composer` section. |
 | `get_device_names()` | Every device name in `specifications['devices']`. |
 | `get_diffusion_plan()` | For each row, the net of every source/drain diffusion and the dummy spans, or `None`. |
-| `TSCell.create_from_params(ts_params: dict | None = None)` *(static)* | Build from a dict that may hold a `'name'` key. |
 
 `sensitive`, `noisy` and `allow_rotation` are stored on the cell and saved with it in the cell database. The core placers do not use them yet.
 
@@ -81,7 +91,9 @@ The cell is composed completely in the constructor. A parameter error raises `Pa
 from aicl_core.bin.core.engines.resistor import RSCell
 ```
 
-`RSCell(name='RS_0', parameters=None, resistor_tech=RESISTOR_TECH.POLYSILICON, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False)`
+`RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False)`
+
+`device_class` is a `RESISTOR_CLASS` (default `STANDARD_N2T`) and `device_tech` a `RESISTOR_TECH` (default `POLYSILICON`).
 
 | Method | Description |
 |:--|:--|
@@ -96,7 +108,9 @@ from aicl_core.bin.core.engines.resistor import RSCell
 from aicl_core.bin.core.engines.capacitor import CSCell
 ```
 
-`CSCell(name='CS_0', parameters=None, capacitor_tech=CAPACITOR_TECH.CMIM, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
+`CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
+
+`device_class` is a `CAPACITOR_CLASS` (default `STANDARD_2T`) and `device_tech` a `CAPACITOR_TECH` (default `CMIM`, the only technology the core package builds).
 
 | Method | Description |
 |:--|:--|
@@ -104,6 +118,52 @@ from aicl_core.bin.core.engines.capacitor import CSCell
 | `device_names()` | The device names. |
 | `has_bulk_pin()` | `True` for `CAPACITOR_CLASS.STANDARD_3T`. |
 | `check_max_metal_area()` | Plates above the process's maximum metal area. It runs in the constructor. |
+
+## Rebuilding from a parameter dictionary
+
+The dictionaries a cell hands out (`get_parameters()`, `get_default_user_parameters()`, a parameter library or cell database entry) carry the device class and technology as the root keys `'device_class'` and `'device_tech'`. A constructor refuses those keys in `parameters`; `create_from_params` takes them out and passes them as the arguments.
+
+- Called on a concrete class (`TSCell.create_from_params(...)`), it builds that class.
+- Called on `SCell`, it builds the class that the dictionary's device class names: a `TRANSISTOR_CLASS` gives a `TSCell`, and so on. A dictionary with neither key raises `ParameterError`.
+- A `'name'` key in the dictionary names the cell when `name` is not given. The dictionary itself is not changed.
+
+```python
+# The copilot and the S-Cell engines from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.scell import SCell
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_tech='ihpSG13G2')
+
+# A PMOS with 3 fingers
+parameters = {
+    'specifications': {'finger_width': 2.0, 'length': 0.5,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [3]}]},
+}
+pmos = TSCell(name='pmos', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
+
+# What the cell hands out: the user's parameters plus the root device_class / device_tech keys
+saved = pmos.get_default_user_parameters()
+print(saved['device_class'], saved['device_tech'])
+
+# Build a copy from it; SCell picks TSCell because the class is a TRANSISTOR_CLASS
+pmos_copy = SCell.create_from_params(saved, name='pmos_copy')
+print(type(pmos_copy).__name__, pmos_copy.get_name(), pmos_copy.get_device_class())
+```
+
+## Cell classes
+
+`aicl_core.bin.core.engines.cell_classes` chooses the classes that the framework uses when it builds cells by itself, for example from a netlist (`MCellAtomic.build_mcell()`) or from `SCell.create_from_params`. Without registrations these are the core classes.
+
+| Function | Description |
+|:--|:--|
+| `register_cell_class(kind, cls)` | Build cells of `kind` (`'mcell'`, `'tscell'`, `'rscell'` or `'cscell'`) with `cls`, which must be a subclass of the core class. Raises `ValueError` for an unknown kind and `TypeError` for a class that is not a subclass. |
+| `cell_class(kind)` | The class cells of `kind` are built with. |
+| `scell_kind_of(cls)` | `'tscell'`, `'rscell'` or `'cscell'` for an S-Cell class, else `None`. |
 
 ## MCell
 

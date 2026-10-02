@@ -20,7 +20,7 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 ```
 
 {: .note }
-`AiclCopilot` needs the `AICL_COP_WORK_DIR` environment variable to point at your `aicl-copilot-core` checkout. See [Installation]({% link docs/setup/install.md %}).
+`AiclCopilot` reads the process templates from the package's `aicl_core/config/` directory, or from `AICL_COP_CONFIG_DIR` when it is set. See [Installation]({% link docs/setup/install.md %}).
 
 ## The simplest S-Cell
 
@@ -47,11 +47,10 @@ The default cell names each device pin after the device (`dev_0_G`, `dev_0_S`, `
 
 ## Name and parameters
 
-`TSCell` takes a `name` and a `parameters` dictionary. The `specifications` section describes the devices:
+`TSCell` takes a `name`, a `parameters` dictionary and a `device_class`. The `specifications` section of the dictionary describes the devices:
 
 | Key | Type | Meaning |
 |:--|:--|:--|
-| `transistor_class` | `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS` or `HIGH_VT_PMOS`, mapped to a PDK device by the process template |
 | `finger_width` | float | Width of one finger |
 | `length` | float | Gate length |
 | `devices` | list of dict | One entry per device group, see below |
@@ -62,7 +61,7 @@ Each entry in `devices` has:
 - `number_of_fingers`: a list with the number of fingers for each name. A shorter list repeats its last value.
 - `sd_connection_type` (optional): a `TRANSISTOR_SD_CONNECTION_TYPE` that tells the composer how the devices in the entry share diffusion. The options are `SINGLE`, `COMMON_SOURCE`, `COMMON_DRAIN` and `CASCODE`. A single-device entry defaults to `SINGLE` and a multi-device entry to `COMMON_SOURCE`.
 
-The example below builds one NMOS with four fingers and names two terminals. The `composer` section selects the linear composer (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
+The example below builds one NMOS with four fingers and names two terminals. The type of transistor is not in the dictionary: it is the `device_class` argument of `TSCell` (see [Device class and technology](#device-class-and-technology)). The `composer` section selects the linear composer (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 
 ```python
 # The copilot and the transistor S-Cell engine from the core package
@@ -80,7 +79,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Describe the cell: one NMOS device M1 with 4 fingers, and its nets
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [
@@ -96,8 +94,8 @@ nmos_parameters = {
     ],
 }
 
-# Build the cell from the description
-nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters)
+# Build the cell from the description; device_class makes it a standard NMOS
+nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # Show it, including contacts and vias
 copilot.preview_layout(nmos_scell, enable_culling=False)
@@ -127,7 +125,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # Describe the cell: a PMOS pair M1/M2 in one entry, so they share diffusion
 pair_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [
@@ -146,12 +143,54 @@ pair_parameters = {
     ],
 }
 
-# Build the cell and show it
-pair_scell = TSCell(name='input_pair', parameters=pair_parameters)
+# Build the cell as a PMOS and show it
+pair_scell = TSCell(name='input_pair', parameters=pair_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 copilot.preview_layout(pair_scell)
 ```
 
 ![PMOS pair sharing a common source diffusion, with the unclaimed bulk tied to VDD]({{site.baseurl}}/assets/images/tscell_pair_lay.png){: width="520"}
+
+## Device class and technology
+
+Every S-Cell constructor (`TSCell`, `RSCell`, `CSCell`) takes two device arguments:
+
+- `device_class`: which device to draw, for example `TRANSISTOR_CLASS.STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS` or `HIGH_VT_PMOS`. Left out, a `TSCell` is a `STANDARD_NMOS`.
+- `device_tech`: the device technology, for example `TRANSISTOR_TECH.MOSFET`. Left out, the cell uses the default technology of its kind, which is the one the core package builds.
+
+The process template maps each class to a PDK device (see [Mapping]({% link docs/setup/process/mapping.md %})). Both arguments are checked when the cell is built: a class the process has no device for raises a `ParameterError` that lists the classes it does have. The values can be read back and changed later:
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_tech='ihpSG13G2')
+
+# One device M1 with 2 fingers
+parameters = {
+    'specifications': {
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+}
+
+# Build it as a low-threshold NMOS and print its class and technology
+switch = TSCell(name='switch', parameters=parameters, device_class=TRANSISTOR_CLASS.LOW_VT_NMOS)
+print(switch.get_device_class(), switch.get_device_tech())
+
+# Make it a PMOS: the cell is rebuilt in place with the new class
+switch.set_device_class(TRANSISTOR_CLASS.STANDARD_PMOS)
+print(switch.get_device_class())
+copilot.preview_layout(switch)
+```
+
+{: .note }
+The class used to be the `transistor_class` key of `specifications` (`resistor_class` and `capacitor_class` for the passive cells), and the technology a `transistor_tech=` argument. Those keys are no longer read: a dictionary that still has them is refused with a `ParameterError`, instead of being built as the default device.
 
 The other sections of `parameters` configure the cell further:
 

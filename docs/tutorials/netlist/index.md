@@ -203,6 +203,8 @@ copilot.preview_layout(deep_inv)
 
 `route_result.sub_results` holds one routing result per sub-M-Cell, looked up by instance name. To group devices inside a sub-circuit, call `create_transistor_group` on its grouper, `grouper.get_sub_circuit('x2')`. The device names are the names inside the sub-circuit, as the netlist spells them.
 
+A net can join two ports of the same sub-circuit instance, for example a flip-flop whose `D` is tied to its own `nQ`. The M-Cell net then keeps every port of that instance: its component entry is `{'terminal': 'D', 'terminals': ['D', 'nQ']}`, where `'terminal'` is the first port and `'terminals'` lists them all.
+
 {: .note }
 `CUSTOM_RPS_PLACER` is random. A fixed `seed` gives the same floor-plan on every run. For a layout you want to inspect again, use `REFERENCE_PLACER` or keep the seed.
 

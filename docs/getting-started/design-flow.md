@@ -82,7 +82,6 @@ copilot = AiclCopilot(process_tech='ihpSG13G2')
 # The NMOS: 2 fingers; source and bulk go to VSS
 nmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_NMOS,
         'finger_width': 2.0,        # um, per finger
         'length': 0.5,              # um
         'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
@@ -93,12 +92,11 @@ nmos_parameters = {
         {'name': 'VSS', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-nmos = TSCell(name='mn', parameters=nmos_parameters)
+nmos = TSCell(name='mn', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 
 # The PMOS: twice as wide; source and bulk go to VDD
 pmos_parameters = {
     'specifications': {
-        'transistor_class': TRANSISTOR_CLASS.STANDARD_PMOS,
         'finger_width': 4.0,
         'length': 0.5,
         'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
@@ -109,7 +107,7 @@ pmos_parameters = {
         {'name': 'VDD', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
     ],
 }
-pmos = TSCell(name='mp', parameters=pmos_parameters)
+pmos = TSCell(name='mp', parameters=pmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 
 # --- 2. The M-Cell and its nets ---
 # Each net says which sub-cell terminals it joins, and on which metal its top wire runs
@@ -136,7 +134,7 @@ place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     inverter, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placement)
 print('routed:', route_result.successful, '| failed:', route_result.failed)
 
-# --- 5. Preview and export: layouts/design_flow/inverter.gds ---
+# --- 5. Preview and export: layouts/ihpSG13G2/design_flow/inverter.gds ---
 copilot.preview_layout(inverter)
 copilot.generate_layout(inverter, 'design_flow', 'inverter')
 
