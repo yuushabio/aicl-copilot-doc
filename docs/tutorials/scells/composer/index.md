@@ -39,7 +39,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
@@ -87,7 +87,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Two separate device entries, M1 and M2, with 2 fingers each
 parameters = {
@@ -121,7 +121,7 @@ copilot.preview_layout(scell, enable_culling=False)
 
 ## Multi-row linear composer
 
-Set `number_of_rows` to stack the linear arrangement several times. Each row has the same devices, fingers, dummies and separators. The finger width is divided across the rows, so every device keeps its total width. `row_spacing` sets the minimum gap between rows; the composer raises it when the wiring rules require more. Each net gets one vertical top wire that joins all the rows.
+Set `number_of_rows` to stack the linear arrangement several times. Each row has the same devices, fingers, dummies and separators. The finger width is divided across the rows, so every device keeps its total width. `row_spacing` sets the minimum gap between rows; the composer raises it when the wiring rules require more. Each net gets one vertical top wire that joins all the rows. The tracks of matched nets are chosen together, so the two halves of a pair are wired as mirror images: in the example below, the nets of `M1` run on the left of the cell and those of `M2` on the right. A gate rail ends at the gates of its own row, and a net's strap is drawn on the side its source/drain pins are on.
 
 The composer also switches to several rows by itself when `finger_width` is wider than the process allows.
 
@@ -136,7 +136,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A common-source NMOS pair with 4 um fingers, 2 fingers per device
 parameters = {

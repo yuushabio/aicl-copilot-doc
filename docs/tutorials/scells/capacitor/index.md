@@ -50,7 +50,7 @@ The matrix sets the layout and `multiplier` sets the device count in the netlist
 
 Capacitor pins are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. Every row has a horizontal `base_wire` rail per terminal. With more than one row, a vertical `top_wire` beside the matrix joins the rails. Via arrays on these wires are set with `number_of_via_rows` and `number_of_via_cols`.
 
-A plate terminal's `base_wire` must be on its plate's metal, or on a horizontal metal at or above the top plate (`PLUS`) or at or below the bottom plate (`MINUS`). In `ihpSG13G2` the plates are on `Metal5` (bottom) and `Metal6` (top). A layer that breaks the rule is moved to the nearest allowed one, with a warning.
+A plate terminal's `base_wire` must be on its plate's metal, or on a horizontal metal at or above the top plate (`PLUS`) or at or below the bottom plate (`MINUS`). In `ihpSG13G2` the plates are on `metal5` (bottom) and `metal6` (top). A layer that breaks the rule is moved to the nearest allowed one, with a warning.
 
 ## Example
 
@@ -67,7 +67,7 @@ from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Describe the capacitor ---
 parameters = {
@@ -93,9 +93,9 @@ parameters = {
     # Top plate (plus) on Metal6, bottom plate (minus) on Metal4
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'Metal6', 'width': 0.5, 'offset': 0.8, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
+         'base_wire': {'layer': 'metal6', 'width': 0.5, 'offset': 0.8, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
         {'name': 'v_minus', 'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
     ],
 }
 
@@ -124,7 +124,7 @@ from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Two 6 um x 6 um units side by side; the bottom plate and the substrate tap share vss
 parameters = {
@@ -139,10 +139,10 @@ parameters = {
     'settings': {'bulk_tap': {'side': 'auto', 'offset': 0.5}},
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'Metal6', 'width': 0.5}},
+         'base_wire': {'layer': 'metal6', 'width': 0.5}},
         {'name': 'vss', 'type': TERMINAL_TYPE.GROUND,
          'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS], ['C1', CAPACITOR_PIN_TYPE.BULK]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5}},
     ],
 }
 

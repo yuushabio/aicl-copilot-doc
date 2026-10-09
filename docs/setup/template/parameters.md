@@ -17,11 +17,11 @@ Every cell is built from a parameter dictionary. S-Cells (`TSCell`, `RSCell`, `C
 | `settings` | yes | | Cell-wide options: guard ring, dummies, gate poly, power wires, via limits. |
 | `terminals` | yes | yes | For an S-Cell, which device pins are joined into each terminal and how its wires are drawn. For an M-Cell, which sub-cell terminals each net connects. |
 
-Any section can be left out. A missing section or key is filled from the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html)), then from the framework defaults. A value outside the process limits (for example a length below `minLength`) is changed to the nearest valid value, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
+Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#parameter_defaultsyaml)), then the framework defaults. A value outside the process limits (for example a length below `min_length`) is changed to the nearest valid value, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
 
 The device class (for example `TRANSISTOR_CLASS.STANDARD_PMOS`) and the device technology are not part of the dictionary. They are constructor arguments, `device_class=` and `device_tech=`; see [Device class and technology](#device-class-and-technology).
 
-All dimensions are in the process layout unit (micrometres for `ihpSG13G2`). Layer names are the framework's generic layer ids (`Metal1` ... `Metal7`), not the PDK's GDS names. The process maps them at export time.
+All dimensions are in the process layout unit (micrometres for `ihpSG13G2`). Layer names are the framework's generic layer IDs (`metal1` ... `metal7`, `via1` ...), not the PDK's GDS names. An ID may be written in any case (`'Metal2'` and `'metal2'` are the same layer). The process maps them at export time.
 
 1. TOC
 {:toc}
@@ -49,7 +49,7 @@ Each S-Cell constructor takes two device arguments:
 | `device_class` | `TRANSISTOR_CLASS`, default `STANDARD_NMOS` | `RESISTOR_CLASS`, default `STANDARD_N2T` | `CAPACITOR_CLASS`, default `STANDARD_2T` |
 | `device_tech` | `TRANSISTOR_TECH`, default `MOSFET` | `RESISTOR_TECH`, default `POLYSILICON` | `CAPACITOR_TECH`, default `CMIM` |
 
-Both are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`.
+The core package builds the standard classes: `TRANSISTOR_CLASS.STANDARD_NMOS` and `STANDARD_PMOS`, the four `RESISTOR_CLASS` members and the two `CAPACITOR_CLASS` members. Both arguments are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`. The class may also be given by name, for example `device_class='STANDARD_PMOS'`.
 
 ```python
 # The copilot and the transistor S-Cell engine
@@ -60,7 +60,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # One device M1 with 2 fingers; the dictionary says nothing about NMOS or PMOS
 parameters = {
@@ -72,8 +72,8 @@ parameters = {
 load = TSCell(name='load', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
 print(load.get_device_class(), load.get_device_tech())
 
-# Change the class of a built cell: it is checked, then the cell is rebuilt in place
-load.set_device_class(TRANSISTOR_CLASS.HIGH_VT_PMOS)
+# Change the class of a built cell: it is checked, then the cell is rebuilt in place as an NMOS
+load.set_device_class(TRANSISTOR_CLASS.STANDARD_NMOS)
 print(load.get_device_class())
 
 # The realized dictionary carries both as root keys
@@ -121,12 +121,15 @@ Each entry of `devices`:
 | `dummy_rows` | dict | `{'top': {'enable': False}, 'bottom': {'enable': False}}` | A row of dummy devices above or below. Each side also takes `offset` and `height`. |
 | `default_number_of_vias` | int | `1` | Via count used when a wire does not give one. |
 | `multi_row_gate_contacts` | bool | `False` | Use several rows of gate contacts. |
-| `route_over_cell` | tuple | `(True, METAL_LAYER_SELECTION.ALL, [...])` | Whether terminal wires may cross the cell, and on which metals. |
-| `route_source_drain_over_poly` | tuple | `(True, METAL_LAYER_SELECTION.ALL, [...])` | Whether source/drain wires may run over the gate poly. When they may not, they take the gate side. |
+| `route_over_cell` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether terminal wires may cross the cell, and on which metals. |
+| `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. When they may not, they take the gate side. |
+| `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
+| `terminal_sides` | str | not set | `'both'` gives every gate and source/drain net of a single row a base wire on both sides of the row, joined by its top wire. |
+| `profile_name` | str | `None` | The characterization profile of the device class to build from. `None` uses the class's default profile (see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). |
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
-`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), and `location` (`TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`).
+`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), `location` (`TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
 
 `power` keys: `stack_metals` (bool), `base_wire` (`layer`, `width`, `offset`, `number_of_via_rows`, `number_of_via_cols`), `base_to_top_wire` (`layer`, `number_of_vias`), and `top_wire` (`layer`, `width`, `track` as a `TOP_WIRE_TRACK`, `offset`).
 
@@ -160,7 +163,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSI
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A PMOS pair sharing its source, with a guard ring, end dummies and the gate contact on top
 parameters = {
@@ -181,8 +184,8 @@ parameters = {
     'terminals': [
         {'name': 'v_bias', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE], ['M2', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out_1', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]],
-         'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.SD_TOP},
-         'top_wire': {'layer': 'Metal3', 'track': TOP_WIRE_TRACK.ROUTE_LEFT}},
+         'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.SD_TOP},
+         'top_wire': {'layer': 'metal3', 'track': TOP_WIRE_TRACK.ROUTE_LEFT}},
         {'name': 'v_out_2', 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]]},
         {'name': 'VDD', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE], ['M2', TRANSISTOR_PIN_TYPE.SOURCE]]},
     ],
@@ -209,9 +212,10 @@ The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STAND
 | | `length` | float | Length of one segment. |
 | | `devices` | list of dict | `[{'names': ['R1'], 'number_of_segments': n}]`. |
 | `composer` | `composer_type` | `RESISTOR_COMPOSER` | `LINEAR`. |
-| | `segment_spacing` | float | Gap between segments. Default `0.2`. |
+| | `segment_spacing` | float | Extra gap between segments, on top of the least gap the process allows (from the characterization; 0.18 µm in `ihpSG13G2`). Default `0.0`; the `ihpSG13G2` process default is `0.02`. |
 | | `segment_connection` | `RESISTOR_SEGMENT_CONNECTION` | `SERIES` or `PARALLEL` (default). |
 | `settings` | `bulk_tap` | dict | Optional `{'side': 'auto' | 'left' | 'right' | 'top' | 'bottom', 'offset': float}`. Overrides the process template's tap placement. |
+| | `profile_name` | str | The characterization profile to build from, as for TSCell. |
 | `terminals` | `name`, `pins`, `type` | | As for TSCell. The pin types are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. `PLUS` and `MINUS` must both be connected. |
 | | `base_wire` | dict | `layer`, `width`, `number_of_vias`, `offset`, `track` (`None`). |
 
@@ -226,7 +230,7 @@ from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Five segments connected in parallel, with a plus and a minus net on Metal4
 parameters = {
@@ -238,8 +242,8 @@ parameters = {
     'composer': {'composer_type': RESISTOR_COMPOSER.LINEAR, 'segment_spacing': 0.3,
                  'segment_connection': RESISTOR_SEGMENT_CONNECTION.PARALLEL},
     'terminals': [
-        {'name': 'v_plus', 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
-        {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
+        {'name': 'v_plus', 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
+        {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
     ],
 }
 
@@ -260,7 +264,7 @@ The class is the `device_class=` argument: `CAPACITOR_CLASS.STANDARD_2T`, or `ST
 | | `number_of_rows`, `number_of_columns` | int | The unit matrix. |
 | | `row_spacing`, `column_spacing` | float | Gaps between units. They are raised to the plate minimum when needed. |
 | `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `mim_capacitor.yaml` `configuration`. |
-| | `bulk_tap` | dict | As for RSCell. |
+| | `bulk_tap`, `profile_name` | | As for RSCell. |
 | `terminals` | `name`, `pins`, `type` | | The pin types are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. |
 | | `base_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. A layer that cannot reach the plate is moved to one that can, with a warning. |
 | | `top_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. |
@@ -279,7 +283,7 @@ from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Two 5 x 5 um units side by side (1 row, 2 columns), with at most 3 x 3 vias per plate
 parameters = {
@@ -291,8 +295,8 @@ parameters = {
                  'row_spacing': 1.0, 'column_spacing': 1.0},
     'settings': {'max_number_of_via_rows': 3, 'max_number_of_via_cols': 3},
     'terminals': [
-        {'name': 'v_top', 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'Metal6', 'width': 0.5}},
-        {'name': 'v_bottom', 'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'Metal4', 'width': 0.5}},
+        {'name': 'v_top', 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'metal6', 'width': 0.5}},
+        {'name': 'v_bottom', 'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'metal4', 'width': 0.5}},
     ],
 }
 
@@ -329,7 +333,7 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Two small transistors, each with a gate terminal g and a drain terminal d ---
 n1_parameters = {
@@ -355,9 +359,9 @@ mcell.add_cells([n1, p1])
 
 # 'in' joins both gates, 'out' joins both drains; 'out' is critical, so it is routed first
 mcell.set_terminal_parameters([
-    {'name': 'in', 'is_port': True, 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'in', 'is_port': True, 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'n1': {'terminal': 'g'}, 'p1': {'terminal': 'g'}}},
-    {'name': 'out', 'is_port': True, 'critical': True, 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'out', 'is_port': True, 'critical': True, 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'n1': {'terminal': 'd'}, 'p1': {'terminal': 'd'}}},
 ])
 

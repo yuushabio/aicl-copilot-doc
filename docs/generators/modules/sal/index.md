@@ -27,7 +27,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Get all registered testbench kinds and print their names
 testbench_kinds = testbench.classes()

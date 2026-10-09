@@ -30,7 +30,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Two NMOS devices in one devices entry, so they share the source (the tail node)
 parameters = {
@@ -67,7 +67,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # M1 is the reference: its gate and drain are both on i_ref (diode connection)
 parameters = {
@@ -101,7 +101,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # M1 and M2 stacked as a cascode: M1's drain and M2's source are joined (v_mid)
 parameters = {
@@ -135,7 +135,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # The gate is the top plate; source, drain and bulk together are the bottom plate (VSS)
 parameters = {
@@ -166,7 +166,7 @@ from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Six poly segments connected in series
 parameters = {
@@ -198,7 +198,7 @@ from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Six unit capacitors in a 2 x 3 matrix (rows x columns = multiplier)
 parameters = {

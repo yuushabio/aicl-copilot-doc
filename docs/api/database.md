@@ -31,7 +31,7 @@ from aicl_core.bin.library.parameterlibrary import ParameterLibrary
 |:--|:--|
 | `save(name, parameters, cell_class='', description='', circuit_type='', tags=None, overwrite=False, extras=None)` | Store a parameter set, with its enum members. `cell_class` (`'TSCell'`, `'RSCell'`, `'CSCell'` or `'MCell'`) is inferred from the parameters when it is left out: from the root `device_class` or `device_tech` key of an S-Cell set, or the `cells` list of an M-Cell set. Overwriting keeps the old payload as a revision. Returns the stored name. |
 | `load(name, revision=None, include_extras=False)` | The parameter dict. Extras are removed unless `include_extras` is set, so the result can be passed straight to a constructor. |
-| `build_cell(name, cell_name=None, process_tech=None)` | Construct the cell with the normal constructor, against `process_tech` (the default is the active process). An M-Cell set is rebuilt children-first, then wired. |
+| `build_cell(name, cell_name=None, process_name=None)` | Construct the cell with the normal constructor, against `process_name` (the default is the active process). An M-Cell set is rebuilt children-first, then wired. |
 | `exists(name)`, `delete(name)`, `rename(old_name, new_name)` | Manage entries. |
 | `list_parameters(detailed=False)`, `describe(name)`, `search(tag=None, cell_class=None, circuit_type=None)` | Query entries. |
 | `list_extras(name)`, `get_extras(name, namespace=None, scope=None)`, `set_extras(name, namespace, value, scope='*')`, `delete_extras(name, namespace=None, scope=None)` | Placer and router constraints that are stored with a set, keyed by tool namespace (for example `'RMST_ROUTER'`) and by scope (a terminal or sub-cell name, or `'*'`). |
@@ -71,7 +71,7 @@ from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot first: the cell database needs a loaded process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A 4-finger NMOS with gate and drain nets. A saved set names its device class
 # with the root key 'device_class' (a cell built in code takes device_class= instead)

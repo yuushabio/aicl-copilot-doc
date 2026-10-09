@@ -46,7 +46,7 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 from aicl_core.bin.verification.results import RunStatus
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Describe a small NMOS S-Cell: one device M1 with 4 fingers
 nmos_parameters = {
@@ -121,7 +121,7 @@ from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.verification.results import RunStatus
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. The two transistors of the inverter ---
 # NMOS: gate v_in, drain v_out, source and bulk on vss
@@ -236,7 +236,7 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 from aicl_core.bin.verification.results import RunStatus
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Describe a small NMOS S-Cell: one device M1 with 4 fingers
 nmos_parameters = {

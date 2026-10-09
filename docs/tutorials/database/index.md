@@ -38,7 +38,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. The parameter sets ---
 # NMOS: 3 fingers, source and bulk on vss. A saved set names its device class
@@ -81,9 +81,9 @@ inverter_parameters = {
         {'name': 'pmos_transistor', 'parameters': pmos_parameters},
     ],
     'terminals': [
-        {'name': 'v_in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+        {'name': 'v_in', 'top_wire': {'layer': 'metal4', 'width': 0.3},
          'components': {'nmos_transistor': {'terminal': 'v_in'}, 'pmos_transistor': {'terminal': 'v_in'}}},
-        {'name': 'v_out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+        {'name': 'v_out', 'top_wire': {'layer': 'metal4', 'width': 0.3},
          'components': {'nmos_transistor': {'terminal': 'v_out'}, 'pmos_transistor': {'terminal': 'v_out'}}},
         {'name': 'vdd', 'components': {'pmos_transistor': {'terminal': 'vdd'}}},
         {'name': 'vss', 'components': {'nmos_transistor': {'terminal': 'vss'}}},
@@ -120,7 +120,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Build the inverter from its stored parameters
 library = ParameterLibrary('tutorial_library')
@@ -154,7 +154,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.database.celldatabase import CellDatabase
 
 # Start the copilot with the same process the cell was saved with
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Open the database of 'tutorial_library'
 database = CellDatabase('tutorial_library')
@@ -181,7 +181,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Store a router setting with the inverter: top wires at least 0.3 um wide, for all nets (scope '*')
 library = ParameterLibrary('tutorial_library')

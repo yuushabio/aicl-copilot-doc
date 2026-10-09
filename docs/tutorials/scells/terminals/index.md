@@ -58,7 +58,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Describe the differential pair ---
 parameters = {
@@ -72,19 +72,19 @@ parameters = {
     'terminals': [
         # Gate inputs: Metal2 wires above the gates
         {'name': 'v_in_p', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]],
-         'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
+         'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
         {'name': 'v_in_n', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.GATE]],
-         'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
+         'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.GATE_TOP}},
         # Drain outputs: wider wires with 2 vias, and a Metal3 top wire on each side
         {'name': 'v_out_n', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]],
-         'base_wire': {'layer': 'Metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
-         'top_wire': {'layer': 'Metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_LEFT}},
+         'base_wire': {'layer': 'metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
+         'top_wire': {'layer': 'metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_LEFT}},
         {'name': 'v_out_p', 'type': TERMINAL_TYPE.ANALOG_OUTPUT, 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]],
-         'base_wire': {'layer': 'Metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
-         'top_wire': {'layer': 'Metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_RIGHT}},
+         'base_wire': {'layer': 'metal2', 'width': 0.3, 'number_of_vias': 2, 'track': BASE_WIRE_TRACK.SD_CENTER_UP},
+         'top_wire': {'layer': 'metal3', 'width': 0.4, 'track': TOP_WIRE_TRACK.CELL_RIGHT}},
         # Both sources on one tail net
         {'name': 'v_tail', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE], ['M2', TRANSISTOR_PIN_TYPE.SOURCE]],
-         'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.SD_CENTER_DOWN}},
+         'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.SD_CENTER_DOWN}},
         # Both bulks on an explicit ground terminal
         {'name': 'VSS', 'type': TERMINAL_TYPE.GROUND,
          'pins': [['M1', TRANSISTOR_PIN_TYPE.BULK], ['M2', TRANSISTOR_PIN_TYPE.BULK]]},
@@ -130,7 +130,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # One NMOS with 2 fingers
 parameters = {
@@ -144,7 +144,7 @@ parameters = {
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
         {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
         # The power terminal with no pins: it only sets where the VSS rail runs
-        {'name': 'VSS', 'pins': [], 'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_BOTTOM, 'offset': 0.5}},
+        {'name': 'VSS', 'pins': [], 'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.GATE_BOTTOM, 'offset': 0.5}},
     ],
 }
 

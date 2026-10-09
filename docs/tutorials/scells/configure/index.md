@@ -7,7 +7,7 @@ nav_order: 3
 
 # Configure
 
-The `settings` section of the S-Cell parameters holds the options around the devices: guard ring, dummy fingers, dummy rows, gate poly, vias and the power rail. Each key is optional. A missing key takes the process default from the template's `parameter_defaults.yaml`, and an invalid value is replaced by a safe one with a warning.
+The `settings` section of the S-Cell parameters holds the options around the devices: guard ring, dummy fingers, dummy rows, gate poly, vias and the power rail. Each key is optional. A missing key takes its default (see [Defaults for every cell](#defaults-for-every-cell)), and an invalid value is replaced by a safe one with a warning.
 
 ## Guard ring, dummy fingers and dummy rows
 
@@ -22,7 +22,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # One NMOS with 4 fingers, plus a 'settings' section for the extras around it
 parameters = {
@@ -90,7 +90,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSI
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # One PMOS with 4 fingers; the settings change the gate strap and the rail
 parameters = {
@@ -103,8 +103,8 @@ parameters = {
     'settings': {
         # Contact the gates at the bottom instead of the top
         'gate_poly': {'location': TRANSISTOR_GATE_CONNECTOR.bottom},
-        # A wider Metal1 power rail
-        'power': {'base_wire': {'layer': 'Metal1', 'width': 0.4}},
+        # A wider metal1 power rail
+        'power': {'base_wire': {'layer': 'metal1', 'width': 0.4}},
     },
     'terminals': [
         {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
@@ -129,11 +129,105 @@ copilot.preview_layout(pmos_scell, enable_culling=False)
 | `gate_poly` | `location: top`, 3 / 5 contacts per unit width | Gate strap, see above |
 | `default_number_of_vias` | 1 | Vias per connection when a wire does not say |
 | `multi_row_gate_contacts` | `False` | More than one row of gate contacts |
-| `route_over_cell` | `(True, METAL_LAYER_SELECTION.ALL, [...])` | Metals a parent router may use over the cell |
-| `route_source_drain_over_poly` | `(True, METAL_LAYER_SELECTION.ALL, [...])` | Metals source/drain wires may use over the gates |
-| `power` | Metal1 rail, stacked | Power rail, see above |
+| `route_over_cell` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals a parent router may use over the cell |
+| `route_source_drain_over_poly` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals source/drain wires may use over the gates |
+| `extend_source_drain_via_enclosures` | `False` | Keep the source/drain via enclosures flush with the ends of the metal, instead of moving the wire track for them |
+| `terminal_sides` | not set | `'both'`: in a single row, every gate and source/drain net gets a base wire on both sides of the row |
+| `profile_name` | `None` | The characterization profile to build the devices from (`None`: the class's default profile) |
+| `power` | metal1 rail, stacked | Power rail, see above |
 
-`route_over_cell` and `route_source_drain_over_poly` take a tuple `(enable, METAL_LAYER_SELECTION, layers)`. `METAL_LAYER_SELECTION.ALL` allows every metal. `METAL_LAYER_SELECTION.PART` allows only the listed layers, for example `(True, METAL_LAYER_SELECTION.PART, ['Metal3', 'Metal4'])`. The enum is in `aicl_core.bin.utilities.enums.metalenums`.
+`route_over_cell` and `route_source_drain_over_poly` take a list `[enable, METAL_LAYER_SELECTION, layers]`. `METAL_LAYER_SELECTION.ALL` allows every metal. `METAL_LAYER_SELECTION.PART` allows only the listed layers, for example `[True, METAL_LAYER_SELECTION.PART, ['metal3', 'metal4']]`. The enum is in `aicl_core.bin.utilities.enums.metalenums`.
+
+## Wires on both sides of a row
+
+Two settings change on which side of a single row the wires are drawn:
+
+- `terminal_sides: 'both'` gives every gate net and every source/drain net of one device a base wire above and below the row, joined by its top wire. A router can then reach the net from either side. The wires of a pair are placed as mirror images: the first device's gate and the second device's drain on the left, the second's gate and the first's drain on the right. A net shared by both devices (a tail) stays over the devices.
+- `gate_poly: {'device_sides': {'M1': TRANSISTOR_GATE_CONNECTOR.top, 'M2': TRANSISTOR_GATE_CONNECTOR.bottom}}` contacts each device's gates on its own side only, so the row is mirrored top to bottom. A gate net must then join devices of one side only; one that joins devices on both sides is refused with a `ParameterError`.
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# A differential pair M1 / M2 sharing its source (the tail)
+parameters = {
+    'specifications': {
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1', 'M2'], 'number_of_fingers': [2]}],
+    },
+    # Draw every gate and drain net on both sides of the row
+    'settings': {'terminal_sides': 'both'},
+    'terminals': [
+        {'name': 'v_in_p', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_in_n', 'pins': [['M2', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out_n', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'v_out_p', 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'tail', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE], ['M2', TRANSISTOR_PIN_TYPE.SOURCE]]},
+    ],
+}
+
+# Build the cell and show it
+pair = TSCell(name='both_sides_pair', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+copilot.preview_layout(pair)
+```
+
+![A differential pair with its gate and drain nets wired on both sides of the row]({{site.baseurl}}/assets/images/tscell_both_sides_lay.png){: width="520"}
+
+## Defaults for every cell
+
+A setting that a cell leaves out is taken from these sources, each over the one before:
+
+1. the framework defaults, `aicl_core/config/global_defaults.yaml`;
+2. the process template's `parameter_defaults.yaml` (see [Constraints]({% link docs/setup/process/constraints.md %}#parameter_defaultsyaml));
+3. the overrides you set in your script with `SCellConfig`;
+4. the cell's own `settings` and terminal wires.
+
+`SCellConfig` (`aicl_core.config.global_config`) changes a default for every cell built after it, without editing a file. Its keys are those of the `SCELL` block of the default files: `config` holds the `settings`, and `terminals.signals` / `terminals.power` the default wires. `SCellConfig.TSCELL`, `RSCELL` and `CSCELL` are the kinds; `SCellConfig.SCELL` holds values shared by every kind.
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# The user overrides of the S-Cell defaults
+from aicl_core.config.global_config import SCellConfig
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# Every TS-Cell built from now on gets one dummy finger at each end
+SCellConfig.TSCELL.config.number_of_dummy_fingers.start = 1
+SCellConfig.set('tscell', 'config.number_of_dummy_fingers.end', 1)
+
+# ... and 0.4 um wide signal base wires
+SCellConfig.update('tscell', {'terminals': {'signals': {'base_wire': {'width': 0.4}}}})
+print('overrides:', SCellConfig.get('tscell'))
+
+# A cell that says nothing about dummies takes the override
+parameters = {
+    'specifications': {
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+}
+nmos = TSCell(name='with_defaults', parameters=parameters)
+print('dummy fingers:', nmos.get_parameters()['settings']['number_of_dummy_fingers'])
+
+# Drop every override again
+SCellConfig.reset()
+```
+
+`SCellConfig.reset('tscell')` drops the overrides of one kind only.
 
 ## Bulk connection and via limits
 

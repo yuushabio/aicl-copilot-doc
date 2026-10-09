@@ -30,7 +30,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Describe the cell: two NMOS devices, M1 and M2, with 2 fingers each,
 # side by side with 2 dummy fingers between them

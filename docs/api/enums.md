@@ -14,7 +14,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 | Enum | Members | Used in |
 |:--|:--|:--|
-| `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS`, `HIGH_VT_PMOS`, `SUPER_LOW_VT_NMOS`, `SUPER_LOW_VT_PMOS`, `SRAM_NMOS`, `SRAM_PMOS` | `TSCell(device_class=...)`. The last four are FinFET threshold flavours; `ihpSG13G2` maps none of them. |
+| `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `STANDARD_PMOS` | `TSCell(device_class=...)` |
 | `TRANSISTOR_TECH` | `MOSFET`, `FINFET` | `TSCell(device_tech=...)`. The core package builds `MOSFET`. |
 | `TRANSISTOR_TYPE` | `NMOS`, `PMOS` | |
 | `TRANSISTOR_SD_CONNECTION_TYPE` | `CASCODE`, `COMMON_SOURCE`, `COMMON_DRAIN`, `SINGLE` | TSCell `specifications['devices'][i]['sd_connection_type']` |
@@ -27,6 +27,20 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `CAPACITOR_TECH` | `CMIM`, `CMOM` | `CSCell(device_tech=...)`. The core package builds `CMIM`. |
 | `CAPACITOR_STRUCTURE_TYPE` | `LINEAR` | `CSCell(cell_structure=...)` |
 
+### Device classes
+
+`TRANSISTOR_CLASS`, `RESISTOR_CLASS` and `CAPACITOR_CLASS` are used like enums: `TRANSISTOR_CLASS.STANDARD_NMOS`, `TRANSISTOR_CLASS['STANDARD_NMOS']`, `list(TRANSISTOR_CLASS)` and `TRANSISTOR_CLASS('STANDARD_NMOS')` all work. Their members are `DeviceClass` objects (`aicl_core.bin.utilities.enums.device_class`), not `Enum` members. Each one carries:
+
+| Attribute | Example (`RESISTOR_CLASS.STANDARD_P3T`) |
+|:--|:--|
+| `name` | `'STANDARD_P3T'` |
+| `key` | `'standard_p_3t'`: the class key the templates use (`layers.extension`, per-class limits, characterization folders) |
+| `alias` | `'Standard P3T'`: its name in `devices.yaml` (`Standard P-3T` there is the same class) |
+| `group` | `'p_poly_silicon'` (`'nmos'` / `'pmos'` for a transistor) |
+| `terminals` | `3`: a 3T class has a `BULK` pin |
+
+`isinstance(x, TRANSISTOR_CLASS)` is true for every transistor class. A cell or a stored parameter set may also name its class as a string (`'STANDARD_PMOS'`, `'TRANSISTOR_CLASS.STANDARD_PMOS'` or the class key `'standard_pmos'`). Parameter sets saved while the classes were enum members are still read.
+
 ## Composers and placement
 
 `from aicl_core.bin.utilities.enums.primitives import ...`, and `DEVICE_SEPARATOR` from `aicl_core.bin.utilities.enums.composer`.
@@ -37,7 +51,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `RESISTOR_COMPOSER` | `LINEAR`, `INTER_DIGITATE` | RSCell `composer['composer_type']` |
 | `CAPACITOR_COMPOSER` | `LINEAR` | CSCell `composer['composer_type']` |
 | `DEVICE_SEPARATOR` | `DUMMY`, `IMPLANT` | TSCell `composer['device_separator']` |
-| `TRANSISTOR_GATE_CONNECTOR` | `top`, `both`, `bottom` | TSCell `settings['gate_poly']['location']` |
+| `TRANSISTOR_GATE_CONNECTOR` | `top`, `both`, `bottom` | TSCell `settings['gate_poly']['location']`, and `top` / `bottom` in `settings['gate_poly']['device_sides']` |
 | `CELL_ABUT_SIDE` | `left`, `right`, `top`, `bottom` | `REFERENCE_PLACER` `reference_abut_side` |
 | `CELL_ABUT_ALIGN` | `lower`, `middle`, `upper` | `REFERENCE_PLACER` `reference_abut_align` |
 | `CELL_ORIENTATION` | `R0`, `R90`, `R0_MX`, `R0_MY`, `R0_MX_MY`, `R90_MX`, `R90_MY`, `R90_MX_MY` | `cell.set_orientation(...)`, `cell.get_orientation()` |
@@ -78,7 +92,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.utilities.enums.primitives import CELL_ORIENTATION
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Make a default transistor cell, then rotate it by 90 degrees and mirror it
 cell = TSCell(name='M1')

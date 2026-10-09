@@ -75,7 +75,7 @@ Every variable except `AICL_COP_WORK_DIR` can be left blank. A blank tool binary
 | `AICL_NETGEN_BIN` | Netgen binary. Magic extracts and Netgen compares, so LVS with the Magic backend needs both. |
 | `AICL_VERIFICATION_BACKEND` | Override the technology's `default_backend` (`klayout` for `ihpSG13G2`). |
 | `AICL_VERIFICATION_DIR` | Where run artifacts go. The default is `~/.aicl_copilot/verification`. |
-| `AICL_DRC_DECK_IHPSG13G2`, `AICL_LVS_DECK_IHPSG13G2` | Absolute paths to a specific DRC or LVS deck, bypassing the lookup relative to the PDK. |
+| `AICL_DRC_DECK_IHPSG13G2`, `AICL_LVS_DECK_IHPSG13G2` | Absolute paths to a specific DRC or LVS deck, bypassing the lookup relative to the PDK. The same variables exist for every process, named after it in capitals (`AICL_DRC_DECK_SKY130A`, `AICL_LVS_DECK_SKY130A`). |
 
 ### PDK roots
 
@@ -83,6 +83,7 @@ Every variable except `AICL_COP_WORK_DIR` can be left blank. A blank tool binary
 |:--|:--|
 | `AICL_PDK_ROOT` | A directory of PDKs. Each technology adds its own relative path, for example `IHP-Open-PDK/ihp-sg13g2`. |
 | `AICL_PDK_ROOT_IHPSG13G2` | The SG13G2 PDK root. It takes precedence over `AICL_PDK_ROOT`. |
+| `AICL_PDK_ROOT_SKY130A` | The sky130A KLayout package (the directory with `drc/` and `lvs/`, for example `~/.klayout/salt/sky130A_el`). It takes precedence over `$AICL_PDK_ROOT/sky130A_el`. |
 | `AICL_PDK_ROOT_PTMMOCK` | The PTM model files for the simulation-only `mock32`/`mock45`/`mock65` sets. The default is `$AICL_PDK_ROOT/PTM-Mock`. |
 
 ### Simulation
@@ -112,6 +113,7 @@ Extraction uses the KPEX backend from the optional `klayout-pex` package (`pip i
 | Tool | Needed for | Notes |
 |:--|:--|:--|
 | [IHP SG13G2 Open PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) | DRC, LVS, PEX, simulation, schematics | Point `AICL_PDK_ROOT_IHPSG13G2` (or `AICL_PDK_ROOT`) at it. |
+| sky130A KLayout package (`sky130A_el`, installed with KLayout's package manager) | DRC and LVS for `sky130A` | Point `AICL_PDK_ROOT_SKY130A` at it, or `AICL_PDK_ROOT` at the directory that holds it. |
 | [KLayout](https://www.klayout.de) | DRC and LVS (default backend), PEX | 0.30.2 or newer is recommended. |
 | [Magic](http://opencircuitdesign.com/magic/) and [Netgen](http://opencircuitdesign.com/netgen/) | The alternative `magic` DRC/LVS backend | Magic can be an AppImage. |
 | [klayout-pex](https://pypi.org/project/klayout-pex/) | `run_pex` and post-layout simulation | The `[pex]` extra. |
@@ -143,7 +145,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
 # Start the copilot and show which processes it found and where it writes its output
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 print('processes:', copilot.valid_processes, '| simulation-only:', copilot.simulation_processes)
 print('output:', copilot.current_project_directory)
 

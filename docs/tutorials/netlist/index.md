@@ -28,7 +28,7 @@ import os
 from aicl_core.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Build the full path to the netlist that ships with core
 work_directory = os.environ['AICL_COP_WORK_DIR']
@@ -55,8 +55,8 @@ print('ports:', circuit.ports)
 
 A *device group* is a set of devices built as one S-Cell. `create_circuit_device_grouper(circuit)` returns a `CircuitDeviceGrouper`. Its `get_default_group()` lists all devices of the level.
 
-- **Without manual groups**, the constructor recognises common structures and groups them: differential pairs, current mirrors, cross-coupled pairs, cascodes and MOS capacitors. The remaining devices get an S-Cell each.
-- **With `create_transistor_group(device_names, group_name, composer_type)`**, you choose the groups. The devices of a group must have the same type (all NMOS or all PMOS), and a device can be in only one group. Devices you leave out are still grouped automatically.
+- **Without manual groups**, the constructor recognises common structures and groups them: differential pairs, current mirrors, cross-coupled pairs, cascodes and MOS capacitors. The remaining devices get an S-Cell each. A current mirror takes every device on its bias, however many legs it has: the diode-connected reference sits in the middle of the row and the legs are split around it. When a bias has several diode-connected references, each reference is its own mirror cell and the legs are shared out between them in order. A cascode current mirror is one cell. Each cross-coupled pair gets its own cell.
+- **With `create_transistor_group(device_names, group_name, composer_type)`**, you choose the groups. The devices of a group must have the same type (all NMOS or all PMOS), and a device can be in only one group. A group is always built as **one** S-Cell: each structure found inside it (a pair, a mirror, ...) becomes a device entry of that cell. Devices you leave out are still grouped automatically.
 
 `composer_type` defaults to `TRANSISTOR_COMPOSER.LINEAR`, which is the composer core provides (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})). The devices of a group are placed side by side in one S-Cell, sharing diffusion where their nets allow. This is how matched devices are kept together in core.
 
@@ -91,7 +91,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_A
 from aicl_core.bin.utilities.geometryutils import Coord
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Parse the netlist ---
 work_directory = os.environ['AICL_COP_WORK_DIR']
@@ -167,7 +167,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Read the hierarchical netlist
 work_directory = os.environ['AICL_COP_WORK_DIR']

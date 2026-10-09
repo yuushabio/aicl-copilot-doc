@@ -53,7 +53,7 @@ Cell
 | `get_polygons(use_pcells=False)` | The drawn polygons. |
 | `get_guard_ring()`, `get_body_rail()` | The guard ring and body rail polygons. |
 | `get_pcell_parameters()` | The per-device PDK parameters, for p-cell based export. |
-| `get_effective_cell_defaults(cell_key)` | The merged framework and process defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`. |
+| `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: the framework defaults, the process's `parameter_defaults.yaml` and the `SCellConfig` overrides, each over the one before. |
 | `SCell.create_from_params(parameters=None, name=None, **kwargs)` *(class method)* | Build an S-Cell from a saved parameter dictionary. See [below](#rebuilding-from-a-parameter-dictionary). |
 
 `TSCell`, `RSCell` and `CSCell` also share the device-setting methods:
@@ -64,7 +64,8 @@ Cell
 | `get_device_tech()` | The cell's `TRANSISTOR_TECH`, `RESISTOR_TECH` or `CAPACITOR_TECH`. |
 | `set_device_class(device_class)` | Check the class against the process template, then rebuild the cell in place at the same position. Raises `ParameterError` when the process has no model for it. |
 | `set_device_tech(device_tech)` | The same for the technology. Raises `ParameterError` for a technology that cannot be built or that the process does not offer. |
-| `device_tech_key()` | The template key of the technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`): the section of `config.yaml` and `devices.yaml` the cell's limits and models are read from. |
+| `device_tech_key()` | The internal name of the cell's technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`). |
+| `device_limits()` | The process limits for the cell's technology and class (`min_length`, `min_finger_width`, `min_width`, ...), with any per-class value resolved. |
 
 ## TSCell
 
@@ -100,6 +101,7 @@ from aicl_core.bin.core.engines.resistor import RSCell
 | `get_scell_parameters()` | The realized parameters. |
 | `device_names()` | The device names. |
 | `has_bulk_pin()` | `True` for the 3-terminal classes (`STANDARD_N3T`, `STANDARD_P3T`). |
+| `minimum_segment_spacing()` | The least gap between two segments for the cell's class and size, before the composer's `segment_spacing` is added. |
 | `RSCell.bulk_tap_available()` *(static)* | Whether the active process can draw a resistor body tap. |
 
 ## CSCell
@@ -137,7 +139,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A PMOS with 3 fingers
 parameters = {
@@ -250,7 +252,7 @@ import os
 from aicl_core.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Read the netlist ---
 # The example netlist ships in the work directory under templates/netlists/

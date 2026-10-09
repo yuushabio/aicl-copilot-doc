@@ -32,7 +32,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK
 
 # Start the copilot first: the cells read the active process when they are created
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where the GDS goes if you write it out
 library_name = 'generator_library'                     # directory the GDS is written into
@@ -62,7 +62,7 @@ parameters = {
         {'name': 'v_out_1', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
         {'name': 'v_out_2', 'pins': [['M2', TRANSISTOR_PIN_TYPE.DRAIN]]},
         {'name': 'v_tail', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE], ['M2', TRANSISTOR_PIN_TYPE.SOURCE]],
-         'base_wire': {'layer': 'Metal2', 'track': BASE_WIRE_TRACK.GATE_BOTTOM}},
+         'base_wire': {'layer': 'metal2', 'track': BASE_WIRE_TRACK.GATE_BOTTOM}},
     ],
 }
 
@@ -87,7 +87,7 @@ from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where the GDS goes if you write it out
 library_name = 'generator_library'
@@ -108,9 +108,9 @@ parameters = {
     'settings': {},
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
         {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
     ],
 }
 
@@ -136,7 +136,7 @@ from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where the GDS goes if you write it out
 library_name = 'generator_library'
@@ -162,9 +162,9 @@ parameters = {
     },
     'terminals': [
         {'name': 'v_top', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'Metal6', 'width': 0.5}},
+         'base_wire': {'layer': 'metal6', 'width': 0.5}},
         {'name': 'v_bottom', 'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5}},
     ],
 }
 
@@ -197,7 +197,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where the GDS goes if you write it out
 library_name = 'generator_library'
@@ -238,9 +238,9 @@ inverter.add_cells([nmos, pmos])
 
 # Nets of the inverter: v_in joins both gates, v_out joins both drains
 inverter.set_terminal_parameters([
-    {'name': 'v_in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'v_in', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
-    {'name': 'v_out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'v_out', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
 ])
 
@@ -280,7 +280,7 @@ from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
 # Start the copilot for the process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where the GDS goes if you write it out
 library_name = 'generator_library'

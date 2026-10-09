@@ -51,7 +51,7 @@ from aicl_core.bin.utilities.helpers.placers import PlacerManager
 from aicl_core.bin.utilities.helpers.routers import RouterManager
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # The names of every placer and router
 print('placers:', PlaceAndRouteManager.get_all_placer_names())
@@ -122,17 +122,20 @@ To write a new engine, implement `place(cell, constraints)` (or `route(cell, ter
 ## Contract types
 
 ```
-from aicl_core.bin.pnr import PlaceRequest, RouteRequest, PlaceResult, RouteResult, OptionSpec, LevelSymmetry
+from aicl_core.bin.pnr import PlaceRequest, RouteRequest, PlaceResult, RouteResult, OptionSpec, LevelSymmetry, CellOverlap, cell_overlaps
 ```
 
 | Type | Fields |
 |:--|:--|
 | `PlaceRequest` | `constraints: Any = None` |
-| `RouteRequest` | `terminal_names: Sequence[str] | str | None = None`, `constraints: Any = None`, `grid: dict | None = None`, `apply: bool = True` (`False` is a dry run), `symmetry: Any = None` |
-| `PlaceResult` | `cell_name`, `elapsed_s`, `sub_results: dict[str, PlaceResult]`, `symmetry: LevelSymmetry | None`, `total_elapsed_s()` |
+| `RouteRequest` | `terminal_names: Sequence[str] | str | None = None`, `constraints: Any = None`, `grid: dict | None = None`, `apply: bool = True` (`False` is a dry run), `symmetry: Any = None`, `overlaps: Any = None` (the placement's overlapping cells; a router that uses them treats cells overlapping the one it routes as obstacles) |
+| `PlaceResult` | `cell_name`, `elapsed_s`, `sub_results: dict[str, PlaceResult]`, `symmetry: LevelSymmetry | None`, `overlaps: list[CellOverlap]`, `overlap_violations` (property), `total_elapsed_s()` |
+| `CellOverlap` | `a`, `b` (instance paths from the placed cell, joined with `/`), `a_kind`, `b_kind` (`'MCell'` or `'SCell'`), `boundbox` (`(x0, y0, x1, y1)` of the overlap), `area`, `violation` |
 | `RouteResult` | `cell_name`, `terminals`, `successful: list[str]`, `failed: list[str]`, `elapsed_s`, `sub_results`, `details`, `all_successful()`, `all_failed()`, `total_elapsed_s()` |
 | `OptionSpec` | `name`, `type`, `default`, `description`, `check`, `accepts(value)`, `describe()` |
 | `LevelSymmetry` | `cell_name`, `axis: SymmetryAxis`, `device_pairs`, `self_devices`, `net_pairs`, `self_nets`, `sub_levels`, `groups`, `level(path)`, `walk()`, `flatten()`, `device_partner(name)`, `net_partner(name)` |
+
+Every placer reports the cells that overlap once it has placed a level: `PlaceResult.overlaps` lists each pair of overlapping cells below the placed cell (touching edges do not count). An M-Cell's box is only the union of what it holds, so after a flat or interleaved placement it may cover cells that are not its own; that is allowed. Two S-Cells on top of each other are devices on top of each other: `place_result.overlap_violations` lists those pairs, and it should be empty. `cell_overlaps(cell)` measures the same list for any placed cell. The place-and-route functions of `PlaceAndRouteManager` hand the list to the router in `RouteRequest.overlaps`.
 
 ## Example
 
@@ -153,7 +156,7 @@ from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Two 2-finger transistors, each with a gate net g and a drain net d ---
 nmos_parameters = {
@@ -187,9 +190,9 @@ pmos = TSCell(name='mp', parameters=pmos_parameters, device_class=TRANSISTOR_CLA
 mcell = MCell(name='inverter')
 mcell.add_cells([nmos, pmos])
 mcell.set_terminal_parameters([
-    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'in', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'mn': {'terminal': 'g'}, 'mp': {'terminal': 'g'}}},
-    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'out', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'mn': {'terminal': 'd'}, 'mp': {'terminal': 'd'}}},
 ])
 
@@ -198,6 +201,9 @@ placer = PlacerManager.create_placer('CUSTOM_RPS_PLACER', seed=7, simanneal_step
 place_result = PlaceAndRouteManager.place_cell(mcell, placer, constraints={'padding': 0.4})
 place_seconds = round(place_result.elapsed_s, 2)
 print('placed', place_result.cell_name, 'in', place_seconds, 's')
+
+# Two S-Cells must never overlap: this list should be empty
+print('overlapping devices:', place_result.overlap_violations)
 
 # --- 4. Routing ---
 # First a dry run of the 'in' net only: apply=False checks it but draws nothing

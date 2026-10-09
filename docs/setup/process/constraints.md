@@ -13,105 +13,156 @@ The `constraints/` directory holds the technology rules and the tool settings. M
 1. TOC
 {:toc}
 
-## config.yaml
+## configuration.yaml
 
-The process's general parameters, under one top-level key, `Configuration`. It is required.
+The process's general parameters. It is required. Its keys are at the top level; a file that still wraps them in a `Configuration` key, or that uses the old CamelCase keys (`ProcessTechnology`, `LayoutResolution`, `Transistors`, ...), is refused.
 
 ```yaml
-Configuration:
-  ProcessTechnology: "ihpSG13G2"
-  LayoutUnit: 1e-6                     # all dimensions are in this unit (um)
-  GridResolution: [0.005, 0.005]       # [x, y]
-  LayoutResolution: 0.005              # every coordinate is snapped to this grid
+process_name: "ihpSG13G2"              # must be the template's directory name
+process_pdk_name: "ihpSG13G2"          # the process's name in its PDK; defaults to process_name
+process_tech: "planar"                 # the family: planar | finfet (must be the template's folder)
+description: "IHP SG13G2 process design kit (PDK) for 130nm CMOS technology."
+version: "1.0.0"
 
-  environment:
-    api: 'open_env'                    # the design bridge used for export (open_env writes GDS with gdstk)
-    pcell_available: False
+layout_unit: 1e-6                      # all dimensions are in this unit (um)
+layout_resolution: 0.005               # every coordinate is snapped to this grid
 
-  min_poly_spacing: 0.18
-  min_poly_abut_extension: 0.0
-  min_distance_poly_to_implant: 0.12
+environment:
+  api: 'open_env'                      # the design bridge used for export (open_env writes GDS with gdstk)
+  pcell_available: False
 
-  boundary_layers: {Scell: 'scell', Module: 'module', AbstractModule: 'abstractModule'}
+min_poly_spacing: 0.18
+min_poly_abut_extension: 0.0
+min_distance_poly_to_implant: 0.12
 
-  Transistors:
-    MOSFET:
-      PCell:
-        Parameters: {total_width: "w", length: "l", number_of_fingers: "ng", multiplier: 'm'}
-        Limits: {minLength: 0.13, maxLength: 20, minFingerWidth: 0.15, maxFingerWidth: 900,
-                 minTotalWidth: 0.6, maxTotalWidth: 900, minNumberOfFingers: 1, maxNumberOfFingers: 999}
-      Netlist:
-        Parameters: {total_width: "w", length: "l", number_of_fingers: "ng", multiplier: 'm'}
-  Resistors:
-    Polysilicon: {PCell: {Parameters: ..., Limits: {minWidth: 0.5, minLength: 0.5, ...}}, Netlist: ...}
-  Capacitors:
-    MetalInsulatorMetal: {PCell: {Parameters: ..., Limits: {minWidth: 1.52, minLength: 1.52, ...}}, Netlist: ...}
+boundary_layers: {s-cell: 'scell', m-cell: 'module', abstract_m-cell: 'abstractModule'}
+
+transistors:
+  pcell:
+    parameters: {total_width: ["w"], length: ["l"], number_of_fingers: ["ng"], multiplier: ['m']}
+    limits:
+      min_length: {default: 0.13, high_voltage_nmos: 0.45, high_voltage_pmos: 0.40}
+      max_length: 20
+      min_finger_width: {default: 0.15, high_voltage_nmos: 0.30, high_voltage_pmos: 0.30}
+      max_finger_width: 900
+      min_total_width: 0.6
+      max_total_width: 900
+      min_number_of_fingers: 1
+      max_number_of_fingers: 999
+  netlist:
+    parameters: {total_width: ["w"], length: ["l"], number_of_fingers: ["ng"], multiplier: ['m']}
+
+resistors:
+  polysilicon:
+    pcell:
+      parameters:
+        segment_width: ["w"]
+        length: ["l"]                  # one segment
+        segment_spacing: ["ps"]
+        number_of_segments:
+          - {name: "b", offset: 1, connection: "series"}
+          - {name: "m", offset: 0, connection: "parallel"}
+      limits: {min_width: 0.5, min_length: 0.5, min_resistance: 24.9, max_resistance: }
+    netlist: ...
+
+capacitors:
+  metal_insulator_metal:
+    pcell:
+      parameters: {width: ["w"], length: ["l"], multiplier: ['m']}
+      limits: {min_width: 1.52, min_length: 1.52, min_capacitance: 74.6f, max_capacitance: 8p}
+    netlist: ...
 ```
 
 | Key | Used for |
 |:--|:--|
-| `LayoutUnit`, `GridResolution`, `LayoutResolution` | Units and the snapping grid. |
+| `process_name`, `process_tech` | Checked against the directory: the name must be the directory's name, and the family must be the folder the template is in. A mismatch makes the template invalid, and the error names both. |
+| `process_pdk_name` | The name the process has in its PDK, when it differs from the template's name. |
+| `layout_unit`, `layout_resolution` | Units and the snapping grid. |
 | `environment.api` | Which design bridge `generate_layout` and `generate_schematic` use. The core package provides `open_env`, which writes GDS files and xschem schematics. |
-| `boundary_layers` | Annotation layers for cell outlines. They are not written as mask geometry. |
-| `*.PCell.Limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. |
-| `*.PCell.Parameters`, `*.Netlist.Parameters` | The PDK's instance parameter names, used when netlists are written and read. For resistors, `number_of_segments` also says how a segment count is written: `n` series segments are `b = n - 1` bends, and `n` parallel segments are `m = n` devices. |
+| `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`, `abstract_m-cell`). They are not written as mask geometry. |
+| `<kind>.pcell.limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. A limit is a number, or `{default: v, <class key>: v}` for a limit that differs between device classes. |
+| `<kind>.pcell.parameters`, `<kind>.netlist.parameters` | The PDK's instance parameter names, used when netlists are written and read. Each is a list of names; a netlist is written with the first one. For resistors, `number_of_segments` says how a segment count is written: `n` series segments are `b = n - 1` bends (`offset: 1`), and `n` parallel segments are `m = n` devices (`offset: 0`). A process without a bends parameter (such as `sky130A`) lists only the parallel rule. |
+
+The transistor section has no technology level: the family says which transistor technology the template is for. The resistor and capacitor sections are grouped by family (`polysilicon`, `metal_insulator_metal`, `metal_oxide_metal`). `inductors` may be present; it is not read.
 
 ## connectivity.yaml
 
-Contacts, vias and metals, with their design rules, under `Connectivity`. It is required, and it is checked for consistency when the process loads.
+Contacts, vias and metals, with their design rules. It is required, and it is checked for consistency when the process loads. Its keys (`contacts`, `vias`, `metals`) are at the top level.
 
 ```yaml
-Connectivity:
-  CONTACTS:
-    default:
-      name: 'Cont'
-      layers: [['Gate Poly', 'Metal1'], ['Oxide Diffusion', 'Metal1']]
-      dimensions: {width: 0.16, height: 0.16}
-      spacing:
-        middle: [[1, 0.18], [5, 0.20]]     # [[rows and cols >=, spacing], ...]
-        edge: {canUseSingleEdge: True, singleAxis: {...}, doubleAxes: {...}}   # enclosures
+contacts:
+  default:
+    name: 'Cont'
+    layers: [['gate_poly', 'metal1'], ['oxide_diffusion', 'metal1']]
+    dimensions: {width: 0.16, height: 0.16}
+    spacing:
+      middle: [[1, 0.18], [5, 0.20]]     # [[rows and cols >=, spacing], ...]
+      edge:                              # enclosures
+        use_unit_spacing: False
+        unit_spacing: {poly: [0.07], metal1: [0.05], oxide: [0.07]}
+        multi_spacing: {poly: [0.07, 0.07], metal1: [0, 0.05], oxide: [0.07, 0.07]}
 
-  VIAS:
-    VIA1:
-      name: 'Via1'
-      layers: [['Metal1', 'Metal2']]
-      dimensions: {width: 0.19, height: 0.19}
-      spacing: {middle: [[1, 0.22], [4, 0.29]], edge: {canUseSingleEdge: True, singleAxis: [0.01, 0.05], doubleAxes: [0.05]}}
-    # VIA2 ... VIA7
+vias:
+  via1:
+    name: 'Via1'
+    layers: [[metal1, metal2]]
+    dimensions: {width: 0.19, height: 0.19}
+    spacing:
+      middle: [[1, 0.22], [4, 0.29]]
+      edge: {use_unit_spacing: False, unit_spacing: [0.05], multi_spacing: [0.01, 0.05]}
+  # via2 ... via7
 
-  METALS:
-    Metal1:
-      name: 'Metal1'
-      dimensions: {minWidth: 0.16, minHeight: 0.16, maxWidth: [12, 50], maxHeight: [50, 20], minArea: 0.09, maxArea: 600}
-      spacing: [[0.16, 0.16, 0.18], [0.3, 1.0, 0.22], [10.0, 10.0, 0.6]]   # [[line width, parallel run, spacing], ...]
-      abut: {can_abut_single_axis: True, single_axis: [[0.16, 0.18]], double_axis: [[0.16, 0.18, 0.18]]}
-    # Metal2 ... Metal7
+metals:
+  metal1:
+    name: 'Metal1'
+    dimensions: {min_width: 0.16, min_height: 0.16, max_width: [12, 50], max_height: [50, 20], min_area: 0.09, max_area: 600}
+    spacing: [[0.16, 0.16, 0.18], [0.3, 1.0, 0.22], [10.0, 10.0, 0.6]]   # [[line width, parallel run, spacing], ...]
+    abut: {use_unit_abut: False, unit_abut: [[0.16, 0.0]], multi_abut: [[0.16, 0.0, 0.0]]}
+  # metal2 ... metal7
 ```
 
-`ihpSG13G2` defines `Metal1` to `Metal7`. `Metal6` and `Metal7` are the PDK's `TopMetal1` and `TopMetal2` (`TM1` and `TM2`). Every via must join two known layers, and every pair of adjacent metals must be joined by a via.
+- `edge.multi_spacing` gives `[min, max]` enclosures: the smaller one on one axis and the larger on the other. With `use_unit_spacing: True`, `unit_spacing` is used on every side instead.
+- `abut` is the margin a junction adds around a metal: `unit_abut` (`[[min width, edge]]`, both axes) when `use_unit_abut` is set, otherwise `multi_abut` (`[[min width, axis a, axis b]]`).
+- The `name` of a via or metal is its PDK layer name. The keys (`metal1`, `via1`) are the IDs used everywhere else. Cell parameters may write an ID in any case (`'Metal2'` is `metal2`).
+
+`ihpSG13G2` defines `metal1` to `metal7`. `metal6` and `metal7` are the PDK's `TopMetal1` and `TopMetal2` (`TM1` and `TM2`). In `sky130A`, `metal1` is the local interconnect `li1` (its contact is `licon1`), and `metal2` to `metal6` are `met1` to `met5`. Every via must join two known layers, and every pair of adjacent metals must be joined by a via.
 
 ## parameter_defaults.yaml
 
-Optional process defaults for S-Cell parameters, under `GLOBAL_CONFIG.SCELL.{tscell, rscell, cscell}`. They are merged over the framework defaults (`aicl_core/config/global_defaults.yaml`) and under the user's parameters. `ihpSG13G2` sets, for example, the default resistor `segment_spacing` (`0.2`) and the default capacitor terminal wire (`width: 0.4`, `offset: 0.4`).
+Optional process defaults for S-Cell parameters, under `GLOBAL_CONFIG.SCELL.{tscell, rscell, cscell}`. Each kind has a `config` block (the cell's `settings`) and a `terminals` block (the default wires of signal and power terminals). The values are layered in this order, each over the one before:
+
+1. the framework defaults, `aicl_core/config/global_defaults.yaml`;
+2. the process's `parameter_defaults.yaml`;
+3. the overrides set from a script with `SCellConfig` (see [Configure]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell));
+4. the cell's own parameters.
+
+`ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.4`). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
 
 ## gds_mapping.yaml
 
-Maps each generic layer to a GDS layer number and to the datatypes for drawing, labels and pins. A layer that is not listed is not exported.
+Maps each layer ID to a GDS layer number and to the datatypes for drawing, labels and pins. A layer that is not listed is not exported.
 
 ```yaml
-Oxide Diffusion:
+oxide_diffusion:
   name: 'Activ'
   gdsNumber: 1
   purpose: {polygon: 0, label: 0, pin: 2}
 
-Metal6:
+metal6:
   name: 'TM1'
   gdsNumber: 126
   purpose: {polygon: 0, label: 25, pin: 2}
+
+thick_gate_oxide:                      # an extension layer of the high-voltage transistors
+  name: 'ThickGateOx'
+  gdsNumber: 44
+  purpose: {polygon: 0, label: 0, pin: 2}
 ```
 
+The keys are the layer IDs of `connectivity.yaml` and of the primitives' base and extension layers.
+
 {: .warning }
-In `ihpSG13G2`, `N Implant` (`nSD`) and `P Well` are commented out on purpose. The n+ implant is not a drawn layer in SG13G2, and writing GDS layer 7 would remove every NMOS from the LVS extraction. Leave them out.
+In `ihpSG13G2`, `n_implant` (`nSD`) and `p_well` are commented out on purpose. The n+ implant is not a drawn layer in SG13G2, and writing GDS layer 7 would remove every NMOS from the LVS extraction. Leave them out. In `sky130A`, `pwell` is listed but not written (`export.suppressed_layers`), because the p-well is implied in SKY130.
 
 ## verification.yaml
 
@@ -120,12 +171,14 @@ DRC, LVS and export settings, under `Verification`.
 | Key | Description |
 |:--|:--|
 | `default_backend` | The checker used when `run_drc`/`run_lvs` get no `backend`: `klayout` for `ihpSG13G2`. `AICL_VERIFICATION_BACKEND` overrides it. |
-| `pdk_root_env`, `pdk_relative_path` | How the PDK is found. The variable named here (`AICL_PDK_ROOT_IHPSG13G2`) is read first, then `$AICL_PDK_ROOT/<pdk_relative_path>` (`IHP-Open-PDK/ihp-sg13g2`). |
+| `pdk_root_env`, `pdk_relative_path` | How the PDK is found. The variable named here (`AICL_PDK_ROOT_IHPSG13G2`, `AICL_PDK_ROOT_SKY130A`) is read first, then `$AICL_PDK_ROOT/<pdk_relative_path>` (`IHP-Open-PDK/ihp-sg13g2`, `sky130A_el`). |
 | `backends.klayout` | `drc_deck` and `lvs_deck` paths relative to the PDK root, `drc_defaults` (`run_mode`, `threads`), `lvs_defaults` (`combine_devices`, `top_lvl_pins`) and `parameter_tolerance` (used only for user-supplied schematics). |
 | `backends.klayout.drc_extra_decks` | Optional list of further DRC decks, relative to the PDK root, run after `drc_deck` over the same layout. Their violations count like the main deck's, so a layout is clean only when every deck passes. A listed deck that is missing makes the run an error. `ihpSG13G2` lists `rule_decks/sg13g2_maximal.drc`, the extra rules that IHP's own DRC flow also runs. The density deck is left out: its minimum-density rules are meant for a full chip. |
-| `backends.klayout.rd_names` | Optional `{name: deck name}` map for a deck that reads its `-rd` variables under other names than `input`, `topcell`, `report` and `schematic`. The IHP decks need none. |
+| `backends.klayout.rd_names` | Optional `{name: deck name}` map for a deck that reads its `-rd` variables under other names than `input`, `topcell`, `report` and `schematic`. The IHP decks need none; `sky130A` renames `threads`, `topcell` and `combine_devices`. |
+| `backends.klayout.drc_rd`, `lvs_rd` | Optional `{name: value}` pairs passed to every DRC or LVS run as `-rd name=value`. The sky130A DRC deck checks nothing unless it is told which rule groups to run, so `sky130A` sets `{feol: true, beol: true, offgrid: true}`. |
+| `backends.klayout.lvs_mismatch_exit_codes` | Exit codes with which the LVS deck reports a mismatch rather than a failure to run. The sky130A deck exits with `1` when the netlists differ; the verdict is then read from its report. |
 | `backends.magic`, `backends.netgen` | Magic `tech`, `rcfile` and `extract_tech`, and the Netgen `setup` file. |
-| `export.suppressed_layers` | Layers deliberately not written to GDS (`nSD`, `PWell`). |
+| `export.suppressed_layers` | Layers deliberately not written to GDS (`nSD` and `PWell` in `ihpSG13G2`, `pwell` in `sky130A`). |
 | `export.annotation_layers` | Cell outline layers. They are not mask geometry. |
 | `export.device_layers` | If none of these layers is in an export, a clean DRC result is reported as "nothing was checked". |
 | `export.port_label_layers` | Layers that can carry a port label that the LVS deck reads. |
@@ -161,24 +214,28 @@ Schematic generation settings, under `Schematic`.
 ## Reading the settings from Python
 
 ```python
-# The copilot from the core package
+# The copilot and the process context from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.contextmanager import ContextManager
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_TECH
 
 # Start the copilot for the process we want to read
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
-# The settings from config.yaml, as nested dictionaries
-tech = copilot.getTechParameters
-print('grid:', tech['LayoutResolution'], 'um')
+# The settings from configuration.yaml, as nested dictionaries
+configuration = copilot.getTechParameters
+print('grid:', configuration['layout_resolution'], 'um')
 
-# The MOSFET size limits
-mosfet_settings = tech['Transistors']['MOSFET']
-print('MOSFET limits:', mosfet_settings['PCell']['Limits'])
+# The transistor size limits, as written in the file
+print('transistor limits:', configuration['transistors']['pcell']['limits'])
 
-# The names of the metal layers
-connectivity = copilot.getMOSParameters['Connectivity']
-metal_names = list(connectivity['METALS'])
-print('metals:', metal_names)
+# The same limits resolved for one device class
+print('NMOS limits:', ContextManager.get_device_limits(TRANSISTOR_TECH.MOSFET, device_class=TRANSISTOR_CLASS.STANDARD_NMOS))
+
+# The metal layer IDs and their PDK layer names (connectivity.yaml)
+print('metals:', ContextManager.get_metal_layer_name_mapping())
 
 # The layers the layout viewer draws
 print('display layers:', copilot.get_display_layers())

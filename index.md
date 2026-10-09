@@ -13,7 +13,7 @@ AICL Co-pilot (Analog Integrated Circuit Layout Co-pilot) is a Python framework 
 - placers and routers for M-Cells;
 - GDS export, DRC/LVS/PEX, ngspice simulation and xschem schematics.
 
-Everything a technology needs is read from YAML process templates. The core package ships the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) open PDK.
+Everything a technology needs is read from YAML process templates. The core package ships templates for the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) and [SkyWater SKY130](https://github.com/google/skywater-pdk) (`sky130A`) open PDKs.
 
 ```python
 # The copilot and the transistor S-Cell generator from the core package
@@ -21,7 +21,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Make a default NMOS transistor S-Cell
 nmos = TSCell(name='nmos')

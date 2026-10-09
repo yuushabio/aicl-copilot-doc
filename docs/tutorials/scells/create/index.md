@@ -16,7 +16,7 @@ Every script starts by creating an `AiclCopilot` for a process technology. The C
 from aicl_core.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 ```
 
 {: .note }
@@ -32,7 +32,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # No arguments: one minimum-size NMOS with the process defaults
 nmos_scell = TSCell()
@@ -74,7 +74,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Describe the cell: one NMOS device M1 with 4 fingers, and its nets
 nmos_parameters = {
@@ -120,7 +120,7 @@ from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Describe the cell: a PMOS pair M1/M2 in one entry, so they share diffusion
 pair_parameters = {
@@ -154,7 +154,7 @@ copilot.preview_layout(pair_scell)
 
 Every S-Cell constructor (`TSCell`, `RSCell`, `CSCell`) takes two device arguments:
 
-- `device_class`: which device to draw, for example `TRANSISTOR_CLASS.STANDARD_NMOS`, `LOW_VT_NMOS`, `HIGH_VT_NMOS`, `STANDARD_PMOS`, `LOW_VT_PMOS` or `HIGH_VT_PMOS`. Left out, a `TSCell` is a `STANDARD_NMOS`.
+- `device_class`: which device to draw. The core package builds `TRANSISTOR_CLASS.STANDARD_NMOS` and `TRANSISTOR_CLASS.STANDARD_PMOS`. Left out, a `TSCell` is a `STANDARD_NMOS`.
 - `device_tech`: the device technology, for example `TRANSISTOR_TECH.MOSFET`. Left out, the cell uses the default technology of its kind, which is the one the core package builds.
 
 The process template maps each class to a PDK device (see [Mapping]({% link docs/setup/process/mapping.md %})). Both arguments are checked when the cell is built: a class the process has no device for raises a `ParameterError` that lists the classes it does have. The values can be read back and changed later:
@@ -168,7 +168,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # One device M1 with 2 fingers
 parameters = {
@@ -179,8 +179,8 @@ parameters = {
     },
 }
 
-# Build it as a low-threshold NMOS and print its class and technology
-switch = TSCell(name='switch', parameters=parameters, device_class=TRANSISTOR_CLASS.LOW_VT_NMOS)
+# Build it as an NMOS and print its class and technology
+switch = TSCell(name='switch', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
 print(switch.get_device_class(), switch.get_device_tech())
 
 # Make it a PMOS: the cell is rebuilt in place with the new class

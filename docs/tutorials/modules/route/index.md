@@ -45,7 +45,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {
@@ -86,9 +86,9 @@ inverter.add_cells([nmos, pmos])
 # v_in joins both gates and v_out both drains, on 0.3 um Metal4;
 # vdd and vss have one component each, so they are not routed
 inverter.set_terminal_parameters([
-    {'name': 'v_in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'v_in', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'nmos': {'terminal': 'v_in'}, 'pmos': {'terminal': 'v_in'}}},
-    {'name': 'v_out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'v_out', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'nmos': {'terminal': 'v_out'}, 'pmos': {'terminal': 'v_out'}}},
     {'name': 'vdd', 'components': {'pmos': {'terminal': 'vdd'}}},
     {'name': 'vss', 'components': {'nmos': {'terminal': 'vss'}}},
@@ -169,7 +169,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # We build the same inverter twice, once per router.
 # The parameters, nets and placement entries below are shared by both copies.
@@ -229,7 +229,7 @@ align_inverter.set_terminal_parameters(inverter_terminals)
 PlaceAndRouteManager.place_cell(align_inverter, 'REFERENCE_PLACER', constraints=placer_constraints)
 
 # Wires at least 0.2 um wide, only on Metal2 to Metal4; try 5 route candidates per net
-align_constraints = {'min_width': 0.2, 'min_layer': 'Metal2', 'max_layer': 'Metal4'}
+align_constraints = {'min_width': 0.2, 'min_layer': 'metal2', 'max_layer': 'metal4'}
 align_options = {'candidates': 5}
 align_result = PlaceAndRouteManager.route_cell(
     align_inverter, 'ALIGN_ROUTER', constraints=align_constraints, options=align_options)
@@ -278,7 +278,7 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. The NMOS: gate on v_in, drain on v_out, source and bulk on the vss rail ---
 nmos_parameters = {

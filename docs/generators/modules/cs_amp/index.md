@@ -41,7 +41,7 @@ library_name = 'generators'
 view_name = 'cs_amp'
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. The two S-Cells ---
 # Input device: one NMOS with 4 fingers; gate = v_in, drain = v_out, source and bulk = vss
@@ -88,7 +88,7 @@ cs_amp.add_cells([input_nmos, load_pmos])
 module_nets = [
     {'name': 'v_in', 'components': {'input_nmos': {'terminal': 'v_in'}}},
     {'name': 'v_bias', 'components': {'load_pmos': {'terminal': 'v_bias'}}},
-    {'name': 'v_out', 'top_wire': {'layer': 'Metal3', 'width': 0.4},
+    {'name': 'v_out', 'top_wire': {'layer': 'metal3', 'width': 0.4},
      'components': {'input_nmos': {'terminal': 'v_out'}, 'load_pmos': {'terminal': 'v_out'}}},
     {'name': 'vdd', 'components': {'load_pmos': {'terminal': 'vdd'}}},
     {'name': 'vss', 'components': {'input_nmos': {'terminal': 'vss'}}},

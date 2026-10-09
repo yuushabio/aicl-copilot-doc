@@ -40,7 +40,7 @@ library_name = 'generators'
 view_name = 'ota_5t'
 
 # Start the copilot for the IHP process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Netlist ---
 # Read the SPICE netlist that ships with core into a circuit

@@ -46,7 +46,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Build the 5T OTA from its netlist ---
 work_directory = os.environ['AICL_COP_WORK_DIR']
@@ -118,7 +118,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.simulation import testbench
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Build the 5T OTA from its netlist ---
 work_directory = os.environ['AICL_COP_WORK_DIR']
@@ -191,7 +191,7 @@ from aicl_core.bin.simulation import testbench
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Build the 5T OTA from its netlist ---
 work_directory = os.environ['AICL_COP_WORK_DIR']

@@ -18,15 +18,15 @@ from aicl_core.bin.core.copilot import AiclCopilot
 
 ## Constructor
 
-`AiclCopilot(process_tech='generic', aicl_home_directory='', project_directory='')`
+`AiclCopilot(process_name='generic', aicl_home_directory='', project_directory='')`
 
 | Argument | Description |
 |:--|:--|
-| `process_tech` | Process to make active, for example `'ihpSG13G2'`. If it is not a valid process, another valid process is used and a warning is logged. |
+| `process_name` | Process to make active, for example `'ihpSG13G2'`. If it is not a valid process, another valid process is used and a warning is logged. |
 | `aicl_home_directory` | Storage root. The default is `~/.aicl_copilot`. It is used only if it exists and is writable. |
 | `project_directory` | Where `layouts/` and `schematics/` are created. The default is the home directory. |
 
-The constructor loads `config.env` and finds the configuration directory: `AICL_COP_CONFIG_DIR` when it is set, otherwise the package's own `aicl_core/config` (`AiclCopilot.default_config_dir()`). It raises `SetupException` if that directory does not exist or has no `process_templates` folder. It then validates every process template and makes `process_tech` active.
+The constructor loads `config.env` and finds the configuration directory: `AICL_COP_CONFIG_DIR` when it is set, otherwise the package's own `aicl_core/config` (`AiclCopilot.default_config_dir()`). It raises `SetupException` if that directory does not exist or has no `process_templates` folder. It then validates every process template and makes `process_name` active.
 
 | Attribute | Description |
 |:--|:--|
@@ -38,11 +38,11 @@ The constructor loads `config.env` and finds the configuration directory: `AICL_
 
 | Method | Description |
 |:--|:--|
-| `set_process(process_tech: str = 'generic')` | Make another valid process active. Cells created after this are built for it. |
+| `set_process(process_name: str = 'generic')` | Make another valid process active. Cells created after this are built for it. |
 | `set_aicl_home_directory(directory: str | None = None)` | Change the storage root (`AICL_COP_HOME_DIR`). |
 | `set_project_directory(directory_path: str)` | Change the project directory (`AICL_COP_PROJECT_DIR`, `AICL_COP_LAY_DIR`, and `AICL_COP_SCH_DIR` unless it is set in `config.env`). |
-| `getTechParameters` *(property)* | The active process's `config.yaml` `Configuration` section. |
-| `getMOSParameters` *(property)* | `{'Connectivity': ..., 'Primitives': ..., 'BaseParameters': ...}` for the active process. |
+| `getTechParameters` *(property)* | The active process's `configuration.yaml`, with the resolved `process_name`, `process_tech` (family) and `process_pdk_name`. |
+| `get_transistor_parameters` *(property)* | The active process's transistor primitives and characterization: `{'primitives': ..., 'characterization': {class key: {profile: ...}}, 'default_profiles': {class key: profile}}`. |
 | `getDeviceMappings` *(property)* | The active process's `devices.yaml`. |
 | `get_display_layers()` | The layers the viewer shows: `{'Metals', 'Vias', 'BoundLayers', 'Primitives'}`. |
 
@@ -51,7 +51,7 @@ The constructor loads `config.env` and finds the configuration directory: `AICL_
 | Method | Description |
 |:--|:--|
 | `preview_layout(cell, enable_culling=True, wheel_zoom=True)` | Open the layout viewer on an `SCell`, `MCell` or `AbstractMCell`. `enable_culling` leaves contacts and vias out of the drawing. `wheel_zoom` makes the mouse wheel zoom. |
-| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. An `AbstractMCell` raises `ProjectException`. |
+| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. Where two same-type implants of neighbouring cells end closer than the process's implant spacing, the gap between them is filled, and the number of fills is logged. An `AbstractMCell` raises `ProjectException`. |
 | `generate_netlist(cell, library_name='', view_name='', style='spice', path='', include_dummies=None, lvs_backend='')` | Write the cell as a netlist file with one top-level `.subckt <view_name>`, and return its path (a `pathlib.Path`). `style='spice'` writes the SPICE dialect of the technology's LVS backend (or of `lvs_backend`); this is the file `run_lvs` writes when it gets no schematic. `style='cdl'` writes an auCdl netlist. The default file is `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl`); `library_name` defaults to `'schematics'` and `view_name` to the cell's name. `include_dummies=None` states the dummy fingers the way the backend's extractor sees them. |
 | `get_layout_primitives(cell)` | The polygons, labels and canvas size that the viewer would draw, as a dict. |
 | `get_export_manifest()` | What the most recent export placed (an `ExportManifest`), or `None`. |
@@ -75,7 +75,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.api import design_paths
 
 # Start the copilot; it sets AICL_COP_LAY_DIR and AICL_COP_SCH_DIR
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # Where generate_layout(cell, 'doc_examples', 'nmos') writes the GDS
 print(design_paths.layout_file(copilot.current_process, 'doc_examples', 'nmos'))
@@ -157,7 +157,7 @@ from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. A 4-finger NMOS with gate, drain and source/bulk nets ---
 parameters = {

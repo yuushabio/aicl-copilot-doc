@@ -20,6 +20,8 @@ The resistor class is the `device_class` argument of `RSCell`:
 | `STANDARD_P3T` | plus, minus, bulk | `rppd` |
 | `STANDARD_N3T` | plus, minus, bulk | none: refused with a `ParameterError` |
 
+In `sky130A`, the classes are `STANDARD_N2T` (`sky130_fd_pr__res_generic_po`) and `STANDARD_P3T` (`sky130_fd_pr__res_high_po`).
+
 The technology, `device_tech`, is `RESISTOR_TECH.POLYSILICON`, the default.
 
 ## Specifications
@@ -36,7 +38,7 @@ An `RSCell` holds one device. To lay out several resistors, build one cell per r
 
 The resistor composer is `RESISTOR_COMPOSER.LINEAR`. It has these options:
 
-- `segment_spacing`: the gap between segments, in µm.
+- `segment_spacing`: extra space between segments, in µm, on top of the least gap the process allows. The least gap comes from the process characterization (0.18 µm in `ihpSG13G2`); `cell.minimum_segment_spacing()` returns it. The default is `0.0`, and `ihpSG13G2` sets `0.02`, so its segments are 0.2 µm apart unless you set another value.
 - `segment_connection`: a `RESISTOR_SEGMENT_CONNECTION`. `SERIES` chains the segments into a meander. `PARALLEL` joins all their heads and all their tails.
 
 ## Settings
@@ -62,7 +64,7 @@ from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A three-terminal resistor R1 made of 4 segments in series (the class is set below)
 parameters = {
@@ -73,7 +75,7 @@ parameters = {
     },
     'composer': {
         'composer_type': RESISTOR_COMPOSER.LINEAR,
-        'segment_spacing': 0.4,     # um between segments
+        'segment_spacing': 0.4,     # um added to the least gap between segments
         'segment_connection': RESISTOR_SEGMENT_CONNECTION.SERIES,
     },
     # Put the substrate tap below the resistor
@@ -81,9 +83,9 @@ parameters = {
     # Plus and minus on wide Metal4 wires; the bulk goes to VSS
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
         {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]],
-         'base_wire': {'layer': 'Metal4', 'width': 0.5, 'number_of_vias': 2}},
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
         {'name': 'VSS', 'type': TERMINAL_TYPE.GROUND, 'pins': [['R1', RESISTOR_PIN_TYPE.BULK]]},
     ],
 }
@@ -108,7 +110,7 @@ from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
 from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A two-terminal resistor R1 made of 5 segments in parallel
 parameters = {
@@ -119,13 +121,13 @@ parameters = {
     },
     'composer': {
         'composer_type': RESISTOR_COMPOSER.LINEAR,
-        'segment_spacing': 0.05,    # um between segments
+        'segment_spacing': 0.05,    # um added to the least gap between segments
         'segment_connection': RESISTOR_SEGMENT_CONNECTION.PARALLEL,
     },
     # Only plus and minus: this class has no bulk pin
     'terminals': [
-        {'name': 'v_plus', 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'Metal4', 'width': 0.5}},
-        {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'Metal4', 'width': 0.5}},
+        {'name': 'v_plus', 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]], 'base_wire': {'layer': 'metal4', 'width': 0.5}},
+        {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]], 'base_wire': {'layer': 'metal4', 'width': 0.5}},
     ],
 }
 

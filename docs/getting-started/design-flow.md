@@ -76,7 +76,7 @@ from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # --- 0. Load the process ---
-copilot = AiclCopilot(process_tech='ihpSG13G2')
+copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # --- 1. Device S-Cells ---
 # The NMOS: 2 fingers; source and bulk go to VSS
@@ -114,13 +114,13 @@ pmos = TSCell(name='mp', parameters=pmos_parameters, device_class=TRANSISTOR_CLA
 inverter = MCell(name='inverter')
 inverter.add_cells([nmos, pmos])
 inverter.set_terminal_parameters([
-    {'name': 'in', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'in', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'mn': {'terminal': 'in'}, 'mp': {'terminal': 'in'}}},
-    {'name': 'out', 'top_wire': {'layer': 'Metal4', 'width': 0.3},
+    {'name': 'out', 'top_wire': {'layer': 'metal4', 'width': 0.3},
      'components': {'mn': {'terminal': 'out'}, 'mp': {'terminal': 'out'}}},
-    {'name': 'VSS', 'top_wire': {'layer': 'Metal3', 'width': 0.3},
+    {'name': 'VSS', 'top_wire': {'layer': 'metal3', 'width': 0.3},
      'components': {'mn': {'terminal': 'VSS'}}},
-    {'name': 'VDD', 'top_wire': {'layer': 'Metal3', 'width': 0.3},
+    {'name': 'VDD', 'top_wire': {'layer': 'metal3', 'width': 0.3},
      'components': {'mp': {'terminal': 'VDD'}}},
 ])
 
