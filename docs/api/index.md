@@ -35,7 +35,7 @@ These pages list the public classes and methods of the `aicl_core` package, with
 | `PlaceAndRouteManager` | `from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager` |
 | `PlacerManager` | `from aicl_core.bin.utilities.helpers.placers import PlacerManager` |
 | `RouterManager` | `from aicl_core.bin.utilities.helpers.routers import RouterManager` |
-| `PlaceRequest`, `RouteRequest`, `PlaceResult`, `RouteResult`, `OptionSpec`, `LevelSymmetry` | `from aicl_core.bin.pnr import ...` |
+| `PlaceRequest`, `RouteRequest`, `PlaceResult`, `RouteResult`, `OptionSpec`, `PlacerOptionsModel`, `RouterOptionsModel`, `LevelSymmetry` | `from aicl_core.bin.pnr import ...` |
 | `CustomRPS`, `ReferencePlacer` | `aicl_core.bin.placers.customrps.customrps`, `aicl_core.bin.placers.reference_placer.referenceplacer` |
 | `RectilinearMstMCellRouter` | `from aicl_core.bin.routers.mcell import RectilinearMstMCellRouter` |
 | `AlignMCellRouter`, `MagicalMCellRouter` | `aicl_core.bin.routers.mcell.align.router`, `aicl_core.bin.routers.mcell.magical.router` |

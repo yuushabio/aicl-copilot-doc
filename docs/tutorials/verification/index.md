@@ -30,6 +30,8 @@ A blank binary variable means the tool is looked up on `PATH`. PEX also needs th
 
 A missing tool does not raise. The result's `status` is `RunStatus.NOT_AVAILABLE` and `message` says what is missing. Asking such a result `clean`, `matched` or `extracted` raises `VerificationStateError`, so a check that never ran cannot pass.
 
+A device the process does not support is different: `run_drc` and `run_lvs` refuse it before anything is exported. When the cell (or a `schematic` you pass) holds a device whose class and technology the process's `devices.yaml` maps to no model, they raise `UnsupportedDeviceError`, which names the devices. A rule deck cannot be trusted to report a device it does not know; it might pass it as plain metal.
+
 ## DRC
 
 ```python
@@ -88,6 +90,7 @@ if drc_magic.status is RunStatus.COMPLETED and not drc_magic.clean:
 
 - `clean`: `True` when the deck found nothing.
 - `violations`, `counts_by_rule` and `rules()`: what fired.
+- Each violation's `locations`: where it is, as boxes (`BBox`, in µm) in the top cell's coordinates, one per placement of the cell it was found in. `report()` lists the first few per rule, so you can find them in the layout without opening the tool's database.
 - `summary()` gives one line and `report()` a readable report.
 - `caveats()` lists the ways a result is narrower than it looks.
 - `artifacts.directory` is the run directory, with the report database and the log.
@@ -205,7 +208,8 @@ if lvs_magic.status is RunStatus.COMPLETED:
 `LvsResult` fields and methods:
 
 - `matched`, and `verdict` (`MatchStatus.MATCH`, `MISMATCH` or `UNKNOWN`).
-- `mismatches`, and the device counts `layout_device_counts` and `schematic_device_counts`.
+- `mismatches`, and the device counts `layout_device_counts` and `schematic_device_counts`. With the KLayout backend, a mismatched net, device or pin that exists in the layout has `locations` (top-cell boxes in µm) and the `layers` it is drawn on, and `report()` prints them.
+- `message`: why the verdict differs from the tool's result database, when it does. The IHP deck checks the top-level ports after the comparison; when its log ends in "Netlists don't match", the result is a mismatch even if the database reads as a match.
 - `parameter_deltas`, and `checks_relaxed` when a parameter tolerance was needed for the match.
 - `checks_skipped`, and `summary()` / `report()`.
 

@@ -53,7 +53,7 @@ Cell
 | `get_polygons(use_pcells=False)` | The drawn polygons. |
 | `get_guard_ring()`, `get_body_rail()` | The guard ring and body rail polygons. |
 | `get_pcell_parameters()` | The per-device PDK parameters, for p-cell based export. |
-| `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: the framework defaults, the process's `parameter_defaults.yaml` and the `SCellConfig` overrides, each over the one before. |
+| `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: the framework defaults, the process's `parameter_defaults.yaml` and the `SCellConfig` overrides, each over the one before (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)). Their `settings` block is what a new cell's `settings` start from. A `config` block in any of them raises `ValueError` (it is now `settings`). |
 | `SCell.create_from_params(parameters=None, name=None, **kwargs)` *(class method)* | Build an S-Cell from a saved parameter dictionary. See [below](#rebuilding-from-a-parameter-dictionary). |
 
 `TSCell`, `RSCell` and `CSCell` also share the device-setting methods:
@@ -66,6 +66,7 @@ Cell
 | `set_device_tech(device_tech)` | The same for the technology. Raises `ParameterError` for a technology that cannot be built or that the process does not offer. |
 | `device_tech_key()` | The internal name of the cell's technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`). |
 | `device_limits()` | The process limits for the cell's technology and class (`min_length`, `min_finger_width`, `min_width`, ...), with any per-class value resolved. |
+| `available_profiles()` | The names of the characterization profiles of the cell's device class: the values its `settings['profile_name']` can take. |
 
 ## TSCell
 

@@ -129,12 +129,31 @@ metals:
 
 ## parameter_defaults.yaml
 
-Optional process defaults for S-Cell parameters, under `GLOBAL_CONFIG.SCELL.{tscell, rscell, cscell}`. Each kind has a `config` block (the cell's `settings`) and a `terminals` block (the default wires of signal and power terminals). The values are layered in this order, each over the one before:
+Optional process defaults for S-Cell parameters, under `GLOBAL_CONFIG.SCELL.{tscell, rscell, cscell}`. Each kind has a `settings` block (the cell's `settings`) and a `terminals` block (the default wires of signal and power terminals). Keys directly under `SCELL` (outside the kind blocks) apply to every kind.
+
+```yaml
+GLOBAL_CONFIG:
+  SCELL:
+    tscell:
+      settings:                       # the cell's 'settings'
+        default_number_of_vias: 1
+        number_of_dummy_fingers: {start: 0, end: 0}
+        guard_ring: {enable: False, offset: 0.0}
+      terminals:
+        signals:
+          - base_wire: {layer: 'metal2', width: 0.3, offset: 0.0, number_of_vias: 1}
+```
+
+The block was called `config` in earlier releases. A file that still has a `config` block makes the next cell stop with a `ValueError`; rename it to `settings`.
+
+The values are layered in this order, each over the one before:
 
 1. the framework defaults, `aicl_core/config/global_defaults.yaml`;
 2. the process's `parameter_defaults.yaml`;
 3. the overrides set from a script with `SCellConfig` (see [Configure]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell));
 4. the cell's own parameters.
+
+The framework defaults set `SCELL.settings.profile_name: null` for every kind, so a cell is built from its class's default characterization profile unless a later layer or the cell chooses another one (see [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile)).
 
 `ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.4`). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
 
@@ -161,6 +180,8 @@ thick_gate_oxide:                      # an extension layer of the high-voltage 
 
 The keys are the layer IDs of `connectivity.yaml` and of the primitives' base and extension layers.
 
+A layer that only carries texts (for example a model name read by the LVS deck) can be marked `label_only: true`. Its labels are then written without the pin box that a terminal label normally gets.
+
 {: .warning }
 In `ihpSG13G2`, `n_implant` (`nSD`) and `p_well` are commented out on purpose. The n+ implant is not a drawn layer in SG13G2, and writing GDS layer 7 would remove every NMOS from the LVS extraction. Leave them out. In `sky130A`, `pwell` is listed but not written (`export.suppressed_layers`), because the p-well is implied in SKY130.
 
@@ -182,14 +203,16 @@ DRC, LVS and export settings, under `Verification`.
 | `export.annotation_layers` | Cell outline layers. They are not mask geometry. |
 | `export.device_layers` | If none of these layers is in an export, a clean DRC result is reported as "nothing was checked". |
 | `export.port_label_layers` | Layers that can carry a port label that the LVS deck reads. |
+| `backends.klayout.lvs_deck_additions` | Optional list of `{after, include}` entries: rule files of the template (`include`, relative to the template folder) that are added to the PDK's LVS deck right after the deck's own include line `after`. The run uses a copy of the deck with the additions, so the PDK stays untouched. An `after` that the deck does not include is an error. |
 
 ## simulation.yaml
 
-Simulator settings, under `Simulation`. The PDK root is the one that `verification.yaml` resolves.
+Simulator settings, under `Simulation`. By default, the PDK root is the one that `verification.yaml` resolves.
 
 | Key | Description |
 |:--|:--|
 | `default_backend` | `ngspice`. `AICL_SIMULATION_BACKEND` overrides it. |
+| `pdk_root_env`, `pdk_relative_path` | Optional: where the models are, when that is not the PDK root of `verification.yaml`. They work like the keys of the same name in `verification.yaml`. `sky130A` uses them, because its verification root is the KLayout package and not the PDK: the models are found through `AICL_PDK_ROOT_SKY130A_MODELS`, else `$AICL_PDK_ROOT/sky130A`. |
 | `backends.ngspice.sourcepath` | Model directories, relative to the PDK root. They are added to ngspice's `sourcepath`. |
 | `backends.ngspice.osdi` | Compiled Verilog-A models to load (PSP103 and others for SG13G2). |
 | `backends.ngspice.corners` | Corner name to the `.lib` lines that load it: `tt`, `ss`, `ff`, `sf`, `fs` and `mc` (mismatch). |

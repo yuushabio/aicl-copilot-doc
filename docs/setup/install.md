@@ -84,6 +84,7 @@ Every variable except `AICL_COP_WORK_DIR` can be left blank. A blank tool binary
 | `AICL_PDK_ROOT` | A directory of PDKs. Each technology adds its own relative path, for example `IHP-Open-PDK/ihp-sg13g2`. |
 | `AICL_PDK_ROOT_IHPSG13G2` | The SG13G2 PDK root. It takes precedence over `AICL_PDK_ROOT`. |
 | `AICL_PDK_ROOT_SKY130A` | The sky130A KLayout package (the directory with `drc/` and `lvs/`, for example `~/.klayout/salt/sky130A_el`). It takes precedence over `$AICL_PDK_ROOT/sky130A_el`. |
+| `AICL_PDK_ROOT_SKY130A_MODELS` | The sky130A PDK itself (the directory with `libs.tech/ngspice/sky130.lib.spice`, as installed by open_pdks or volare). Only the simulation settings read it. The default is `$AICL_PDK_ROOT/sky130A`. |
 | `AICL_PDK_ROOT_PTMMOCK` | The PTM model files for the simulation-only `mock32`/`mock45`/`mock65` sets. The default is `$AICL_PDK_ROOT/PTM-Mock`. |
 
 ### Simulation

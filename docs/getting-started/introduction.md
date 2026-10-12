@@ -46,10 +46,10 @@ The process templates and the framework defaults are in `aicl_core/config/`. The
 | Process | Layout | GDS export | DRC / LVS | PEX | Simulation | Schematic |
 |:--|:--:|:--:|:--:|:--:|:--:|:--:|
 | `ihpSG13G2` (IHP SG13G2, 130 nm) | yes | yes | KLayout, Magic/Netgen | KPEX | ngspice | xschem |
-| `sky130A` (SkyWater SKY130, 130 nm) | yes | yes | KLayout (LVS matches transistor cells only) | | | |
+| `sky130A` (SkyWater SKY130, 130 nm) | yes | yes | KLayout (LVS matches transistor cells only) | | models only | |
 | `mock32`, `mock45`, `mock65` (PTM-based model sets) | | | | | ngspice | |
 
-`sky130A` builds the standard transistors, its N-poly and P-poly resistors and its MIM capacitor; see [sky130A]({{ site.baseurl }}/docs/setup/process/#sky130a). The mock processes are simulation-only model sets. They can simulate netlists, but they have no layout context. See [Process Technology]({{ site.baseurl }}/docs/setup/process/) for adding a process.
+`sky130A` builds the standard transistors, its N-poly and P-poly resistors and its MIM capacitor. Its template names the ngspice models and corners, but testbench simulation needs schematic support, which `sky130A` does not have yet; see [sky130A]({{ site.baseurl }}/docs/setup/process/#sky130a). The mock processes are simulation-only model sets. They can simulate netlists, but they have no layout context. See [Process Technology]({{ site.baseurl }}/docs/setup/process/) for adding a process.
 
 ## Next steps
 

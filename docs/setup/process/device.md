@@ -95,7 +95,7 @@ primitive_construction:
       max_tie_distance: 20.0             # any diffusion is kept within this distance of a body tie
 ```
 
-`configuration.min_spacing.p_implant` (and `n_implant`) is the implant spacing rule. When two cells are exported next to each other and their same-type implants end closer than this, the gap is filled, so the export does not break the implant spacing rule.
+`configuration.min_spacing.p_implant` (and `n_implant`) is the implant spacing rule. When two cells are exported next to each other and their same-type implants end closer than this, the gap is filled, so the export does not break the implant spacing rule. `configuration.min_width.p_implant` (and `n_implant`), when given, is the implant minimum width: each fill is then at least this long along the gap. Where the two implants face each other over a shorter run, the fill covers both shapes' whole extent, so the merged implant has no narrow neck. `ihpSG13G2` sets `min_width.p_implant: 0.31` (rule pSD.a), and `sky130A` sets `0.38` for both implants (nsd.1, psd.1).
 
 A process can need two more layers around a transistor. `sky130A` shows both:
 
@@ -182,6 +182,7 @@ An extension entry adds one layer to the devices of one class:
 | `display_name` | The name the layout viewer shows. Without it, the viewer shows the key in words (`thick_gate_oxide` is "Thick Gate Oxide"). |
 | `reference_scope` | `bound` (the default): one shape over all the reference shapes of the device. `unit`: one shape per reference shape, for example one salicide block per resistor segment. |
 | `reference_side` | With `reference_scope: unit` only. `start_end` draws the layer at the first and last unit only, `middle` between neighbouring units. Left out, it is drawn at every unit. |
+| `reference_start_count`, `reference_end_count` | Optional counts (0 or more): draw that many shapes before the first unit and after the last, counted outward from its edge, for example over a transistor's dummy fingers. The nearest shape is placed at the reference distance, and each further one at the `<key>|<key>` spacing of the characterization beyond the previous one. They imply `reference_scope: unit` and cannot be combined with `reference_side`. More than one shape per side needs that `<key>|<key>` spacing. |
 | `purpose` | Optional: the name of a further purpose listed for the layer in `gds_mapping.yaml`; the shape is written with that datatype. Left out, it is written with the drawing (`polygon`) datatype. |
 
 A class with no extension entries (the standard transistors of `ihpSG13G2`, for example) is written as an empty key.
@@ -219,7 +220,9 @@ entries:
 default: true               # optional: this is the class's default profile
 ```
 
-A cell uses its class's default profile: the one marked `default: true`, otherwise the one named `default`. To build a cell from another profile, set `settings['profile_name']` to the profile's file name (without `.yaml`); a name the class does not have is refused with a `ParameterError` that lists the profiles it has. Every class you build cells with needs at least one profile.
+A cell uses its class's default profile: the one marked `default: true`, otherwise the one named `default`. To build a cell from another profile, set `settings['profile_name']` to the profile's file name (without `.yaml`), or to a per-class dictionary such as `{'default': None, 'standard_pmos': 'default'}`. A name the class does not have is refused with a `ParameterError` that lists the profiles it has. Every class you build cells with needs at least one profile.
+
+Profiles are part of the template: whoever writes the template adds them, and a cell script only chooses among them. `copilot.get_characterization_profiles()` lists the profiles of the active process and the default of each class. [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile) shows how a script chooses one for a cell, for one kind, or for every cell.
 
 ## Inspecting the loaded primitives
 
@@ -243,4 +246,7 @@ context = ContextManager.get_current_context()
 transistor_profiles = context['transistor_parameters']['characterization']
 for class_key, profiles in transistor_profiles.items():
     print(class_key, '->', list(profiles))
+
+# The same list with each class's default profile, here for the resistor S-Cells
+print(copilot.get_characterization_profiles('rscell'))
 ```

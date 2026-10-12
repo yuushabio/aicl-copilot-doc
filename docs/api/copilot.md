@@ -43,6 +43,7 @@ The constructor loads `config.env` and finds the configuration directory: `AICL_
 | `set_project_directory(directory_path: str)` | Change the project directory (`AICL_COP_PROJECT_DIR`, `AICL_COP_LAY_DIR`, and `AICL_COP_SCH_DIR` unless it is set in `config.env`). |
 | `getTechParameters` *(property)* | The active process's `configuration.yaml`, with the resolved `process_name`, `process_tech` (family) and `process_pdk_name`. |
 | `get_transistor_parameters` *(property)* | The active process's transistor primitives and characterization: `{'primitives': ..., 'characterization': {class key: {profile: ...}}, 'default_profiles': {class key: profile}}`. |
+| `get_characterization_profiles(kind=None, device_class=None)` | The characterization profiles a cell can choose from in the active process: `{kind: {class key: {'profiles': [names], 'default': name}}}`. `kind` (`'tscell'`, `'rscell'` or `'cscell'`) and `device_class` (an enum member, its name or its class key) narrow the answer. An unknown kind raises `CharacterizationError`. See [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile). |
 | `getDeviceMappings` *(property)* | The active process's `devices.yaml`. |
 | `get_display_layers()` | The layers the viewer shows: `{'Metals', 'Vias', 'BoundLayers', 'Primitives'}`. |
 
@@ -97,6 +98,7 @@ These methods export the cell first and check the file that was written. Without
 | `verification_for(backend: str = '')` | A bridge for a named backend (`'klayout'`, `'magic'` or `'KPEX'`). Bridges are cached per process and backend. |
 
 - `backend` overrides the technology's `default_backend` for one run.
+- `run_drc` and `run_lvs` first check that the process supports every device of the cell (and of a `schematic` you pass): its `devices.yaml` must map the device's class and technology to a model. Otherwise they raise `UnsupportedDeviceError` (`aicl_core.bin.verification.process_support`, a `VerificationError`) that names the devices, before anything is exported. A rule deck cannot be trusted to report a device it does not know.
 - The layout is written to `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds`, and generated netlists go next to it.
 - `run_drc` runs every deck the process lists: the main `drc_deck` and then each of `drc_extra_decks` (for `ihpSG13G2`, `sg13g2_maximal.drc`). Their violations are added together. `DrcResult.extra_decks` lists the extra decks, and `artifacts.extra_reports` their reports.
 - `run_lvs` with a `cell` and no `schematic` writes the reference netlist from the cell itself, and the result records `schematic_source='generated'`. That checks that the layout was built as the cell describes (router shorts, opens, missing vias). Pass a separately authored `schematic` to check the design intent.
@@ -107,11 +109,11 @@ Result fields:
 
 | Result | Useful members |
 |:--|:--|
-| `DrcResult` | `status` (`RunStatus`), `clean` *(property; raises if the run did not complete)*, `total`, `counts_by_rule`, `violations`, `extra_decks`, `summary()`, `report(limit=20)`, `artifacts` |
-| `LvsResult` | `status`, `verdict` (`MatchStatus.MATCH`, `MISMATCH` or `UNKNOWN`), `matched` *(property)*, `mismatches`, `layout_device_counts`, `schematic_device_counts`, `schematic_source`, `summary()` |
+| `DrcResult` | `status` (`RunStatus`), `clean` *(property; raises if the run did not complete)*, `total`, `counts_by_rule`, `violations`, `extra_decks`, `summary()`, `report(limit=20)`, `artifacts`. Each violation has `bbox` (in the coordinates of its `cell`) and `locations` (the same box in top-cell coordinates, once per placement), both `BBox` in µm; `report()` lists where the first violations of each rule are. |
+| `LvsResult` | `status`, `verdict` (`MatchStatus.MATCH`, `MISMATCH` or `UNKNOWN`), `matched` *(property)*, `mismatches`, `layout_device_counts`, `schematic_device_counts`, `schematic_source`, `message`, `summary()`. A mismatch with a layout side (KLayout backend) has `locations` (top-cell `BBox` es, µm) and the `layers` its net is on. `message` explains a verdict that differs from the result database, for example when the deck's log ends in "Netlists don't match" after its port check. |
 | `PexResult` | `status`, `extracted` *(property)*, `netlist`, `resistors`, `capacitors`, `total_capacitance_f`, `summary()` |
 
-`RunStatus` and `MatchStatus` are in `aicl_core.bin.verification.results`.
+`RunStatus`, `MatchStatus` and `BBox` (`left`, `bottom`, `right`, `top`, `center`, `width`, `height`) are in `aicl_core.bin.verification.results`.
 
 ## Simulation
 

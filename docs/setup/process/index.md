@@ -24,7 +24,7 @@ A template placed directly under `process_templates/<process name>/`, without a 
 | Template | Kind | Supports |
 |:--|:--|:--|
 | `ihpSG13G2` | Layout technology | S-Cells, M-Cells, GDS export, DRC/LVS (KLayout, Magic/Netgen), PEX (KPEX), ngspice simulation and xschem schematics. This is the [IHP SG13G2 open PDK](https://github.com/IHP-GmbH/IHP-Open-PDK), a 130 nm BiCMOS process. |
-| `sky130A` | Layout technology | S-Cells (standard NMOS/PMOS, N-poly and P-poly resistors, MIM capacitor), M-Cells, GDS export, DRC and LVS with KLayout. There is no simulation, schematic or PEX support yet. This is the [SkyWater SKY130](https://github.com/google/skywater-pdk) open PDK, a 130 nm CMOS process, in its `sky130A` variant. See [sky130A](#sky130a) below. |
+| `sky130A` | Layout technology | S-Cells (standard NMOS/PMOS, N-poly and P-poly resistors, MIM capacitor), M-Cells, GDS export, DRC and LVS with KLayout. A `simulation.yaml` names the ngspice models and corners, but there is no schematic or PEX support yet, so `run_simulation` cannot run. This is the [SkyWater SKY130](https://github.com/google/skywater-pdk) open PDK, a 130 nm CMOS process, in its `sky130A` variant. See [sky130A](#sky130a) below. |
 | `mock32`, `mock45`, `mock65` | Simulation-only model set | ngspice simulation with PTM-based predictive models. There is no layout, verification or schematic support. |
 
 ## Layout of a template
@@ -150,7 +150,8 @@ Verification, simulation and schematic settings are kept in their own files on p
 | Metals | `metal1` is SKY130's local interconnect `li1`; `metal2` to `metal6` are `met1` to `met5`. |
 | GDS export | Every drawn layer is in `gds_mapping.yaml`. `pwell` is not written: it is implied in SKY130. |
 | DRC and LVS | KLayout, with the decks of the sky130A KLayout package (`drc/core/sky130A_mr.drc`, `lvs/core/sky130.lvs`). Point `AICL_PDK_ROOT_SKY130A` at the package, or `AICL_PDK_ROOT` at the directory that holds `sky130A_el`. Transistor cells are DRC clean and match in LVS. Resistor and capacitor cells are DRC clean, but their LVS does not match yet. |
-| Simulation, schematics, PEX | Not available: the template has no `simulation.yaml` or `schematic.yaml`, and there is no PEX deck. |
+| Simulation | `simulation.yaml` loads the PDK's own ngspice library (`sky130.lib.spice`) with the corners `tt`, `ss`, `ff`, `sf` and `fs`. The models are found through `AICL_PDK_ROOT_SKY130A_MODELS`, else `$AICL_PDK_ROOT/sky130A`. The library sets `.option scale=1e-6`, so a netlist gives W and L in micrometres without a unit (`w=1 l=0.15`). `run_simulation` still stops with `SimulationNotConfiguredError`, because testbenches are written as xschem schematics and the template has no `schematic.yaml`. |
+| Schematics, PEX | Not available: the template has no `schematic.yaml`, and there is no PEX deck. |
 
 {: .warning }
 The sky130A KLayout DRC deck is not complete. Its own README says it does not check the poly endcap and extension rules, several `licon` enclosures, or the well, implant and `rpm` enclosures. A clean KLayout run is therefore not a full signoff.

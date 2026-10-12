@@ -60,6 +60,8 @@ A *device group* is a set of devices built as one S-Cell. `create_circuit_device
 
 `composer_type` defaults to `TRANSISTOR_COMPOSER.LINEAR`, which is the composer core provides (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})). The devices of a group are placed side by side in one S-Cell, sharing diffusion where their nets allow. This is how matched devices are kept together in core.
 
+The netlist flow sets only what it must decide for each cell: whether wires may run over it, the side of the gate contacts, and the power rail of each device type. Every other setting (guard ring, dummy fingers and rows, vias, characterization profile, ...) comes from the same defaults as a hand-built cell, so you can change them for every cell of the netlist with `SCellConfig` before you build. For example, `SCellConfig.TSCELL.settings.guard_ring.enable = True` gives every transistor cell a guard ring (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)).
+
 For a hierarchical netlist, each sub-circuit instance has its own grouper. `grouper.get_sub_circuit('x2')` returns it, and `grouper.sub_circuits` lists them all.
 
 ## 3. Atomics

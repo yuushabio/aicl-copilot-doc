@@ -17,7 +17,7 @@ Every cell is built from a parameter dictionary. S-Cells (`TSCell`, `RSCell`, `C
 | `settings` | yes | | Cell-wide options: guard ring, dummies, gate poly, power wires, via limits. |
 | `terminals` | yes | yes | For an S-Cell, which device pins are joined into each terminal and how its wires are drawn. For an M-Cell, which sub-cell terminals each net connects. |
 
-Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#parameter_defaultsyaml)), then the framework defaults. A value outside the process limits (for example a length below `min_length`) is changed to the nearest valid value, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
+Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#parameter_defaultsyaml)), then the framework defaults. For a transistor S-Cell, a size outside the process limits is an error: a `length`, `finger_width` or number of fingers below the minimum (or a length or number of fingers above the maximum) raises `ParameterError` with the limit in the message. A `finger_width` above the maximum is split over several rows of the linear composer (see [Layout Composer]({{ site.baseurl }}/docs/tutorials/scells/composer/)). A resistor or capacitor size below the process minimum is raised to it, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
 
 The device class (for example `TRANSISTOR_CLASS.STANDARD_PMOS`) and the device technology are not part of the dictionary. They are constructor arguments, `device_class=` and `device_tech=`; see [Device class and technology](#device-class-and-technology).
 
@@ -125,7 +125,7 @@ Each entry of `devices`:
 | `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. When they may not, they take the gate side. |
 | `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
 | `terminal_sides` | str | not set | `'both'` gives every gate and source/drain net of a single row a base wire on both sides of the row, joined by its top wire. |
-| `profile_name` | str | `None` | The characterization profile of the device class to build from. `None` uses the class's default profile (see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). |
+| `profile_name` | str, dict or `None` | `None` | The characterization profile of the device class to build from: a profile name, or `{'default': name, <class key>: name}` per device class. `None` uses the class's default profile. The profiles come with the process template; list them with `copilot.get_characterization_profiles()` or `cell.available_profiles()` (see [Characterization profile]({{ site.baseurl }}/docs/tutorials/scells/configure/#characterization-profile)). |
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
