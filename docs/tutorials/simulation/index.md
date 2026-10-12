@@ -31,7 +31,7 @@ A `Testbench` (`aicl_core.bin.simulation.testbench`) is an xschem schematic arou
 
 - `roles`: maps DUT ports to roles, for example `{'vout': 'out'}`. The `vss` role is ground.
 - `params`: the bench parameters. `vdd`, `vcm`, `cload` and `band` apply to OTAs. `tclk`, `trise`, `cycles`, `vdiff` and `clk_active` apply to comparators.
-- `fixed`: biases the remaining ports. `{'v': 0.6}` is a voltage source. `{'i': 20e-6, 'from': 'vdd'}` or `{'i': 20e-6, 'to': 'vss'}` is a current source.
+- `fixed`: biases the remaining ports. `{'v': 0.6}` is a voltage source to ground. `{'v': -0.55, 'ref': 'vdd'}` is a voltage source from a rail instead, for example a PMOS gate bias that follows the supply. `{'i': 20e-6, 'from': 'vdd'}` or `{'i': 20e-6, 'to': 'vss'}` is a current source.
 
 ## Pre-layout simulation of the 5T OTA
 
