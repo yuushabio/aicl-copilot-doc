@@ -41,18 +41,18 @@ The constructor loads `config.env` and finds the configuration directory: `AICL_
 | `set_process(process_name: str = 'generic')` | Make another valid process active. Cells created after this are built for it. |
 | `set_aicl_home_directory(directory: str | None = None)` | Change the storage root (`AICL_COP_HOME_DIR`). |
 | `set_project_directory(directory_path: str)` | Change the project directory (`AICL_COP_PROJECT_DIR`, `AICL_COP_LAY_DIR`, and `AICL_COP_SCH_DIR` unless it is set in `config.env`). |
-| `getTechParameters` *(property)* | The active process's `configuration.yaml`, with the resolved `process_name`, `process_tech` (family) and `process_pdk_name`. |
-| `get_transistor_parameters` *(property)* | The active process's transistor primitives and characterization: `{'primitives': ..., 'characterization': {class key: {profile: ...}}, 'default_profiles': {class key: profile}}`. |
+| `getTechParameters` *(property)* | The active process's `technology.yaml`, as a read-only `Technology` object (`ContextManager.current.technology`): `process_name`, `process_tech` (family), `process_pdk_name`, `layout_resolution`, `limits(tech, device_class)` and the other keys of the file as attributes. See [Process Context]({{ site.baseurl }}/docs/setup/process/context.html). |
+| `get_transistor_parameters` *(property)* | The active process's transistor primitive (`primitives/transistor.yaml`) as a read-only object (`ContextManager.current.primitives.transistor`). Its characterization profiles are `ContextManager.current.characterization.transistor`. |
 | `get_characterization_profiles(kind=None, device_class=None)` | The characterization profiles a cell can choose from in the active process: `{kind: {class key: {'profiles': [names], 'default': name}}}`. `kind` (`'tscell'`, `'rscell'` or `'cscell'`) and `device_class` (an enum member, its name or its class key) narrow the answer. An unknown kind raises `CharacterizationError`. See [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile). |
-| `getDeviceMappings` *(property)* | The active process's `devices.yaml`. |
+| `getDeviceMappings` *(property)* | The active process's `devices.yaml`, as a plain dictionary. |
 | `get_display_layers()` | The layers the viewer shows: `{'Metals', 'Vias', 'BoundLayers', 'Primitives'}`. |
 
 ## Preview and export
 
 | Method | Description |
 |:--|:--|
-| `preview_layout(cell, enable_culling=True, wheel_zoom=True)` | Open the layout viewer on an `SCell`, `MCell` or `AbstractMCell`. `enable_culling` leaves contacts and vias out of the drawing. `wheel_zoom` makes the mouse wheel zoom. |
-| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. Where two same-type implants of neighbouring cells end closer than the process's implant spacing, the gap between them is filled, and the number of fills is logged. An `AbstractMCell` raises `ProjectException`. |
+| `preview_layout(cell, enable_culling=True, wheel_zoom=True)` | Open the layout viewer on an `SCell` or `MCell`. Another object raises `TypeError`. `enable_culling` leaves contacts and vias out of the drawing. `wheel_zoom` makes the mouse wheel zoom. |
+| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. Where two same-type implants of neighbouring cells end closer than the process's implant spacing, the gap between them is filled, and the number of fills is logged. |
 | `generate_netlist(cell, library_name='', view_name='', style='spice', path='', include_dummies=None, lvs_backend='')` | Write the cell as a netlist file with one top-level `.subckt <view_name>`, and return its path (a `pathlib.Path`). `style='spice'` writes the SPICE dialect of the technology's LVS backend (or of `lvs_backend`); this is the file `run_lvs` writes when it gets no schematic. `style='cdl'` writes an auCdl netlist. The default file is `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl`); `library_name` defaults to `'schematics'` and `view_name` to the cell's name. `include_dummies=None` states the dummy fingers the way the backend's extractor sees them. |
 | `get_layout_primitives(cell)` | The polygons, labels and canvas size that the viewer would draw, as a dict. |
 | `get_export_manifest()` | What the most recent export placed (an `ExportManifest`), or `None`. |

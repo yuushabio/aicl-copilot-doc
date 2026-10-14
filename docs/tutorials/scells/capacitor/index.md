@@ -37,6 +37,7 @@ The composer is `CAPACITOR_COMPOSER.LINEAR`. It lays the units out as a matrix:
 | `number_of_columns` | 1 | Columns of units |
 | `row_spacing` | 0.5 | Gap between rows (µm) |
 | `column_spacing` | 0.5 | Gap between columns (µm) |
+| `connecting_wire_width` | the minimum width of the higher plate metal | Width of the wires that join the plates of a row (µm). A smaller value is raised to the plate metals' minimum width, with a warning. |
 
 {: .important }
 The matrix sets the layout and `multiplier` sets the device count in the netlist. Keep `number_of_rows × number_of_columns` equal to `multiplier`, or the layout and the netlist describe different capacitors. A netlist-built capacitor chooses a matching matrix by itself.
@@ -44,17 +45,24 @@ The matrix sets the layout and `multiplier` sets the device count in the netlist
 ## Settings
 
 - `max_number_of_via_rows` / `max_number_of_via_cols`: the largest via array on each plate metal. The process template sets the defaults and the lower limits.
-- `bulk_tap`: `{'side', 'offset'}` for the substrate tap of a `STANDARD_3T` capacitor, as for [resistors]({% link docs/tutorials/scells/resistor/index.md %}).
+- `bulk_tap`: `{'side', 'offset'}` for the substrate tap of a `STANDARD_3T` capacitor, as for [resistors]({% link docs/tutorials/scells/resistor/index.md %}#settings).
 
 ## Terminals
 
-Capacitor pins are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. Every row has a horizontal `base_wire` rail per terminal. With more than one row, a vertical `top_wire` beside the matrix joins the rails. Via arrays on these wires are set with `number_of_via_rows` and `number_of_via_cols`.
+Capacitor pins are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. In `ihpSG13G2` the bottom plates are on `metal5` and the top plates on `metal6` (`TM1`).
 
-A plate terminal's `base_wire` must be on its plate's metal, or on a horizontal metal at or above the top plate (`PLUS`) or at or below the bottom plate (`MINUS`). In `ihpSG13G2` the plates are on `metal5` (bottom) and `metal6` (top). A layer that breaks the rule is moved to the nearest allowed one, with a warning.
+The wires of a plate terminal are built like this:
+
+- Every row of the matrix has a **connecting wire** for each plate terminal: a horizontal wire on the plate's own metal, across the plates of the row. `connecting_wire_width` in the composer sets its width.
+- The `base_wire` sits on the connecting wire. When it is on the plate's metal (`metal6` for `PLUS`, `metal5` for `MINUS`), it is the connecting wire itself. On another metal it is a pad on the connecting wire, joined to it by a via stack. `number_of_via_rows` and `number_of_via_cols` set the size of that via array, and `width` the pad's height.
+- `track` says where along the row the pad sits: `CAPACITOR_TRACK.LEFT` (the left end), `RIGHT` (the right end) or `MIDDLE`. `PLUS` is on the right and `MINUS` on the left by default. `offset` moves the pad from there: a positive value moves it outwards (to the left from `LEFT`, to the right from `RIGHT` and `MIDDLE`), and the connecting wire is drawn on to it.
+- With more than one row, a vertical `top_wire` through the pads joins the rows. It is as wide as the connecting wires unless you give a `width`. A top wire on a horizontal metal is moved to the nearest vertical one, with a warning. With one row there is no top wire.
+
+When a pad's via stack would pass through the other plate's metal (for example a `PLUS` pad on `metal4`, whose stack up to `metal6` crosses the bottom plates on `metal5`), the pad is moved out past the plates, and the move is logged. At `MIDDLE` it cannot be moved, so the cell stops with a `ParameterError`. A base wire without a `layer` is on `metal4`.
 
 ## Example
 
-Four 6 µm × 6 µm MIM units as a 2 × 2 matrix:
+Four 6 µm × 6 µm MIM units as a 2 × 2 matrix. The plus terminal is the top plates' own connecting wire on `metal6`, at the right end. The minus terminal is a `metal4` pad below the bottom plates, in the middle of each row:
 
 ```python
 # The copilot and the capacitor S-Cell engine from the core package
@@ -64,7 +72,7 @@ from aicl_core.bin.core.engines.capacitor import CSCell
 # Option lists (enums) from the core package
 from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
 from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
+from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, CAPACITOR_TRACK, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -90,12 +98,13 @@ parameters = {
         'max_number_of_via_rows': 2,
         'max_number_of_via_cols': 2,
     },
-    # Top plate (plus) on Metal6, bottom plate (minus) on Metal4
     'terminals': [
+        # Top plate (plus): on its own metal (metal6), at the right end of each row
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['C1', CAPACITOR_PIN_TYPE.PLUS]],
-         'base_wire': {'layer': 'metal6', 'width': 0.5, 'offset': 0.8, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
+         'base_wire': {'layer': 'metal6', 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
+        # Bottom plate (minus): a metal4 pad in the middle of each row, below the metal5 plates
         {'name': 'v_minus', 'pins': [['C1', CAPACITOR_PIN_TYPE.MINUS]],
-         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
+         'base_wire': {'layer': 'metal4', 'track': CAPACITOR_TRACK.MIDDLE, 'number_of_via_rows': 2, 'number_of_via_cols': 2}},
     ],
 }
 
@@ -105,13 +114,13 @@ capacitor = CSCell(name='c_matrix', parameters=parameters,
 copilot.preview_layout(capacitor, enable_culling=False)
 ```
 
-![Four MIM unit capacitors in a 2 by 2 matrix with the plus rail on the right and the minus rail on the left]({{site.baseurl}}/assets/images/cscell_matrix_lay.png){: width="480"}
+![Four MIM unit capacitors in a 2 by 2 matrix, with the plus wires at the right end of the rows and the minus wire in the middle]({{site.baseurl}}/assets/images/cscell_matrix_lay.png){: width="480"}
 
 ## Three-terminal capacitor with a bulk tap
 
-A `STANDARD_3T` capacitor has a `BULK` pin, and the cell draws a substrate tap for it: a contacted diffusion strip along one side of the matrix. A terminal can carry the bulk pin together with a plate pin. Below, `vss` joins the bottom plate (`MINUS`) and the tap (`BULK`), and the tap is connected to the bottom-plate rail.
+A `STANDARD_3T` capacitor has a `BULK` pin, and the cell draws a substrate tap for it: a contacted diffusion strip along one side of the matrix. A terminal can carry the bulk pin together with a plate pin. Below, `vss` joins the bottom plate (`MINUS`) and the tap (`BULK`). Without a terminal for the `BULK` pin, the cell adds one named `vss` (`vdd` in a process with well ties).
 
-With `'side': 'auto'` the tap goes along one of the shorter sides of the matrix, the one nearer the rail of its own net. Give `'left'`, `'right'`, `'top'` or `'bottom'` to choose the side yourself.
+With `'side': 'auto'` the tap goes along the shorter sides of the matrix: left or right for a wide matrix, bottom or top for a tall one. Of the two, it takes the side nearer the terminal its bulk pin shares (here `vss`, on the left), else the side nearer the minus terminal. Give `'vertical'` (left or right) or `'horizontal'` (bottom or top) to choose the direction yourself.
 
 ```python
 # The copilot and the capacitor S-Cell engine from the core package
@@ -151,4 +160,4 @@ capacitor = CSCell(name='c_tapped', parameters=parameters, device_class=CAPACITO
 copilot.preview_layout(capacitor, enable_culling=False)
 ```
 
-![Two MIM units side by side, with the substrate tap along the left edge joined to the vss rail]({{site.baseurl}}/assets/images/cscell_bulk_tap_lay.png){: width="520"}
+![Two MIM units side by side, with the substrate tap along the left edge next to the vss pad]({{site.baseurl}}/assets/images/cscell_bulk_tap_lay.png){: width="520"}

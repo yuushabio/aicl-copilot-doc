@@ -15,8 +15,7 @@ Cell
 │   ├── TSCell      transistor
 │   ├── RSCell      resistor
 │   └── CSCell      capacitor
-├── MCell           hierarchical container
-└── AbstractMCell   display-only placeholder
+└── MCell           hierarchical container
 ```
 
 1. TOC
@@ -31,7 +30,7 @@ Cell
 | `get_name()`, `set_name(name_str)` | The cell name. In an M-Cell, sub-cells are addressed by it. |
 | `get_parameters()` | The realized parameter dictionary, with every default filled in. |
 | `get_default_user_parameters()` | The parameters as the user passed them. |
-| `get_primitive_type()` | `PRIMITIVE_TYPE.SCELL`, `MCELL` or `ABSTRACT_CELL`. |
+| `get_primitive_type()` | `PRIMITIVE_TYPE.SCELL` or `MCELL`. |
 | `get_boundbox()` | The cell's `Boundbox` (`start_x_coord`, `start_y_coord`, `end_x_coord`, `end_y_coord`, `width`, `height`). |
 | `get_position()` | Lower-left corner, as a `Coord`. |
 | `translate(new_pos: Coord)` | Move the cell so that its lower-left corner is at `new_pos`. |
@@ -55,6 +54,8 @@ Cell
 | `get_pcell_parameters()` | The per-device PDK parameters, for p-cell based export. |
 | `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: the framework defaults, the process's `parameter_defaults.yaml` and the `SCellConfig` overrides, each over the one before (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)). Their `settings` block is what a new cell's `settings` start from. A `config` block in any of them raises `ValueError` (it is now `settings`). |
 | `SCell.create_from_params(parameters=None, name=None, **kwargs)` *(class method)* | Build an S-Cell from a saved parameter dictionary. See [below](#rebuilding-from-a-parameter-dictionary). |
+| `context` *(property)* | The process context the cell is built with: the active process's, with the overrides that apply to the cell (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)). Read-only. |
+| `get_context_override()` | The cell's own `ContextOverride` (the `context=` argument), or `None`. |
 
 `TSCell`, `RSCell` and `CSCell` also share the device-setting methods:
 
@@ -74,9 +75,11 @@ Cell
 from aicl_core.bin.core.engines.transistor import TSCell
 ```
 
-`TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
+`TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False, context=None)`
 
 `device_class` is a `TRANSISTOR_CLASS` (default `STANDARD_NMOS`) and `device_tech` a `TRANSISTOR_TECH` (default `MOSFET`). The cell is composed completely in the constructor. A parameter error raises `ParameterError`, and a pin that is claimed by two terminals raises `DeviceTerminalConflictPinError`.
+
+`context` is an optional `ContextOverride` (or its `{path: value}` dictionary): process values that are changed for this cell only, such as a spacing rule. It is stored in the cell's parameters under `'context'`, so a rebuilt or reloaded cell uses it again. `RSCell` and `CSCell` take the same argument. See [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#changing-values-for-some-cells).
 
 | Method | Description |
 |:--|:--|
@@ -93,7 +96,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.core.engines.resistor import RSCell
 ```
 
-`RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False)`
+`RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False, context=None)`
 
 `device_class` is a `RESISTOR_CLASS` (default `STANDARD_N2T`) and `device_tech` a `RESISTOR_TECH` (default `POLYSILICON`).
 
@@ -104,6 +107,7 @@ from aicl_core.bin.core.engines.resistor import RSCell
 | `has_bulk_pin()` | `True` for the 3-terminal classes (`STANDARD_N3T`, `STANDARD_P3T`). |
 | `minimum_segment_spacing()` | The least gap between two segments for the cell's class and size, before the composer's `segment_spacing` is added. |
 | `RSCell.bulk_tap_available()` *(static)* | Whether the active process can draw a resistor body tap. |
+| `get_guard_ring()` | The guard ring polygons, when `settings['guard_ring']['enable']` is set. |
 
 ## CSCell
 
@@ -111,7 +115,7 @@ from aicl_core.bin.core.engines.resistor import RSCell
 from aicl_core.bin.core.engines.capacitor import CSCell
 ```
 
-`CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
+`CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False, context=None)`
 
 `device_class` is a `CAPACITOR_CLASS` (default `STANDARD_2T`) and `device_tech` a `CAPACITOR_TECH` (default `CMIM`, the only technology the core package builds).
 
@@ -211,16 +215,6 @@ from aicl_core.bin.core.engines.mcell import MCell
 | `get_user_groups()` | For an M-Cell built from a netlist, the device groups the user created. It is `None` for an M-Cell that was built by hand. |
 
 `translate`, `rotate`, `flip_horizontal` and `flip_vertical` move the whole M-Cell with its routes.
-
-## AbstractMCell
-
-```
-from aicl_core.bin.core.engines.abstract_mcell import AbstractMCell
-```
-
-`AbstractMCell(name: str, parameters: dict = None, sensitive=False, noisy=False, allow_rotation=False)`
-
-This is a placeholder block with only an outline and terminals, used to preview a floor plan before its contents exist. `parameters` must contain `'origin'` (a `Coord`), `'boundbox'` (a `Boundbox`) and `'terminals'` (a list). `preview_layout` accepts it. `generate_layout` refuses it, because an abstract cell has no mask geometry.
 
 ## Geometry
 

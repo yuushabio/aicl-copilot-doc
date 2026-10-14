@@ -193,6 +193,9 @@ A setting that a cell leaves out is taken from these sources, each over the one 
 
 The cell's own values always win. A value you set in `SCellConfig` wins over both files, but only for the keys you set; every other key keeps its file default.
 
+{: .note }
+`SCellConfig` changes the cell *parameters* (`settings` and terminal wires). To change a *process rule* for some cells, such as a spacing or the gate poly strap height of `configuration.yaml`, use a context override instead (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#changing-values-for-some-cells)).
+
 `SCellConfig` (`aicl_core.config.global_config`) changes a default for every cell built after it, without editing a file. It has one block per cell kind:
 
 | Block | Applies to |
@@ -324,9 +327,10 @@ A per-class dictionary may only use `'default'` and class keys of the process (s
 
 A transistor S-Cell has no separate bulk setting. The bulk pin joins the power rail by default. The guard ring, when enabled, ties the substrate or well. To give the bulk its own net, add a terminal with a `TRANSISTOR_PIN_TYPE.BULK` pin (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %})).
 
-Resistor and capacitor S-Cells have two further settings:
+Resistor and capacitor S-Cells have further settings:
 
-- `bulk_tap`: the side and offset of the substrate tap.
-- `max_number_of_via_rows` / `max_number_of_via_cols`: via-array limits.
+- `bulk_tap`: the side (`'auto'`, `'vertical'` or `'horizontal'`) and offset of the substrate tap.
+- `guard_ring` (resistors): a guard ring on all four sides instead of the tap strip.
+- `max_number_of_via_rows` / `max_number_of_via_cols` (capacitors): via-array limits.
 
 They are described on the [resistor]({% link docs/tutorials/scells/resistor/index.md %}) and [capacitor]({% link docs/tutorials/scells/capacitor/index.md %}) pages.

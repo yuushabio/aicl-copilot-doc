@@ -13,9 +13,12 @@ The `constraints/` directory holds the technology rules and the tool settings. M
 1. TOC
 {:toc}
 
-## configuration.yaml
+## technology.yaml
 
-The process's general parameters. It is required. Its keys are at the top level; a file that still wraps them in a `Configuration` key, or that uses the old CamelCase keys (`ProcessTechnology`, `LayoutResolution`, `Transistors`, ...), is refused.
+The process's general parameters: its names, units and grid, the design environment, and the PDK's device parameters and limits. It is required. Its keys are at the top level; a file that still wraps them in a `Configuration` key, or that uses the old CamelCase keys (`ProcessTechnology`, `LayoutResolution`, `Transistors`, ...), is refused.
+
+{: .note }
+This file was called `configuration.yaml` in earlier releases. `configuration.yaml` is now the [device configuration](#configurationyaml) below.
 
 ```yaml
 process_name: "ihpSG13G2"              # must be the template's directory name
@@ -31,9 +34,11 @@ environment:
   api: 'open_env'                      # the design bridge used for export (open_env writes GDS with gdstk)
   pcell_available: False
 
-min_poly_spacing: 0.18
-min_poly_abut_extension: 0.0
-min_distance_poly_to_implant: 0.12
+bulk:
+  available: true                      # the process can draw body taps ...
+  tap_type: P                          # ... and they are substrate ('P') ties
+guard_ring:
+  available: true                      # the process can draw guard rings
 
 boundary_layers: {s-cell: 'scell', m-cell: 'module', abstract_m-cell: 'abstractModule'}
 
@@ -79,11 +84,97 @@ capacitors:
 | `process_pdk_name` | The name the process has in its PDK, when it differs from the template's name. |
 | `layout_unit`, `layout_resolution` | Units and the snapping grid. |
 | `environment.api` | Which design bridge `generate_layout` and `generate_schematic` use. The core package provides `open_env`, which writes GDS files and xschem schematics. |
-| `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`, `abstract_m-cell`). They are not written as mask geometry. |
+| `bulk` | `available`: whether body taps (the tap of a three-terminal resistor or capacitor, a transistor's body rail) can be drawn. `tap_type`: `P` for a substrate tie, `N` for a well tie. The tap type also names the default bulk terminal of a passive cell: `vss` for `P`, `vdd` for `N`. |
+| `guard_ring` | `available`: whether guard rings can be drawn. |
+| `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`). They are not written as mask geometry. The shipped templates also list an `abstract_m-cell` layer, which the core package does not use. |
 | `<kind>.pcell.limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. A limit is a number, or `{default: v, <class key>: v}` for a limit that differs between device classes. |
 | `<kind>.pcell.parameters`, `<kind>.netlist.parameters` | The PDK's instance parameter names, used when netlists are written and read. Each is a list of names; a netlist is written with the first one. For resistors, `number_of_segments` says how a segment count is written: `n` series segments are `b = n - 1` bends (`offset: 1`), and `n` parallel segments are `m = n` devices (`offset: 0`). A process without a bends parameter (such as `sky130A`) lists only the parallel rule. |
 
 The transistor section has no technology level: the family says which transistor technology the template is for. The resistor and capacitor sections are grouped by family (`polysilicon`, `metal_insulator_metal`, `metal_oxide_metal`). `inductors` may be present; it is not read.
+
+`technology.yaml` must not hold the keys that moved to `configuration.yaml`. A template that still has `min_poly_spacing`, `min_distance_poly_to_implant` or `min_poly_abut_extension` here is refused, and the error says where each one goes now.
+
+## configuration.yaml
+
+The **device configuration**: the values that every device of a kind is built with, such as the guard ring and body tap widths, the gate poly strap, the via limits of a capacitor plate, and the spacing rules between the layers that the devices draw. It is required. It has two keys, `global` and `local`.
+
+```yaml
+global:
+  guard_ring:                          # guard rings
+    min_offset: {n_type: 0.5, p_type: 1.4}
+    width: {oxide_diffusion: 0.3, metal1: 0.3, n_implant: 0.43, p_implant: 0.43, n_well: 0.78, p_well: null}
+  bulk:                                # body taps
+    width: {oxide_diffusion: 0.3, metal1: 0.3, n_implant: 0.43, p_implant: 0.43, n_well: 0.78, p_well: null}
+  transistor:
+    extend_implant_layer: true         # extend the implant over the gate poly
+    gate_poly:
+      connector_height: 0.1            # height of the poly strap that joins the gates
+      extension_height: 0.2            # gap between the finger poly and the strap
+    latch_up:
+      max_tie_distance: 20.0           # any diffusion is kept within this distance of a body tie
+  poly_resistor:
+    bulk: {side: auto, offset: 0.5}    # where a resistor's body tap goes, and its gap to the resistor
+  mim_capacitor:
+    min_number_of_via_rows: 1          # via array limits on each plate
+    min_number_of_via_columns: 1
+    max_number_of_via_rows: 5
+    max_number_of_via_columns: 5
+    bulk: {side: auto, offset: 0.5}
+  spacing:
+    base:                              # [[width, parallel run, spacing], ...], like a metal spacing table
+      oxide_diffusion: [[0.0, 0.0, 0.11]]
+      gate_poly: [[0.0, 0.0, 0.18]]
+      p_implant: [[0.0, 0.0, 0.31]]
+      gate_poly|p_implant: [[0.0, 0.0, 0.12]]
+      gate_poly|n_implant: [[0.0, 0.0, 0.12]]
+      ...
+    extension: {}
+  min_width:
+    base: {p_implant: 0.31}
+    extension: {}
+  abut:
+    base: {gate_poly: [[0.0, 0.0, 0.0]]}
+    extension: {}
+local: {}
+```
+
+| Key | Used for |
+|:--|:--|
+| `global.guard_ring` | The guard ring of transistors and resistors: its least distance from the devices (`min_offset`, for an `n_type` and a `p_type` ring) and the width of each of its layers. `null` means the layer is not drawn (`ihpSG13G2` draws no p-well). |
+| `global.bulk.width` | The width of each layer of a body tap. |
+| `global.transistor` | `extend_implant_layer`, the `gate_poly` strap (`connector_height`, `extension_height`), and `latch_up.max_tie_distance`. |
+| `global.poly_resistor.bulk`, `global.mim_capacitor.bulk` | Where the body tap of a three-terminal resistor or capacitor goes: `side` (`auto`, `vertical` or `horizontal`) and `offset`, its gap to the device in µm. A cell can choose another side with `settings['bulk_tap']`. |
+| `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. |
+| `global.spacing` | Spacing rules between the layers the devices draw. A key is one layer (the spacing between its own shapes) or a pair `a|b` (in either order). `base` holds the base layers of the primitives, `extension` the pairs that involve an extension layer. Each value is a table `[[width, parallel run, spacing], ...]`: of the rows whose width and run the two shapes reach, the largest spacing applies. A layer or pair without an entry has no rule. |
+| `global.min_width` | The least width of a layer, for example of an implant. When two cells are exported next to each other and their implants end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. |
+| `global.abut` | The abutment rule of a layer (for gate poly, the former `min_poly_abut_extension`), as a table like `spacing`. |
+| `local` | Values for devices of a certain size only (see below). |
+
+The three keys `min_poly_spacing`, `min_distance_poly_to_implant` and `min_poly_abut_extension` of older templates are now `global.spacing.base.gate_poly`, `global.spacing.base.gate_poly|<implant>` and `global.abut.base.gate_poly`.
+
+### Values for one device size
+
+`local` holds values that replace the `global` ones for devices of a certain size. Each entry is one device kind (`transistor`, `poly_resistor`, `mim_capacitor`), with the device parameters that decide the size, and one block of values per size:
+
+```yaml
+local:
+  transistor:
+    parameters: [length]
+    values:
+      0.5: {gate_poly: {extension_height: 0.3}}     # transistors with a length of 0.5 um or more
+```
+
+A device uses the block of the largest value that is not above its own size (the first block when it is smaller than all of them). A key in a block is a `global` key (`guard_ring`, `spacing`, ...) or one of the kind's own keys (`gate_poly` for a transistor). `ihpSG13G2` has no local values.
+
+### Other transistor options
+
+A process can set more options under `global.transistor`. The shipped templates use the defaults:
+
+| Key | Default | Meaning |
+|:--|:--|:--|
+| `gate_poly.contact` | `cap` | How a gate is contacted. `cap` draws a poly cap wide enough for a contact on every side. `inline` draws no cap: the gate runs straight on past the diffusion, and the contact sits on it, enclosed by `gate_poly.contact_end_enclosure` at its two ends. |
+| `source_drain_via_rows` | `shared` | `shared` puts the source and drain via landings on one row. `separate` gives the sources and the drains rows of their own, so the landings only have to clear the neighbouring finger's metal. |
+| `poly_contact_cut` | not set | A layer drawn around every contact on poly, with its `enclosure` (SKY130's `npc`). |
 
 ## connectivity.yaml
 
@@ -92,15 +183,22 @@ Contacts, vias and metals, with their design rules. It is required, and it is ch
 ```yaml
 contacts:
   default:
-    name: 'Cont'
-    layers: [['gate_poly', 'metal1'], ['oxide_diffusion', 'metal1']]
+    name: Cont
+    layers: [[gate_poly, metal1], [oxide_diffusion, metal1]]
     dimensions: {width: 0.16, height: 0.16}
-    spacing:
-      middle: [[1, 0.18], [5, 0.20]]     # [[rows and cols >=, spacing], ...]
-      edge:                              # enclosures
-        use_unit_spacing: False
-        unit_spacing: {poly: [0.07], metal1: [0.05], oxide: [0.07]}
-        multi_spacing: {poly: [0.07, 0.07], metal1: [0, 0.05], oxide: [0.07, 0.07]}
+    spacing:                             # one block per layer pair the contact joins
+      gate_poly|metal1:
+        middle: [[1, 0.18], [5, 0.2]]    # [[rows and cols >=, spacing], ...]
+        edge:                            # enclosures
+          use_unit_spacing: false
+          unit_spacing: {poly: [0.07], metal1: [0.05]}
+          multi_spacing: {poly: [0.07, 0.07], metal1: [0, 0.05]}
+      oxide_diffusion|metal1:
+        middle: [[1, 0.18], [5, 0.2]]
+        edge:
+          use_unit_spacing: false
+          unit_spacing: {metal1: [0.05], oxide: [0.07]}
+          multi_spacing: {metal1: [0, 0.05], oxide: [0.07, 0.07]}
 
 vias:
   via1:
@@ -121,6 +219,7 @@ metals:
   # metal2 ... metal7
 ```
 
+- A contact's `spacing` has one block per layer pair (`gate_poly|metal1`, `oxide_diffusion|metal1`), so a contact on poly and a contact on diffusion can have different rules. A file whose contact `spacing` still has `middle` and `edge` directly under it is in the old format and is refused.
 - `edge.multi_spacing` gives `[min, max]` enclosures: the smaller one on one axis and the larger on the other. With `use_unit_spacing: True`, `unit_spacing` is used on every side instead.
 - `abut` is the margin a junction adds around a metal: `unit_abut` (`[[min width, edge]]`, both axes) when `use_unit_abut` is set, otherwise `multi_abut` (`[[min width, axis a, axis b]]`).
 - The `name` of a via or metal is its PDK layer name. The keys (`metal1`, `via1`) are the IDs used everywhere else. Cell parameters may write an ID in any case (`'Metal2'` is `metal2`).
@@ -155,7 +254,7 @@ The values are layered in this order, each over the one before:
 
 The framework defaults set `SCELL.settings.profile_name: null` for every kind, so a cell is built from its class's default characterization profile unless a later layer or the cell chooses another one (see [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile)).
 
-`ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.4`). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
+`ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.0`, at the end of its row's connecting wire). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
 
 ## gds_mapping.yaml
 
@@ -236,8 +335,10 @@ Schematic generation settings, under `Schematic`.
 
 ## Reading the settings from Python
 
+The loaded files can be read back from Python. The [Process Context]({{ site.baseurl }}/docs/setup/process/context.html) page explains the objects used here.
+
 ```python
-# The copilot and the process context from the core package
+# The copilot and the process contexts from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 
@@ -247,18 +348,21 @@ from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSIST
 # Start the copilot for the process we want to read
 copilot = AiclCopilot(process_name='ihpSG13G2')
 
-# The settings from configuration.yaml, as nested dictionaries
-configuration = copilot.getTechParameters
-print('grid:', configuration['layout_resolution'], 'um')
+# The active process's context: everything its template says
+context = ContextManager.current
 
-# The transistor size limits, as written in the file
-print('transistor limits:', configuration['transistors']['pcell']['limits'])
+# technology.yaml: the layout grid and the transistor size limits for one device class
+print('grid:', context.technology.layout_resolution, 'um')
+print('NMOS limits:', context.technology.limits(TRANSISTOR_TECH.MOSFET, TRANSISTOR_CLASS.STANDARD_NMOS))
 
-# The same limits resolved for one device class
-print('NMOS limits:', ContextManager.get_device_limits(TRANSISTOR_TECH.MOSFET, device_class=TRANSISTOR_CLASS.STANDARD_NMOS))
+# configuration.yaml: the gate poly strap, and the spacing between gate poly shapes
+print('gate poly:', context.configuration.transistor.gate_poly)
+print('poly spacing:', context.configuration.spacing.value('gate_poly'), 'um')
 
-# The metal layer IDs and their PDK layer names (connectivity.yaml)
-print('metals:', ContextManager.get_metal_layer_name_mapping())
+# connectivity.yaml: the metal layer IDs and their PDK layer names, and one metal's rules
+print('metals:', context.connectivity.metal_names)
+metal2 = context.connectivity.metal('metal2')
+print('metal2:', metal2.name, 'direction', metal2.direction, 'min width', metal2.min_width)
 
 # The layers the layout viewer draws
 print('display layers:', copilot.get_display_layers())

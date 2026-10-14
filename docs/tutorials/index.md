@@ -13,12 +13,11 @@ Suggested order:
 1. [S-Cells]({% link docs/tutorials/scells/index.md %}): build transistor, resistor and capacitor S-Cells, and set their composer, settings and terminals.
 2. [Modules]({% link docs/tutorials/modules/index.md %}): combine cells in M-Cells, and place and route them, also hierarchically.
 3. [From a Netlist]({% link docs/tutorials/netlist/index.md %}): let the Co-pilot build the M-Cell tree from a SPICE netlist.
-4. [Abstract Module]({% link docs/tutorials/abstract-module/index.md %}): a black-box outline for blocks laid out elsewhere (experimental).
-5. [Preview and Generate]({% link docs/tutorials/generate.md %}): view layouts and export them as GDSII.
-6. [Verification]({% link docs/tutorials/verification/index.md %}): DRC, LVS and PEX with KLayout, Magic/Netgen and KLayout-PEX.
-7. [Simulation]({% link docs/tutorials/simulation/index.md %}): pre- and post-layout simulation with ngspice.
-8. [Schematic]({% link docs/tutorials/schematic/index.md %}): draw a cell as an xschem schematic.
-9. [Databases]({% link docs/tutorials/database/index.md %}): store parameter sets and built cells for reuse.
+4. [Preview and Generate]({% link docs/tutorials/generate.md %}): view layouts and export them as GDSII.
+5. [Verification]({% link docs/tutorials/verification/index.md %}): DRC, LVS and PEX with KLayout, Magic/Netgen and KLayout-PEX.
+6. [Simulation]({% link docs/tutorials/simulation/index.md %}): pre- and post-layout simulation with ngspice.
+7. [Schematic]({% link docs/tutorials/schematic/index.md %}): draw a cell as an xschem schematic.
+8. [Databases]({% link docs/tutorials/database/index.md %}): store parameter sets and built cells for reuse.
 
 Ready-made circuits built with these steps are collected in [Generators]({% link docs/generators/index.md %}).
 

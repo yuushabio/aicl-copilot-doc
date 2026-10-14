@@ -214,7 +214,8 @@ The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STAND
 | `composer` | `composer_type` | `RESISTOR_COMPOSER` | `LINEAR`. |
 | | `segment_spacing` | float | Extra gap between segments, on top of the least gap the process allows (from the characterization; 0.18 µm in `ihpSG13G2`). Default `0.0`; the `ihpSG13G2` process default is `0.02`. |
 | | `segment_connection` | `RESISTOR_SEGMENT_CONNECTION` | `SERIES` or `PARALLEL` (default). |
-| `settings` | `bulk_tap` | dict | Optional `{'side': 'auto' | 'left' | 'right' | 'top' | 'bottom', 'offset': float}`. Overrides the process template's tap placement. |
+| `settings` | `bulk_tap` | dict | Optional `{'side': 'auto' | 'vertical' | 'horizontal', 'offset': float}`. Overrides the process template's tap placement (`configuration.yaml`, `global.poly_resistor.bulk`). |
+| | `guard_ring` | dict | `{'enable': False, 'offset': 0.0}`. With `enable`, a guard ring is drawn on all four sides instead of a tap strip, `offset` µm further out than the tap gap. |
 | | `profile_name` | str | The characterization profile to build from, as for TSCell. |
 | `terminals` | `name`, `pins`, `type` | | As for TSCell. The pin types are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. `PLUS` and `MINUS` must both be connected. |
 | | `base_wire` | dict | `layer`, `width`, `number_of_vias`, `offset`, `track` (`None`). |
@@ -263,11 +264,12 @@ The class is the `device_class=` argument: `CAPACITOR_CLASS.STANDARD_2T`, or `ST
 | `composer` | `composer_type` | `CAPACITOR_COMPOSER` | `LINEAR`. |
 | | `number_of_rows`, `number_of_columns` | int | The unit matrix. |
 | | `row_spacing`, `column_spacing` | float | Gaps between units. They are raised to the plate minimum when needed. |
-| `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `mim_capacitor.yaml` `configuration`. |
+| | `connecting_wire_width` | float | Width of the wires that join the plates of a row. Default: the minimum width of the higher plate metal. |
+| `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `configuration.yaml` (`global.mim_capacitor`). |
 | | `bulk_tap`, `profile_name` | | As for RSCell. |
 | `terminals` | `name`, `pins`, `type` | | The pin types are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. |
-| | `base_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. A layer that cannot reach the plate is moved to one that can, with a warning. |
-| | `top_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. |
+| | `base_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. On the plate's own metal it is the row's connecting wire; on another metal, a pad on it. `track` is a `CAPACITOR_TRACK` (`LEFT`, `RIGHT` or `MIDDLE`): where along the row it sits, moved by `offset`. See [Capacitor S-Cells]({% link docs/tutorials/scells/capacitor/index.md %}#terminals). |
+| | `top_wire` | dict | `layer`, `width`, `number_of_via_rows`, `number_of_via_cols`. The vertical wire that joins the rows' base wires; there is none with one row. |
 
 {: .important }
 The unit matrix belongs in `composer` and the multiplier in `specifications['devices']`. A `multiplier` in `composer` or a `matrix` in `settings` is refused with a `ParameterError`.

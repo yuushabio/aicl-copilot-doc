@@ -120,7 +120,7 @@ On `ihpSG13G2` every net routes and LVS matches. The pre-layout simulation at th
 | Power | 37 µW |
 
 {: .warning }
-KLayout DRC is **not** clean for this recipe in the current release. It reports a few minimum-width violations on routed metal (rules `M2.a`, `M3.a`, `M4.a`). Check `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
+KLayout DRC is **not** clean for this recipe in the current release. It reports a few violations: minimum width on routed metal (rule `M2.a`) and an N-well spacing (`NW.b1`). Check `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
 
 ## Variations
 

@@ -8,7 +8,7 @@ nav_order: 5
 
 ## Previewing a cell
 
-`AiclCopilot.preview_layout(cell, enable_culling=True, wheel_zoom=True)` opens the layout viewer for an S-Cell, an M-Cell or an abstract module:
+`AiclCopilot.preview_layout(cell, enable_culling=True, wheel_zoom=True)` opens the layout viewer for an S-Cell or an M-Cell:
 
 - `enable_culling=True` leaves contacts and vias out of the drawing, which keeps large layouts responsive. Pass `False` to see them.
 - `wheel_zoom` lets the mouse wheel zoom. The toolbar's zoom tool works either way, and the viewer has a checkbox for it.
@@ -83,7 +83,7 @@ print(manifest.polygon_count, 'polygons written:', polygons_per_layer)
 
 The verification commands check the manifest too. They refuse to run a rule deck over a file that has lost its devices.
 
-M-Cells are generated the same way, flattened into one top cell. An abstract module cannot be generated (see [Abstract Module]({% link docs/tutorials/abstract-module/index.md %})).
+M-Cells are generated the same way, flattened into one top cell.
 
 ## Next steps
 

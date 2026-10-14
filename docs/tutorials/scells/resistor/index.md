@@ -43,11 +43,12 @@ The resistor composer is `RESISTOR_COMPOSER.LINEAR`. It has these options:
 
 ## Settings
 
-- `bulk_tap`: `{'side': 'auto' | 'left' | 'right' | 'top' | 'bottom', 'offset': µm}` places the substrate tap of a three-terminal resistor. With `'auto'`, the tap runs along one of the two shorter sides of the resistor: the one nearer the rail of the tap's own net when the cell has one, otherwise the one nearer a ground rail (for a substrate tap) or a supply rail (for a well tap). With no rail at all, it is the left side of a wide resistor or the bottom side of a tall one.
+- `bulk_tap`: `{'side': 'auto' | 'vertical' | 'horizontal', 'offset': µm}` places the substrate tap of a three-terminal resistor. `'vertical'` puts it on the left or right side, `'horizontal'` on the bottom or top side, and `'auto'` (the process default in `ihpSG13G2`) on the two shorter sides: left or right for a wide resistor, bottom or top for a tall one. Of the two sides, the tap takes the one nearer the terminal its `BULK` pin shares, else the one nearer the minus terminal. Any other value (also `'left'`, `'bottom'`, ...) is replaced by the process default, with a warning.
+- `guard_ring`: `{'enable': True, 'offset': µm}` draws a guard ring around the resistor instead of a tap on one side: the same tie, on all four sides. `offset` adds space between the resistor and the ring, on top of the process's tap gap. The ring is off by default.
 
 ## Terminals
 
-Resistor pins are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. The keys of a terminal entry are the same as for transistors (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %})). A three-terminal class without a terminal on its `BULK` pin gets a default `bulk` terminal, so the tap is always drawn.
+Resistor pins are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. The keys of a terminal entry are the same as for transistors (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %})). A three-terminal class without a terminal on its `BULK` pin gets a default terminal, so the tap is always drawn. It is named after the tie: `vss` for a substrate tie (as in `ihpSG13G2`), `vdd` for a well tie.
 
 ## Example
 
@@ -78,8 +79,8 @@ parameters = {
         'segment_spacing': 0.4,     # um added to the least gap between segments
         'segment_connection': RESISTOR_SEGMENT_CONNECTION.SERIES,
     },
-    # Put the substrate tap below the resistor
-    'settings': {'bulk_tap': {'side': 'bottom', 'offset': 0.5}},
+    # Put the substrate tap on a horizontal side (below or above the resistor)
+    'settings': {'bulk_tap': {'side': 'horizontal', 'offset': 0.5}},
     # Plus and minus on wide Metal4 wires; the bulk goes to VSS
     'terminals': [
         {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]],
@@ -137,3 +138,50 @@ copilot.preview_layout(resistor)
 ```
 
 ![Five poly-silicon segments connected in parallel between two rails]({{site.baseurl}}/assets/images/rscell_parallel_lay.png){: width="420"}
+
+## Guard ring
+
+The same three-terminal resistor with a guard ring instead of the tap strip. The ring is joined to the `VSS` terminal:
+
+```python
+# The copilot and the resistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.resistor import RSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# A three-terminal resistor R1 made of 4 segments in series
+parameters = {
+    'specifications': {
+        'segment_width': 1.0,       # um
+        'length': 4.0,              # um, per segment
+        'devices': [{'names': ['R1'], 'number_of_segments': 4}],
+    },
+    'composer': {
+        'composer_type': RESISTOR_COMPOSER.LINEAR,
+        'segment_spacing': 0.4,     # um added to the least gap between segments
+        'segment_connection': RESISTOR_SEGMENT_CONNECTION.SERIES,
+    },
+    # A guard ring on all four sides, 0.2 um further out than the process's tap gap
+    'settings': {'guard_ring': {'enable': True, 'offset': 0.2}},
+    'terminals': [
+        {'name': 'v_plus', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['R1', RESISTOR_PIN_TYPE.PLUS]],
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
+        {'name': 'v_minus', 'pins': [['R1', RESISTOR_PIN_TYPE.MINUS]],
+         'base_wire': {'layer': 'metal4', 'width': 0.5, 'number_of_vias': 2}},
+        {'name': 'VSS', 'type': TERMINAL_TYPE.GROUND, 'pins': [['R1', RESISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+
+# Build it as a three-terminal P-poly resistor and show it
+resistor = RSCell(name='r_ring', parameters=parameters, device_class=RESISTOR_CLASS.STANDARD_P3T)
+copilot.preview_layout(resistor, enable_culling=False)
+```
+
+![Four poly-silicon segments in series inside a guard ring]({{site.baseurl}}/assets/images/rscell_guard_ring_lay.png){: width="420"}

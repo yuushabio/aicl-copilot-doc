@@ -123,7 +123,7 @@ copilot.preview_layout(scell, enable_culling=False)
 
 Set `number_of_rows` to stack the linear arrangement several times. Each row has the same devices, fingers, dummies and separators. The finger width is divided across the rows, so every device keeps its total width. `row_spacing` sets the minimum gap between rows; the composer raises it when the wiring rules require more. Each net gets one vertical top wire that joins all the rows. The tracks of matched nets are chosen together, so the two halves of a pair are wired as mirror images: in the example below, the nets of `M1` run on the left of the cell and those of `M2` on the right. A gate rail ends at the gates of its own row, and a net's strap is drawn on the side its source/drain pins are on.
 
-The composer also switches to several rows by itself when `finger_width` is wider than the process allows (`max_finger_width` in `configuration.yaml`). It takes the fewest rows that split the width into equal fingers on the layout grid, each within the process limits, so the device keeps its total width. When no number of rows does that, the cell is refused with a `ParameterError`; change the finger width or the number of fingers.
+The composer also switches to several rows by itself when `finger_width` is wider than the process allows (`max_finger_width` in `technology.yaml`). It takes the fewest rows that split the width into equal fingers on the layout grid, each within the process limits, so the device keeps its total width. When no number of rows does that, the cell is refused with a `ParameterError`; change the finger width or the number of fingers.
 
 ```python
 # The copilot and the transistor S-Cell engine from the core package

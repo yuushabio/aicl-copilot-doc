@@ -55,7 +55,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `CELL_ABUT_SIDE` | `left`, `right`, `top`, `bottom` | `REFERENCE_PLACER` `reference_abut_side` |
 | `CELL_ABUT_ALIGN` | `lower`, `middle`, `upper` | `REFERENCE_PLACER` `reference_abut_align` |
 | `CELL_ORIENTATION` | `R0`, `R90`, `R0_MX`, `R0_MY`, `R0_MX_MY`, `R90_MX`, `R90_MY`, `R90_MX_MY` | `cell.set_orientation(...)`, `cell.get_orientation()` |
-| `PRIMITIVE_TYPE` | `SCELL`, `MCELL`, `ABSTRACT_CELL` | `cell.get_primitive_type()` |
+| `PRIMITIVE_TYPE` | `SCELL`, `MCELL` | `cell.get_primitive_type()` |
 | `CELL_TYPE` | `TRANSISTOR`, `RESISTOR`, `CAPACITOR` | `scell.cell_type` |
 
 ## Terminals
@@ -69,6 +69,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `CAPACITOR_PIN_TYPE` | `PLUS`, `MINUS`, `BULK` | CSCell `terminals[i]['pins']` |
 | `BASE_WIRE_TRACK` | `GATE_TOP`, `GATE_BOTTOM`, `SD_TOP`, `SD_BOTTOM`, `SD_CENTER_UP`, `SD_CENTER_DOWN`, `ABS` | TSCell `terminals[i]['base_wire']['track']` |
 | `TOP_WIRE_TRACK` | `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `CELL_LEFT`, `CELL_RIGHT`, `ROUTE_LEFT`, `ROUTE_RIGHT`, `LOWER`, `MIDDLE`, `UPPER`, `ABS` | TSCell `terminals[i]['top_wire']['track']`, `settings['power']['top_wire']['track']` |
+| `CAPACITOR_TRACK` | `LEFT`, `RIGHT`, `MIDDLE` | CSCell `terminals[i]['base_wire']['track']`: where along a row the plate terminal's base wire sits |
 | `TERMINAL_TYPE` | `ANALOG_INPUT`, `ANALOG_OUTPUT`, `BIAS`, `SUPPLY`, `GROUND`, `CLOCK`, `SENSITIVE_NODE`, `NOISY_NODE`, `REFERENCE`, `GENERIC` | S-Cell `terminals[i]['type']`: the port direction in generated netlists |
 | `PORT_DIRECTION` | `INPUT`, `OUTPUT`, `INOUT` | `MCell.add_terminal(...)`, `MCell.get_ports()` |
 | `METAL_LAYER_SELECTION` | `ALL`, `PART` | TSCell `settings['route_over_cell']`, `settings['route_source_drain_over_poly']` |

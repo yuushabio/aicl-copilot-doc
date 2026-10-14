@@ -22,7 +22,7 @@ The files in `primitives/` describe the geometry of one unit device: which layer
 {: .note }
 These files were called `mos.yaml`, `resistor.yaml` and `capacitor.yaml` before. A template with the old names is not loaded; rename the files.
 
-Every file has a single top-level key, `primitive_construction`. A file whose top key is still `Primitives` is in the old format and is refused.
+Every file has its keys at the top level: `device_scaling`, `device_orientation`, `layers` and `polygon_profiles`. A file in an older format is refused, and the error says what to change: a top key `Primitives` or `primitive_construction`, a `polygons` key (now `polygon_profiles`), or a `configuration` block (now in [`constraints/configuration.yaml`]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)).
 
 ## Common sections
 
@@ -32,143 +32,112 @@ Every file has a single top-level key, `primitive_construction`. A file whose to
 | `device_orientation` | Resistors and capacitors: the direction a segment's or plate's `width` runs in (`horizontal` or `vertical`). A resistor also gives `metal_1`, the direction its contacts are arrayed in on the heads. |
 | `layers.base` | Layer ID to PDK layer name for the layers every device of the kind uses, for example `oxide_diffusion: Activ`. The IDs are used everywhere else in the template. |
 | `layers.extension` | Per device class, the layers that class adds (see [Extension layers](#extension-layers)). |
-| `polygons` | Per device class (`default`, and optionally one block per class key): `offsets`, `dimensions` and `distances`, each split into `base` and `extension` entries. |
-| `polygons.<class>.offsets` | Lower-left start `[[x, y]]` of each layer, relative to the primitive's origin (`origin`). |
-| `polygons.<class>.dimensions` | `[[width, height]]` of each layer in the unit device. |
-| `polygons.<class>.distances` | `layer_a|layer_b: [[dx, dy]]`: the signed distance from layer A's lower-left corner to layer B's (positive is inward). |
-| `configuration` | Kind-specific options: spacings, gate-poly strap, guard ring, body tap, via-array limits. |
+| `polygon_profiles` | Per device class (`default`, and optionally one block per class key): `offsets`, `dimensions` and `distances`, each split into `base` and `extension` entries. |
+| `polygon_profiles.<class>.offsets` | Lower-left start `[[x, y]]` of each layer, relative to the primitive's origin (`origin`). |
+| `polygon_profiles.<class>.dimensions` | `[[width, height]]` of each layer in the unit device. |
+| `polygon_profiles.<class>.distances` | `layer_a|layer_b: [[dx, dy]]`: the signed distance from layer A's lower-left corner to layer B's (positive is inward). |
 
-A **class key** is the snake_case of the class's alias in `devices.yaml`: `Standard NMOS` is `standard_nmos`, `High-voltage PMOS` is `high_voltage_pmos`, `Standard P-2T` is `standard_p_2t`. A class without its own `polygons` or `device_scaling` block uses `default`.
+The options that say *how* a device is built (spacings, the gate-poly strap, guard ring and body tap widths, via-array limits) are not in these files. They are in the process's [device configuration]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml), `constraints/configuration.yaml`.
+
+A **class key** is the snake_case of the class's alias in `devices.yaml`: `Standard NMOS` is `standard_nmos`, `High-voltage PMOS` is `high_voltage_pmos`, `Standard P-2T` is `standard_p_2t`. A class without its own `polygon_profiles` or `device_scaling` block uses `default`.
 
 ## transistor.yaml
 
 The listings below are shortened from `ihpSG13G2`, and `...` marks the entries that were left out.
 
 ```yaml
-primitive_construction:
-  device_scaling:
-    default: {parameters: ['finger_width'], values: [[0.13]]}
-    high_voltage_nmos: {parameters: ['finger_width'], values: [[0.3]]}
+device_scaling:
+  default: {parameters: ['finger_width'], values: [[0.13]]}
+  high_voltage_nmos: {parameters: ['finger_width'], values: [[0.3]]}
+  high_voltage_pmos: {parameters: ['finger_width'], values: [[0.3]]}
 
-  layers:
-    base:
-      oxide_diffusion: Activ             # reference layer
-      gate_poly: GatPoly
-      contact: Cont
-      metal1: metal1
-      n_well: NWell
-      p_well: PWell
-      n_implant: nSD
-      p_implant: pSD
-    extension:
-      high_voltage_nmos:                 # the thick-oxide devices add ThickGateOx around the diffusion
-        - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
-      high_voltage_pmos:
-        - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
+layers:
+  base:
+    oxide_diffusion: Activ               # reference layer
+    gate_poly: GatPoly
+    contact: Cont
+    metal1: metal1
+    n_well: NWell
+    p_well: PWell
+    n_implant: nSD
+    p_implant: pSD
+  extension:
+    high_voltage_nmos:                   # the thick-oxide devices add ThickGateOx around the diffusion
+      - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
+    high_voltage_pmos:
+      - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
 
-  polygons:
-    default:
-      offsets:
-        origin: [[0.0, 0.0]]
-        base: {oxide_diffusion: [[0.18, 0.19]], gate_poly: [[0.55, 0.01]], ...}
-        extension: {thick_gate_oxide: [[0, 0]]}
-      dimensions:
-        base: {oxide_diffusion: [[1.44, 0.3]], gate_poly: [[0.13, 0.435]], ...}
-        extension: {thick_gate_oxide: [[1.8, 0.675]]}
-      distances:
-        base: {oxide_diffusion|gate_poly: [[0.37, -0.18]], gate_poly|gate_poly: [[0.44, 0]], ...}
-        extension: {oxide_diffusion|thick_gate_oxide: [[-0.18, -0.19]]}
-    high_voltage_nmos: {...}             # the same tables with the high-voltage rules
-
-  configuration:
-    min_spacing: {oxide_diffusion: 0.11, gate_poly: 0.18, p_implant: 0.31}
-    gate_poly:
-      connector_height: 0.1              # height of the poly strap that joins the gates
-      extension_height: 0.2              # gap between the finger poly and the strap
-      extend_implant_layer: True
-    guard_ring:
-      available: True                    # the process can draw a guard ring
-      bulk_available: True               # ... and a body tap
-      min_offset: {n_type: 0.5, p_type: 1.4}
-      width: {oxide_diffusion: 0.3, metal1: 0.3, n_implant: 0.43, p_implant: 0.43, n_well: 0.78, p_well: null}
-    latch_up:
-      max_tie_distance: 20.0             # any diffusion is kept within this distance of a body tie
+polygon_profiles:
+  default:
+    offsets:
+      origin: [[0.0, 0.0]]
+      base: {oxide_diffusion: [[0.18, 0.19]], gate_poly: [[0.55, 0.01]], ...}
+      extension: {thick_gate_oxide: [[0, 0]]}
+    dimensions:
+      base: {oxide_diffusion: [[1.44, 0.3]], gate_poly: [[0.13, 0.435]], ...}
+      extension: {thick_gate_oxide: [[1.8, 0.675]]}
+    distances:
+      base: {oxide_diffusion|gate_poly: [[0.37, -0.18]], gate_poly|gate_poly: [[0.44, 0]], ...}
+      extension: {oxide_diffusion|thick_gate_oxide: [[-0.18, -0.19]]}
+  high_voltage_nmos: {...}               # the same tables with the high-voltage rules
+  high_voltage_pmos: {...}
 ```
-
-`configuration.min_spacing.p_implant` (and `n_implant`) is the implant spacing rule. When two cells are exported next to each other and their same-type implants end closer than this, the gap is filled, so the export does not break the implant spacing rule. `configuration.min_width.p_implant` (and `n_implant`), when given, is the implant minimum width: each fill is then at least this long along the gap. Where the two implants face each other over a shorter run, the fill covers both shapes' whole extent, so the merged implant has no narrow neck. `ihpSG13G2` sets `min_width.p_implant: 0.31` (rule pSD.a), and `sky130A` sets `0.38` for both implants (nsd.1, psd.1).
 
 A process can need two more layers around a transistor. `sky130A` shows both:
 
 - A `tap_diffusion` base layer: the body ties and the guard ring are drawn on it instead of on `oxide_diffusion`, so the LVS deck can tell a tap from a source or drain (SKY130's `tap`).
-- `configuration.poly_contact_cut`: a layer drawn around every contact on poly, with its `enclosure`, and kept off the gates (SKY130's `npc`, layer ID `nitride_poly_cut`).
+- A `nitride_poly_cut` base layer (SKY130's `npc`), which `configuration.yaml` names in `global.transistor.poly_contact_cut`: it is drawn around every contact on poly, with its `enclosure`, and kept off the gates.
 
 ## poly_resistor.yaml
 
 The resistor's reference layer is `gate_poly`. The class-specific marker layers (the resistor body, the salicide block, the implant) are extension layers, so a P-poly class can add `p_implant` that an N-poly class does not:
 
 ```yaml
-primitive_construction:
-  device_scaling: {parameters: ['width'], values: [[0.5]]}
-  device_orientation:
-    width: horizontal                    # the segments stack along their width
-    metal_1: horizontal                  # how contacts are arrayed on the heads
+device_scaling: {parameters: ['width'], values: [[0.5]]}
+device_orientation:
+  width: horizontal                      # the segments stack along their width
+  metal_1: horizontal                    # how contacts are arrayed on the heads
 
-  layers:
-    base: {gate_poly: GatPoly, contact: Cont, metal1: metal1}
-    extension:
-      standard_n_2t:
-        - {key: resistor_poly, layer: PolyRes, reference: gate_poly, reference_scope: unit, display_name: Resistor Poly}
-        - {key: salicide_block, layer: SalBlock, reference: gate_poly, reference_scope: unit, display_name: Salicide Block}
-        - {key: resistor_ext_block, layer: EXTBlock, reference: gate_poly, reference_scope: unit, display_name: Resistor Ext Block}
-      standard_p_2t:
-        - ...                            # the same three layers
-        - {key: p_implant, layer: pSD, reference: gate_poly, display_name: P Implant}
+layers:
+  base: {gate_poly: GatPoly, contact: Cont, metal1: metal1}
+  extension:
+    standard_n_2t:
+      - {key: resistor_poly, layer: PolyRes, reference: gate_poly, reference_scope: unit, display_name: Resistor Poly}
+      - {key: salicide_block, layer: SalBlock, reference: gate_poly, reference_scope: unit, display_name: Salicide Block}
+      - {key: resistor_ext_block, layer: EXTBlock, reference: gate_poly, reference_scope: unit, display_name: Resistor Ext Block}
+    standard_p_2t:
+      - ...                              # the same three layers
+      - {key: p_implant, layer: pSD, reference: gate_poly, display_name: P Implant}
 
-  polygons: {default: {offsets: ..., dimensions: ..., distances: ...}}
-
-  configuration:
-    bulk:                                # body tap for 3-terminal classes (or a BULK pin)
-      available: True
-      tap_type: 'P'                      # 'P' substrate tap, 'N' well tap
-      side: 'auto'                       # 'auto' (shorter side, near the supply), bottom, top, left, right
-      offset: 0.5
-      width: {oxide_diffusion: 0.3, metal1: 0.3, n_implant: 0.43, p_implant: 0.43, n_well: 0.78, p_well: null}
+polygon_profiles: {default: {offsets: ..., dimensions: ..., distances: ...}}
 ```
+
+Whether a body tap can be drawn, and its tie type, are in `technology.yaml` (`bulk.available`, `bulk.tap_type`). Its layer widths and where it goes are in `configuration.yaml` (`global.bulk.width`, `global.poly_resistor.bulk`).
 
 The least gap between two segments comes from the characterization (for `ihpSG13G2`, 0.18 µm). The composer's `segment_spacing` is added on top of it (see [Resistor S-Cells]({% link docs/tutorials/scells/resistor/index.md %})).
 
 ## mim_capacitor.yaml
 
 ```yaml
-primitive_construction:
-  device_scaling: {parameters: ['width'], values: [[1.14]]}
-  device_orientation: {width: 'horizontal'}   # the direction the plate width runs in
+device_scaling: {parameters: ['width'], values: [[1.14]]}
+device_orientation: {width: 'horizontal'}     # the direction the plate width runs in
 
-  layers:
-    base:
-      cap_top_dielectric: MIM
-      cap_bottom_dielectric: MIM         # reference layer
-      cap_top_metal: TM1
-      cap_bottom_metal: Metal5
-      cap_via: Vmim
-    extension: {}
+layers:
+  base:
+    cap_top_dielectric: MIM
+    cap_bottom_dielectric: MIM           # reference layer
+    cap_top_metal: TM1
+    cap_bottom_metal: Metal5
+    cap_via: Vmim
+  extension: {}
 
-  polygons: {default: {offsets: ..., dimensions: ..., distances: ...}}
-
-  configuration:                         # default via-array limits per plate (CSCell settings)
-    min_number_of_via_rows: 1
-    min_number_of_via_columns: 1
-    max_number_of_via_rows: 5
-    max_number_of_via_columns: 5
-    bulk: {available: True, tap_type: 'P', side: 'auto', offset: 0.5, width: {...}}
+polygon_profiles: {default: {offsets: ..., dimensions: ..., distances: ...}}
 ```
 
-The capacitor's reference layer is `cap_bottom_dielectric`: every entry of `polygons.default.distances` is measured from it, for example `cap_bottom_dielectric|cap_top_metal: [[-0.06, -0.06]]`. In `ihpSG13G2` both dielectric layers are `MIM`.
-
-`configuration` can also hold `extend_bottom_cap_plates: True`. In a process whose top and bottom plate are on two different layers (`cap_top_dielectric` and `cap_bottom_dielectric` differ), the bottom plates of a unit matrix are then joined into one plate across the gaps between the units. It is off by default and has no effect in `ihpSG13G2`, where both are `MIM`.
+The capacitor's reference layer is `cap_bottom_dielectric`: every entry of `polygon_profiles.default.distances` is measured from it. In `ihpSG13G2` both dielectric layers are `MIM`. The via-array limits of the plates and the capacitor's body tap placement are in `configuration.yaml` (`global.mim_capacitor`).
 
 {: .note }
-A template without a `bulk` block draws no body tap. Any `BULK` pins in a resistor or capacitor cell are then removed with a warning.
+A process whose `technology.yaml` says `bulk: {available: false}` (or has no `bulk` block) draws no body tap. Any `BULK` pins in a resistor or capacitor cell are then removed with a warning.
 
 ## Extension layers
 
@@ -176,7 +145,7 @@ An extension entry adds one layer to the devices of one class:
 
 | Key | Description |
 |:--|:--|
-| `key` | The layer ID, used in `polygons`, the characterization and `gds_mapping.yaml`. One ID must keep the same PDK layer in every class. |
+| `key` | The layer ID, used in `polygon_profiles`, the characterization and `gds_mapping.yaml`. One ID must keep the same PDK layer in every class. |
 | `layer` | The PDK layer name. |
 | `reference` | The base layer the extension is placed from. |
 | `display_name` | The name the layout viewer shows. Without it, the viewer shows the key in words (`thick_gate_oxide` is "Thick Gate Oxide"). |
@@ -226,25 +195,27 @@ Profiles are part of the template: whoever writes the template adds them, and a 
 
 ## Inspecting the loaded primitives
 
-The loaded primitives are part of the process context:
+The loaded primitives and their characterization profiles are part of the process context (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)):
 
 ```python
-# The process context from the core package
+# The copilot and the process contexts from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 
 # Start the copilot; this loads the process context
 copilot = AiclCopilot(process_name='ihpSG13G2')
+context = ContextManager.current
 
 # The layers each device generator draws with: its base layers and every class's extension layers
-print('transistor layers:', ContextManager.get_primitive_layers('transistor'))
-print('resistor layers:  ', ContextManager.get_primitive_layers('resistor'))
-print('capacitor layers: ', ContextManager.get_primitive_layers('capacitor'))
+print('transistor layers:', context.primitive_layers('transistor'))
+print('resistor layers:  ', context.primitive_layers('resistor'))
+print('capacitor layers: ', context.primitive_layers('capacitor'))
+
+# The size a high-voltage NMOS is characterized at (device_scaling)
+print('HV NMOS scaling:', context.primitives.transistor.scaling('high_voltage_nmos'))
 
 # The characterization profiles that were loaded for each transistor class
-context = ContextManager.get_current_context()
-transistor_profiles = context['transistor_parameters']['characterization']
-for class_key, profiles in transistor_profiles.items():
+for class_key, profiles in context.characterization.transistor.classes.items():
     print(class_key, '->', list(profiles))
 
 # The same list with each class's default profile, here for the resistor S-Cells

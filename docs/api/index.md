@@ -11,7 +11,7 @@ These pages list the public classes and methods of the `aicl_core` package, with
 | Page | Contents |
 |:--|:--|
 | [AiclCopilot]({{ site.baseurl }}/docs/api/copilot.html) | The entry point: processes, preview and export, DRC/LVS/PEX, simulation, schematics and netlist import. |
-| [Cells]({{ site.baseurl }}/docs/api/cells.html) | `Cell`, `SCell`, `TSCell`, `RSCell`, `CSCell`, `MCell`, `AbstractMCell` and the netlist hierarchy (`Circuit`, `CircuitDeviceGrouper`, `MCellAtomic`). |
+| [Cells]({{ site.baseurl }}/docs/api/cells.html) | `Cell`, `SCell`, `TSCell`, `RSCell`, `CSCell`, `MCell` and the netlist hierarchy (`Circuit`, `CircuitDeviceGrouper`, `MCellAtomic`). |
 | [Place and Route]({{ site.baseurl }}/docs/api/pnr.html) | `PlaceAndRouteManager`, the placer and router registries, and the request/result types. |
 | [Databases]({{ site.baseurl }}/docs/api/database.html) | `ParameterLibrary` and `CellDatabase`. |
 | [Enumerations]({{ site.baseurl }}/docs/api/enums.html) | Every enum that is used in cell parameters and constraints. |
@@ -25,7 +25,8 @@ These pages list the public classes and methods of the `aicl_core` package, with
 | `RSCell` | `from aicl_core.bin.core.engines.resistor import RSCell` |
 | `CSCell` | `from aicl_core.bin.core.engines.capacitor import CSCell` |
 | `MCell` | `from aicl_core.bin.core.engines.mcell import MCell` |
-| `AbstractMCell` | `from aicl_core.bin.core.engines.abstract_mcell import AbstractMCell` |
+| `ContextManager` | `from aicl_core.bin.core.contextmanager import ContextManager` |
+| `ContextOverride` | `from aicl_core.bin.core.context import ContextOverride` |
 | `SCell`, `Cell` | `aicl_core.bin.core.engines.scell`, `aicl_core.bin.core.engines.cell` |
 | `register_cell_class`, `cell_class` | `from aicl_core.bin.core.engines.cell_classes import ...` |
 | `discover`, `template_dir`, `template_file` | `from aicl_core.bin.core.process_templates import ...` |

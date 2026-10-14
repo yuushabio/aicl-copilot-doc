@@ -32,7 +32,8 @@ A template placed directly under `process_templates/<process name>/`, without a 
 ```
 process_templates/planar/ihpSG13G2/
 ├── constraints/
-│   ├── configuration.yaml       # required: name, family, units, grid, environment, device limits and PDK parameter names
+│   ├── technology.yaml          # required: name, family, units, grid, environment, device limits and PDK parameter names
+│   ├── configuration.yaml       # required: how devices are built (guard rings, body taps, gate poly, layer spacing rules)
 │   ├── connectivity.yaml        # required: contacts, vias and metals with their design rules
 │   ├── devices.yaml             # required: device class -> PDK device name
 │   ├── parameter_defaults.yaml  # optional: process defaults for S-Cell parameters
@@ -62,6 +63,7 @@ The pages in this section describe the files:
 - [Primitives]({{ site.baseurl }}/docs/setup/process/device.html): `primitives/*.yaml` and `characterization/`.
 - [Mapping]({{ site.baseurl }}/docs/setup/process/mapping.html): `constraints/devices.yaml`.
 - [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html): the rest of `constraints/`.
+- [Process Context]({{ site.baseurl }}/docs/setup/process/context.html): how the loaded template is read from Python, and how a script changes a value for some cells only.
 
 ## How templates are validated
 
@@ -69,14 +71,14 @@ When an `AiclCopilot` is created, every process directory under `process_templat
 
 | List | Condition |
 |:--|:--|
-| `valid_processes` | It has `constraints/configuration.yaml`, `constraints/connectivity.yaml` and `primitives/transistor.yaml`, and it loads. `devices.yaml` must also be present and non-empty, and the connectivity must be consistent. For example, every via must join two known layers, and every pair of adjacent metals must be joined by a via. |
+| `valid_processes` | It has `constraints/technology.yaml`, `constraints/configuration.yaml`, `constraints/connectivity.yaml` and `primitives/transistor.yaml`, and it loads. `devices.yaml` must also be present and non-empty, and the connectivity must be consistent. For example, every via must join two known layers, and every pair of adjacent metals must be joined by a via. |
 | `simulation_processes` | Its only content is `constraints/simulation.yaml`. This is a simulation model set and has no layout context. |
 | `invalid_processes` | Anything else, or a template that fails to load. The reason is logged. |
 
 A template also fails to load, and is listed in `invalid_processes`, when:
 
-- `configuration.yaml` names a `process_name` that is not the directory's name, or a `process_tech` (family) that is not the folder it is in.
-- A file is still in the old template format: a `config.yaml`, a top-level `Configuration`, `Connectivity` or `Primitives` key, CamelCase sections such as `Transistors:` in `devices.yaml`, or flat characterization files (`MOS.yaml`, `RES.yaml`, `CAP.yaml`, or `characterization/transistor.yaml`). The logged error names the file and what to change.
+- `technology.yaml` names a `process_name` that is not the directory's name, or a `process_tech` (family) that is not the folder it is in.
+- A file is still in the old template format: a `config.yaml`, a top-level `Configuration`, `Connectivity`, `Primitives` or `primitive_construction` key, a `configuration.yaml` that still holds the technology keys (`process_name`, `layout_resolution`, `transistors`, ...), CamelCase sections such as `Transistors:` in `devices.yaml`, or flat characterization files (`MOS.yaml`, `RES.yaml`, `CAP.yaml`, or `characterization/transistor.yaml`). The logged error names the file and what to change.
 
 ```python
 # The copilot from the core package
@@ -91,16 +93,19 @@ print('simulation-only sets:', copilot.simulation_processes)
 print('invalid templates:   ', copilot.invalid_processes)
 print('active process:      ', copilot.current_process)
 
-# Two values read from the active process's configuration.yaml: its family and the layout grid
-configuration = copilot.getTechParameters
-print('family:              ', configuration['process_tech'])
-print('layout resolution:   ', configuration['layout_resolution'])
+# Two values read from the active process's technology.yaml: its family and the layout grid
+technology = copilot.getTechParameters
+print('family:              ', technology.process_tech)
+print('layout resolution:   ', technology.layout_resolution)
 ```
 
 If the requested process is not valid, `AiclCopilot` logs a warning and falls back to another valid process. Check `copilot.current_process` when you add a new template.
 
 {: .warning }
-Older templates used other file names: `config.yaml` (now `configuration.yaml`, without its `Configuration:` key), `mos.yaml`, `resistor.yaml` and `capacitor.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`), and `characterization/MOS.yaml`, `RES.yaml` and `CAP.yaml` (now one profile per device class, see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). A template that still uses an old name is not loaded, and an error names the files to rename.
+Older templates used other file names: `config.yaml` (later `configuration.yaml`, and now `technology.yaml`; see the note below), `mos.yaml`, `resistor.yaml` and `capacitor.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`), and `characterization/MOS.yaml`, `RES.yaml` and `CAP.yaml` (now one profile per device class, see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). A template that still uses an old name is not loaded, and an error names the files to rename.
+
+{: .note }
+In the current release the file that used to be called `configuration.yaml` is **`technology.yaml`**. The name `configuration.yaml` now belongs to a new file: the device configuration (guard rings, body taps, gate poly and the layer spacing rules), which used to sit in the `configuration` blocks of the `primitives/*.yaml` files. To update an older template, rename its `configuration.yaml` to `technology.yaml`, move `min_poly_spacing`, `min_distance_poly_to_implant` and `min_poly_abut_extension` out of it, and write a new `configuration.yaml` (see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)). The error message of a template in the old layout says which key goes where.
 
 ## Finding a template from code
 
@@ -159,7 +164,7 @@ The sky130A KLayout DRC deck is not complete. Its own README says it does not ch
 The process is used like any other:
 
 ```python
-# The copilot, the process context and the transistor S-Cell engine from the core package
+# The copilot, the process contexts and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 from aicl_core.bin.core.engines.transistor import TSCell
@@ -173,7 +178,7 @@ copilot = AiclCopilot(process_name='sky130A')
 print('active process:', copilot.current_process)
 
 # The metal layer IDs and their SKY130 layer names (metal1 is li1)
-print('metals:', ContextManager.get_metal_layer_name_mapping())
+print('metals:', ContextManager.current.connectivity.metal_names)
 
 # One NMOS with 4 fingers of 1 um at the SKY130 minimum length of 0.15 um
 parameters = {
@@ -202,7 +207,7 @@ print('simulation:', copilot.simulation.available().available)
 ## Adding a process
 
 1. Copy `process_templates/planar/ihpSG13G2/` (or `sky130A/`) to a new directory named after the process, in the folder of its family (`planar/` for a bulk CMOS process). To keep your templates out of the package, copy the whole configuration directory (`aicl_core/config/`) somewhere else and point `AICL_COP_CONFIG_DIR` at the copy.
-2. Set `process_name` in `configuration.yaml` to the directory name, and edit the units, grid and limits. Edit `connectivity.yaml` (layers and rules) and `devices.yaml` (device names) from the PDK's design rule manual.
+2. Set `process_name` in `technology.yaml` to the directory name, and edit the units, grid and limits. Edit `configuration.yaml` (guard ring, body tap and layer spacing values). Edit `connectivity.yaml` (layers and rules) and `devices.yaml` (device names) from the PDK's design rule manual.
 3. Measure the primitive geometry from the PDK's device layouts into `primitives/*.yaml`, and write one characterization profile per device class you use.
 4. Write `gds_mapping.yaml` from the PDK's layer map.
 5. Create an `AiclCopilot(process_name='<name>')` and check that the name appears in `valid_processes`. Then build and export a small TSCell and run DRC on it.

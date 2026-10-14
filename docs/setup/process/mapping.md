@@ -44,7 +44,7 @@ capacitors:
 inductors: ...             # listed for completeness; no inductor cells are built
 ```
 
-The transistors have no family level: the template's family (`planar` or `finfet`, from its folder and `configuration.yaml`) says which transistor technology they are. The class alias is matched by its snake_case key, so `Standard N-2T` in the file is the class `RESISTOR_CLASS.STANDARD_N2T`.
+The transistors have no family level: the template's family (`planar` or `finfet`, from its folder and `technology.yaml`) says which transistor technology they are. The class alias is matched by its snake_case key, so `Standard N-2T` in the file is the class `RESISTOR_CLASS.STANDARD_N2T`.
 
 Write `null` for a class the process does not have. A cell built with a class that the process maps to `null` is refused with a `ParameterError` that lists the classes the process does offer, for example:
 
@@ -102,7 +102,7 @@ A cell takes its class and technology as the constructor arguments `device_class
 
 ## PDK parameter names
 
-The device instance parameters (for example `w`, `l`, `ng` and `m` on an IHP MOSFET, or `W`, `L`, `nf` and `mult` on a SKY130 one) are not in `devices.yaml`. They are listed per device kind in `configuration.yaml` under `pcell.parameters` and `netlist.parameters`; see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml).
+The device instance parameters (for example `w`, `l`, `ng` and `m` on an IHP MOSFET, or `W`, `L`, `nf` and `mult` on a SKY130 one) are not in `devices.yaml`. They are listed per device kind in `technology.yaml` under `pcell.parameters` and `netlist.parameters`; see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#technologyyaml).
 
 ## Checking the mapping
 
@@ -123,7 +123,7 @@ print('PMOS:', transistor_mapping['pmos'])
 To ask whether the process has a model for one class, use `device_model` from `aicl_core.bin.utilities.methods.devicemappings`. `offered_device_classes` lists every class the process maps:
 
 ```python
-# The copilot and the process context from the core package
+# The copilot and the process contexts from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 
@@ -135,7 +135,7 @@ from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_T
 
 # Start the copilot and read the device mapping of the active process
 copilot = AiclCopilot(process_name='ihpSG13G2')
-mapping = ContextManager.get_device_mapping()
+mapping = ContextManager.current.devices.to_data()
 
 # The PDK model of one class, or None when the process has none
 print('STANDARD_P2T:', device_model(mapping, RESISTOR_TECH.POLYSILICON, RESISTOR_CLASS.STANDARD_P2T))

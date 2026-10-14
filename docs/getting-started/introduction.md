@@ -16,7 +16,6 @@ The core package is released under the GNU GPLv3. Layouts, netlists and other fi
 |:--|:--|:--|
 | **S-Cell** (super cell) | `TSCell`, `RSCell`, `CSCell` | A generated block of one kind of device: one or more transistors that share diffusion, a segmented poly resistor, or a matrix of MIM capacitor units. The block comes with its own terminal wiring and optionally a guard ring and dummies. |
 | **M-Cell** (module cell) | `MCell` | A hierarchical container of S-Cells and other M-Cells. Its nets say which sub-cell terminals are connected, and placers and routers arrange and wire it. |
-| **Abstract M-Cell** | `AbstractMCell` | An outline with terminals, used to preview a floor plan before its contents exist. |
 | **Composer** | | The algorithm that arranges devices inside an S-Cell, for example `TRANSISTOR_COMPOSER.LINEAR`. |
 | **Process template** | | The YAML description of a technology in `aicl_core/config/process_templates/<family>/<process>/`, for example `planar/ihpSG13G2`. |
 | **Generator** | | A Python script that builds a cell and exports it. |
@@ -25,7 +24,7 @@ The core package is released under the GNU GPLv3. Layouts, netlists and other fi
 
 | Package (`aicl_core/bin/...`) | Contents |
 |:--|:--|
-| `core/` | `AiclCopilot` (`copilot.py`), the process context, and the cell engines in `core/engines/` (`TSCell`, `RSCell`, `CSCell`, `MCell`, `AbstractMCell`). Composers, connectors and factories build the device geometry. |
+| `core/` | `AiclCopilot` (`copilot.py`), the process context, and the cell engines in `core/engines/` (`TSCell`, `RSCell`, `CSCell`, `MCell`). Composers, connectors and factories build the device geometry. |
 | `netlisting/` | SPICE parsing (`NetlistParser`), the `Circuit` tree, the device grouper (`CircuitDeviceGrouper`) and the atomic hierarchy (`MCellAtomic`), which builds an `MCell` from a netlist. |
 | `placers/` | `CUSTOM_RPS_PLACER`, a rectangle-packing placer with simulated annealing, and `REFERENCE_PLACER`, which places cells at given positions or relative to other cells. |
 | `routers/` | Terminal routing inside S-Cells (`scell/`), and the M-Cell routers `RMST_ROUTER`, `ALIGN_ROUTER` and `MAGICAL_ROUTER` (`mcell/`). |
