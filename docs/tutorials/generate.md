@@ -11,7 +11,9 @@ nav_order: 5
 `AiclCopilot.preview_layout(cell, enable_culling=True, wheel_zoom=True)` opens the layout viewer for an S-Cell or an M-Cell:
 
 - `enable_culling=True` leaves contacts and vias out of the drawing, which keeps large layouts responsive. Pass `False` to see them.
-- `wheel_zoom` lets the mouse wheel zoom. The toolbar's zoom tool works either way, and the viewer has a checkbox for it.
+- `wheel_zoom` lets the mouse wheel zoom. The toolbar's zoom tool works either way, and the **Wheel Zoom** button on the toolbar switches it on and off.
+
+The toolbar also has a **Pan** tool (drag with the left mouse button to move a zoomed view, drag with the right one to zoom) and a **Grid** button. The grid lies on the process's layout resolution and shows the layout coordinates along the axes. The label slider fades every label, including the cell names and the pin labels, so you can see the geometry behind them.
 
 The viewer is a Qt window. The script continues when the window is closed.
 
@@ -85,7 +87,52 @@ The verification commands check the manifest too. They refuse to run a rule deck
 
 M-Cells are generated the same way, flattened into one top cell.
 
+## Writing a netlist
+
+`AiclCopilot.generate_netlist(cell, library_name, view_name, style='spice')` writes the cell as a netlist file. The netlist has one top-level `.subckt` named `view_name`, with the cell's terminals as its ports. It is built from the same device graph as the layout, so the two always describe the same circuit. You can use it as the schematic for LVS, or load it in a circuit simulator.
+
+- `style='spice'` (the default) writes a SPICE netlist in the dialect that the process's LVS tool reads.
+- `style='cdl'` writes an auCdl netlist (`.SUBCKT`, `*.PININFO`) for commercial LVS tools.
+
+The file is written to `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl` for CDL), and the method returns its path. `AICL_COP_SCH_DIR` is `<project_directory>/schematics`, or `~/.aicl_copilot/schematics` without a project directory. Pass `path=` to write somewhere else.
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Start the copilot for the IHP process
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# A 2-finger NMOS with three terminals: gate, drain, and source tied to bulk
+nmos_parameters = {
+    'specifications': {
+        'finger_width': 2.0,        # um, per finger
+        'length': 0.5,              # um
+        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
+    },
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
+        {'name': 'VSS', 'pins': [['M1', TRANSISTOR_PIN_TYPE.SOURCE, TRANSISTOR_PIN_TYPE.BULK]]},
+    ],
+}
+nmos_scell = TSCell(name='netlist_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+
+# A SPICE netlist and an auCdl netlist of the same cell
+spice_path = copilot.generate_netlist(nmos_scell, 'tutorial_library', 'netlist_nmos')
+cdl_path = copilot.generate_netlist(nmos_scell, 'tutorial_library', 'netlist_nmos', style='cdl')
+
+# Print where they are, and the SPICE file itself
+print(spice_path)
+print(cdl_path)
+print(spice_path.read_text())
+```
+
 ## Next steps
 
-- [Verification]({% link docs/tutorials/verification/index.md %}): DRC, LVS and PEX export the layout themselves, so `generate_layout` is not needed first.
-- [Schematic]({% link docs/tutorials/schematic/index.md %}): an xschem schematic of the same cell.
+- [Verification]({% link docs/tutorials/verification/index.md %}): DRC and LVS export the layout themselves, so `generate_layout` is not needed first.

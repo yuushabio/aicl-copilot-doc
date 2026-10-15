@@ -29,9 +29,8 @@ With this many devices, the recipe leaves both the grouping and the floor-plan t
 # Python's built-in module for file paths and environment variables
 import os
 
-# Copilot, testbench builder, placer factory and place-and-route helper from the core package
+# Copilot, placer factory and place-and-route helper from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.simulation import testbench
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 from aicl_core.bin.utilities.helpers.placers import PlacerManager
 
@@ -74,53 +73,26 @@ print('failed nets:', route_result.failed)
 # Show the layout
 copilot.preview_layout(ota)
 
-# --- 3. Check and simulate ---
+# --- 3. Check ---
 # Run DRC and LVS and print a short summary of each
 drc = copilot.run_drc(ota, library_name=library_name, view_name=view_name)
 lvs = copilot.run_lvs(ota, library_name=library_name, view_name=view_name)
 print(drc.summary())
 print(lvs.summary())
 
-# run_simulation writes the OTA netlist first, then calls this function with its path
-# to get a testbench built around exactly that netlist
-def ota_testbench(dut_netlist):
-    # Folder for the testbench files
-    project_directory = os.environ['AICL_COP_PROJECT_DIR']
-    testbench_directory = os.path.join(project_directory, 'testbenches', view_name)
-
-    # Which OTA pins play which testbench role
-    roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
-
-    # Supply, common-mode input, load capacitor and the frequency band to sweep
-    params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
-
-    # Fixed sources: 5 uA bias current from vdd, and enable tied high
-    fixed = {'ibias_5u': {'i': 5e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
-
-    # Build a single-ended OTA testbench
-    return testbench.build('ota_se', dut_netlist, testbench_directory,
-                           roles=roles, params=params, fixed=fixed)
-
-# Simulate the OTA (pre-layout) and print the measured metrics
-simulation = copilot.run_simulation(ota_testbench, cell=ota, library_name=library_name, view_name=view_name)
-print(simulation.summary())
+# --- 4. Export ---
+# Write the GDS file, and a SPICE netlist of the same circuit (for a simulator of your choice)
+copilot.generate_layout(ota, library_name, view_name)
+netlist_path = copilot.generate_netlist(ota, library_name, view_name)
+print('netlist:', netlist_path)
 ```
 
 ![Cascode OTA packed by the custom RPS placer and routed by the RMST router]({{site.baseurl}}/assets/images/gen_ota_improved_lay.png){: width="760"}
 
 ## Results
 
-On `ihpSG13G2` every net routes and LVS matches. The pre-layout simulation at the typical corner, with 5 µA bias into 50 fF, gives:
-
-| Metric | Value |
-|:--|:--|
-| DC gain | 41.8 dB |
-| Unity-gain bandwidth | 146 MHz |
-| Phase margin | 65° |
-| Power | 37 µW |
-
 {: .warning }
-KLayout DRC is **not** clean for this recipe in the current release. It reports a few violations: minimum width on routed metal (rule `M2.a`) and an N-well spacing (`NW.b1`). Check `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
+This recipe does **not** give a clean layout in the current release. With this seed the RMST router cannot finish the `vdd` net (`route_result.failed` is `['vdd']`), so LVS reports a mismatch: the layout has no `VDD` pin, and the supply nets of the cells are not joined. KLayout DRC also reports a few violations: minimum width on routed metal (rule `M2.a`) and an N-well spacing (`NW.b1`). Check `route_result.failed`, `lvs.report()`, `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
 
 ## Variations
 

@@ -15,7 +15,7 @@ The `terminals` section of the S-Cell parameters is a list of nets. Each entry n
 |:--|:--|:--|
 | `name` | str | Net name, unique in the cell |
 | `pins` | list | `[device_name, PIN_TYPE, ...]` items: one device and one or more of its pins |
-| `type` | `TERMINAL_TYPE` | Role of the net (optional). The schematic writer uses it to choose the pin direction |
+| `type` | `TERMINAL_TYPE` | Role of the net (optional). The CDL netlist uses it for the pin direction in `*.PININFO` |
 | `base_wire` | dict | The wire that collects the pins inside the cell |
 | `base_to_top_wire` | dict | The connector from the base wire up to the top wire |
 | `top_wire` | dict | The wire a parent M-Cell connects to |

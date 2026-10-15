@@ -11,7 +11,7 @@ AICL Co-pilot (Analog Integrated Circuit Layout Co-pilot) is a Python framework 
 - parameterised device generators (S-Cells) for transistors, resistors and capacitors;
 - hierarchical M-Cells, built by hand or from a SPICE netlist;
 - placers and routers for M-Cells;
-- GDS export, DRC/LVS/PEX, ngspice simulation and xschem schematics.
+- GDS export, SPICE/CDL netlist export, and DRC and LVS with KLayout or Magic/Netgen.
 
 Everything a technology needs is read from YAML process templates. The core package ships templates for the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) and [SkyWater SKY130](https://github.com/google/skywater-pdk) (`sky130A`) open PDKs.
 
@@ -38,9 +38,9 @@ copilot.preview_layout(nmos)
 | | |
 |:--|:--|
 | [Introduction]({{ site.baseurl }}/docs/getting-started/introduction.html) | What the framework is and how the package is organised. |
-| [Design Flow]({{ site.baseurl }}/docs/getting-started/design-flow.html) | The steps from a device to a verified, simulated layout. |
-| [Installation]({{ site.baseurl }}/docs/setup/install.html) | Installing the package, `config.env` and the external tools. |
-| [Tutorials]({{ site.baseurl }}/docs/tutorials/) | Step-by-step guides for S-Cells, M-Cells, netlists, verification and simulation. |
+| [Design Flow]({{ site.baseurl }}/docs/getting-started/design-flow.html) | The steps from a device to a verified layout. |
+| [Installation]({{ site.baseurl }}/docs/setup/install.html) | Installing the package, the `setup/` folder, `config.env` and the external tools. |
+| [Tutorials]({{ site.baseurl }}/docs/tutorials/) | Step-by-step guides for S-Cells, M-Cells, netlists and verification. |
 | [Generator Templates]({{ site.baseurl }}/docs/setup/template/generators.html) | Complete generator scripts to copy. |
 | [API Reference]({{ site.baseurl }}/docs/api/) | Classes, methods and enums. |
 

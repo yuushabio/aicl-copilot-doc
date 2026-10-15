@@ -17,7 +17,7 @@ Every cell is built from a parameter dictionary. S-Cells (`TSCell`, `RSCell`, `C
 | `settings` | yes | | Cell-wide options: guard ring, dummies, gate poly, power wires, via limits. |
 | `terminals` | yes | yes | For an S-Cell, which device pins are joined into each terminal and how its wires are drawn. For an M-Cell, which sub-cell terminals each net connects. |
 
-Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`parameter_defaults.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#parameter_defaultsyaml)), then the framework defaults. For a transistor S-Cell, a size outside the process limits is an error: a `length`, `finger_width` or number of fingers below the minimum (or a length or number of fingers above the maximum) raises `ParameterError` with the limit in the message. A `finger_width` above the maximum is split over several rows of the linear composer (see [Layout Composer]({{ site.baseurl }}/docs/tutorials/scells/composer/)). A resistor or capacitor size below the process minimum is raised to it, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
+Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`cell_parameter_locals.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#cell_parameter_localsyaml)), then the defaults for every process (`cell_parameter_globals.yaml`). For a transistor S-Cell, a size outside the process limits is an error: a `length`, `finger_width` or number of fingers below the minimum (or a length or number of fingers above the maximum) raises `ParameterError` with the limit in the message. A `finger_width` above the maximum is split over several rows of the linear composer (see [Layout Composer]({{ site.baseurl }}/docs/tutorials/scells/composer/)). A resistor or capacitor size below the process minimum is raised to it, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
 
 The device class (for example `TRANSISTOR_CLASS.STANDARD_PMOS`) and the device technology are not part of the dictionary. They are constructor arguments, `device_class=` and `device_tech=`; see [Device class and technology](#device-class-and-technology).
 
@@ -83,7 +83,7 @@ print(realized['device_class'], realized['device_tech'])
 
 `get_device_class()` and `get_device_tech()` return the cell's values. `set_device_class(...)` and `set_device_tech(...)` check the new value against the process and rebuild the cell in place, at the same position.
 
-The cell records the two values in the dictionaries it hands out (`get_parameters()`, `get_default_user_parameters()`, the parameter library and the cell database) as the root keys `'device_class'` and `'device_tech'`. A dictionary with these keys is rebuilt with `create_from_params` (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). A constructor refuses them in `parameters`, and it also refuses the old keys `specifications['transistor_class']`, `['resistor_class']` and `['capacitor_class']`, so an old dictionary is never built silently as the default device.
+The cell records the two values in the dictionaries it hands out (`get_parameters()` and `get_default_user_parameters()`) as the root keys `'device_class'` and `'device_tech'`. A dictionary with these keys is rebuilt with `create_from_params` (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). A constructor refuses them in `parameters`, and it also refuses the old keys `specifications['transistor_class']`, `['resistor_class']` and `['capacitor_class']`, so an old dictionary is never built silently as the default device.
 
 ## Transistor S-Cell (TSCell)
 
@@ -125,7 +125,6 @@ Each entry of `devices`:
 | `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. When they may not, they take the gate side. |
 | `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
 | `terminal_sides` | str | not set | `'both'` gives every gate and source/drain net of a single row a base wire on both sides of the row, joined by its top wire. |
-| `profile_name` | str, dict or `None` | `None` | The characterization profile of the device class to build from: a profile name, or `{'default': name, <class key>: name}` per device class. `None` uses the class's default profile. The profiles come with the process template; list them with `copilot.get_characterization_profiles()` or `cell.available_profiles()` (see [Characterization profile]({{ site.baseurl }}/docs/tutorials/scells/configure/#characterization-profile)). |
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
@@ -216,7 +215,6 @@ The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STAND
 | | `segment_connection` | `RESISTOR_SEGMENT_CONNECTION` | `SERIES` or `PARALLEL` (default). |
 | `settings` | `bulk_tap` | dict | Optional `{'side': 'auto' | 'vertical' | 'horizontal', 'offset': float}`. Overrides the process template's tap placement (`configuration.yaml`, `global.poly_resistor.bulk`). |
 | | `guard_ring` | dict | `{'enable': False, 'offset': 0.0}`. With `enable`, a guard ring is drawn on all four sides instead of a tap strip, `offset` µm further out than the tap gap. |
-| | `profile_name` | str | The characterization profile to build from, as for TSCell. |
 | `terminals` | `name`, `pins`, `type` | | As for TSCell. The pin types are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. `PLUS` and `MINUS` must both be connected. |
 | | `base_wire` | dict | `layer`, `width`, `number_of_vias`, `offset`, `track` (`None`). |
 
@@ -266,7 +264,7 @@ The class is the `device_class=` argument: `CAPACITOR_CLASS.STANDARD_2T`, or `ST
 | | `row_spacing`, `column_spacing` | float | Gaps between units. They are raised to the plate minimum when needed. |
 | | `connecting_wire_width` | float | Width of the wires that join the plates of a row. Default: the minimum width of the higher plate metal. |
 | `settings` | `min_number_of_via_rows`, `min_number_of_via_cols`, `max_number_of_via_rows`, `max_number_of_via_cols` | int | Limits on the via array per plate. The defaults come from the template's `configuration.yaml` (`global.mim_capacitor`). |
-| | `bulk_tap`, `profile_name` | | As for RSCell. |
+| | `bulk_tap` | | As for RSCell. |
 | `terminals` | `name`, `pins`, `type` | | The pin types are `CAPACITOR_PIN_TYPE.PLUS` (top plate), `MINUS` (bottom plate) and `BULK`. |
 | | `base_wire` | dict | `layer`, `width`, `offset`, `track`, `number_of_via_rows`, `number_of_via_cols`. On the plate's own metal it is the row's connecting wire; on another metal, a pad on it. `track` is a `CAPACITOR_TRACK` (`LEFT`, `RIGHT` or `MIDDLE`): where along the row it sits, moved by `offset`. See [Capacitor S-Cells]({% link docs/tutorials/scells/capacitor/index.md %}#terminals). |
 | | `top_wire` | dict | `layer`, `width`, `number_of_via_rows`, `number_of_via_cols`. The vertical wire that joins the rows' base wires; there is none with one row. |
@@ -374,4 +372,4 @@ copilot.preview_layout(mcell)
 
 ## Storing parameters
 
-A parameter dictionary, with its enum members, can be saved by name in a `ParameterLibrary` and built again later, against any process. See the [database tutorial]({{ site.baseurl }}/docs/tutorials/database/).
+A parameter dictionary is plain Python data (with enum members as values), so you can keep it in your own script or module and build the cell again later, also for another process. `create_from_params` rebuilds a cell from the dictionary that `get_parameters()` returns (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). The core package has no parameter library or cell database of its own.

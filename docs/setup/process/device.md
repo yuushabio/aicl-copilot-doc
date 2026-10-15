@@ -8,7 +8,7 @@ nav_order: 1
 # Device Primitives
 {: .no_toc }
 
-The files in `primitives/` describe the geometry of one unit device: which layers it is drawn on, and where each layer sits relative to a reference layer. The composers repeat and connect these units to build an S-Cell. The values are measured from the PDK's own device layouts (its p-cells), in the process layout unit. The files in `characterization/` hold the same geometry measured at each device size, per device class.
+The files in `primitives/` describe the geometry of one unit device: which layers it is drawn on, and where each layer sits relative to a reference layer. The composers repeat and connect these units to build an S-Cell. The values are measured from the PDK's own device layouts (its p-cells), in the process layout unit. The files in `characterization/` hold the same geometry measured at each device size, one file per kind of primitive.
 
 1. TOC
 {:toc}
@@ -22,34 +22,31 @@ The files in `primitives/` describe the geometry of one unit device: which layer
 {: .note }
 These files were called `mos.yaml`, `resistor.yaml` and `capacitor.yaml` before. A template with the old names is not loaded; rename the files.
 
-Every file has its keys at the top level: `device_scaling`, `device_orientation`, `layers` and `polygon_profiles`. A file in an older format is refused, and the error says what to change: a top key `Primitives` or `primitive_construction`, a `polygons` key (now `polygon_profiles`), or a `configuration` block (now in [`constraints/configuration.yaml`]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)).
+Every file has its keys at the top level: `device_scaling`, `device_orientation`, `layers` and `polygons`. A file in an older format is refused, and the error says what to change: a top key `Primitives` or `primitive_construction`, a `polygon_profiles` block (one block per device class; give one `polygons` block instead), or a `configuration` block (now in [`constraints/configuration.yaml`]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)).
 
 ## Common sections
 
 | Key | Description |
 |:--|:--|
-| `device_scaling` | `parameters` (the device dimension the geometry depends on) and `values` (the dimension values it was measured at). The value selects the matching entry of the class's characterization profile. It can be given once, or per device class: `{default: {parameters, values}, <class key>: {...}}`. |
+| `device_scaling` | `parameters` (the device dimension the geometry depends on) and `values` (the dimension values it was measured at). The value selects the matching entry of the kind's characterization. It is given once for the kind, and every device class uses it. |
 | `device_orientation` | Resistors and capacitors: the direction a segment's or plate's `width` runs in (`horizontal` or `vertical`). A resistor also gives `metal_1`, the direction its contacts are arrayed in on the heads. |
 | `layers.base` | Layer ID to PDK layer name for the layers every device of the kind uses, for example `oxide_diffusion: Activ`. The IDs are used everywhere else in the template. |
 | `layers.extension` | Per device class, the layers that class adds (see [Extension layers](#extension-layers)). |
-| `polygon_profiles` | Per device class (`default`, and optionally one block per class key): `offsets`, `dimensions` and `distances`, each split into `base` and `extension` entries. |
-| `polygon_profiles.<class>.offsets` | Lower-left start `[[x, y]]` of each layer, relative to the primitive's origin (`origin`). |
-| `polygon_profiles.<class>.dimensions` | `[[width, height]]` of each layer in the unit device. |
-| `polygon_profiles.<class>.distances` | `layer_a|layer_b: [[dx, dy]]`: the signed distance from layer A's lower-left corner to layer B's (positive is inward). |
+| `polygons` | `offsets`, `dimensions` and `distances`, each split into `base` and `extension` entries. One set for the kind. |
+| `polygons.offsets` | Lower-left start `[[x, y]]` of each layer, relative to the primitive's origin (`origin`). |
+| `polygons.dimensions` | `[[width, height]]` of each layer in the unit device. |
+| `polygons.distances` | `layer_a|layer_b: [[dx, dy]]`: the signed distance from layer A's lower-left corner to layer B's (positive is inward). |
 
 The options that say *how* a device is built (spacings, the gate-poly strap, guard ring and body tap widths, via-array limits) are not in these files. They are in the process's [device configuration]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml), `constraints/configuration.yaml`.
 
-A **class key** is the snake_case of the class's alias in `devices.yaml`: `Standard NMOS` is `standard_nmos`, `High-voltage PMOS` is `high_voltage_pmos`, `Standard P-2T` is `standard_p_2t`. A class without its own `polygon_profiles` or `device_scaling` block uses `default`.
+A **class key** is the snake_case of the class's alias in `devices.yaml`: `Standard NMOS` is `standard_nmos`, `Low-threshold NMOS` is `low_threshold_nmos`, `Standard P-2T` is `standard_p_2t`. Class keys are used in `layers.extension`. The scaling, the polygons and the characterization are shared by every class of the kind.
 
 ## transistor.yaml
 
 The listings below are shortened from `ihpSG13G2`, and `...` marks the entries that were left out.
 
 ```yaml
-device_scaling:
-  default: {parameters: ['finger_width'], values: [[0.13]]}
-  high_voltage_nmos: {parameters: ['finger_width'], values: [[0.3]]}
-  high_voltage_pmos: {parameters: ['finger_width'], values: [[0.3]]}
+device_scaling: {parameters: ['finger_width'], values: [[0.13]]}
 
 layers:
   base:
@@ -61,27 +58,22 @@ layers:
     p_well: PWell
     n_implant: nSD
     p_implant: pSD
-  extension:
-    high_voltage_nmos:                   # the thick-oxide devices add ThickGateOx around the diffusion
-      - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
-    high_voltage_pmos:
-      - {key: thick_gate_oxide, layer: ThickGateOx, reference: oxide_diffusion, display_name: Thick Gate Oxide}
+  extension:                             # the standard classes add no layers
+    low_threshold_nmos:
+    low_threshold_pmos:
+    ...
 
-polygon_profiles:
-  default:
-    offsets:
-      origin: [[0.0, 0.0]]
-      base: {oxide_diffusion: [[0.18, 0.19]], gate_poly: [[0.55, 0.01]], ...}
-      extension: {thick_gate_oxide: [[0, 0]]}
-    dimensions:
-      base: {oxide_diffusion: [[1.44, 0.3]], gate_poly: [[0.13, 0.435]], ...}
-      extension: {thick_gate_oxide: [[1.8, 0.675]]}
-    distances:
-      base: {oxide_diffusion|gate_poly: [[0.37, -0.18]], gate_poly|gate_poly: [[0.44, 0]], ...}
-      extension: {oxide_diffusion|thick_gate_oxide: [[-0.18, -0.19]]}
-  high_voltage_nmos: {...}               # the same tables with the high-voltage rules
-  high_voltage_pmos: {...}
+polygons:
+  offsets:
+    origin: [[0.0, 0.0]]
+    base: {oxide_diffusion: [[0.18, 0.19]], gate_poly: [[0.55, 0.01]], ...}
+  dimensions:
+    base: {oxide_diffusion: [[1.44, 0.3]], gate_poly: [[0.13, 0.435]], ...}
+  distances:
+    base: {oxide_diffusion|gate_poly: [[0.37, -0.18]], gate_poly|gate_poly: [[0.44, 0]], ...}
 ```
+
+`sky130A` gives its threshold-voltage classes an extension layer each, for example `low_threshold_nmos: [{key: low_vt, layer: lvtn, reference: oxide_diffusion}]`.
 
 A process can need two more layers around a transistor. `sky130A` shows both:
 
@@ -109,7 +101,7 @@ layers:
       - ...                              # the same three layers
       - {key: p_implant, layer: pSD, reference: gate_poly, display_name: P Implant}
 
-polygon_profiles: {default: {offsets: ..., dimensions: ..., distances: ...}}
+polygons: {offsets: ..., dimensions: ..., distances: ...}
 ```
 
 Whether a body tap can be drawn, and its tie type, are in `technology.yaml` (`bulk.available`, `bulk.tap_type`). Its layer widths and where it goes are in `configuration.yaml` (`global.bulk.width`, `global.poly_resistor.bulk`).
@@ -131,10 +123,10 @@ layers:
     cap_via: Vmim
   extension: {}
 
-polygon_profiles: {default: {offsets: ..., dimensions: ..., distances: ...}}
+polygons: {offsets: ..., dimensions: ..., distances: ...}
 ```
 
-The capacitor's reference layer is `cap_bottom_dielectric`: every entry of `polygon_profiles.default.distances` is measured from it. In `ihpSG13G2` both dielectric layers are `MIM`. The via-array limits of the plates and the capacitor's body tap placement are in `configuration.yaml` (`global.mim_capacitor`).
+The capacitor's reference layer is `cap_bottom_dielectric`: every entry of `polygons.distances` is measured from it. In `ihpSG13G2` both dielectric layers are `MIM`. The via-array limits of the plates and the capacitor's body tap placement are in `configuration.yaml` (`global.mim_capacitor`).
 
 {: .note }
 A process whose `technology.yaml` says `bulk: {available: false}` (or has no `bulk` block) draws no body tap. Any `BULK` pins in a resistor or capacitor cell are then removed with a warning.
@@ -145,10 +137,10 @@ An extension entry adds one layer to the devices of one class:
 
 | Key | Description |
 |:--|:--|
-| `key` | The layer ID, used in `polygon_profiles`, the characterization and `gds_mapping.yaml`. One ID must keep the same PDK layer in every class. |
+| `key` | The layer ID, used in `polygons`, the characterization and `gds_mapping.yaml`. One ID must keep the same PDK layer in every class. |
 | `layer` | The PDK layer name. |
 | `reference` | The base layer the extension is placed from. |
-| `display_name` | The name the layout viewer shows. Without it, the viewer shows the key in words (`thick_gate_oxide` is "Thick Gate Oxide"). |
+| `display_name` | The name the layout viewer shows. Without it, the viewer shows the key in words (`resistor_poly` is "Resistor Poly"). |
 | `reference_scope` | `bound` (the default): one shape over all the reference shapes of the device. `unit`: one shape per reference shape, for example one salicide block per resistor segment. |
 | `reference_side` | With `reference_scope: unit` only. `start_end` draws the layer at the first and last unit only, `middle` between neighbouring units. Left out, it is drawn at every unit. |
 | `reference_start_count`, `reference_end_count` | Optional counts (0 or more): draw that many shapes before the first unit and after the last, counted outward from its edge, for example over a transistor's dummy fingers. The nearest shape is placed at the reference distance, and each further one at the `<key>|<key>` spacing of the characterization beyond the previous one. They imply `reference_scope: unit` and cannot be combined with `reference_side`. More than one shape per side needs that `<key>|<key>` spacing. |
@@ -158,44 +150,39 @@ A class with no extension entries (the standard transistors of `ihpSG13G2`, for 
 
 ## Characterization
 
-`characterization/` holds the geometry of each device class, measured at each size listed in `device_scaling`. It has one folder per primitive kind, one folder per class key, and one file per **profile**:
+`characterization/` holds the geometry of each primitive kind, measured at each size listed in `device_scaling`. It has one file per kind, named like the primitives file:
 
 ```
 characterization/
-├── transistor/standard_nmos/default.yaml
-├── transistor/standard_pmos/default.yaml
-├── poly_resistor/standard_p_2t/default.yaml
-└── mim_capacitor/standard_2t/default.yaml
+├── transistor.yaml
+├── poly_resistor.yaml
+└── mim_capacitor.yaml
 ```
 
-A profile file has three keys:
+The file has one entry per scaling value (with several scaling parameters the key is, for example, `'0.4,1.0'`). Each entry holds the lower-left corner of every layer (`layer_offset`), its size (`layer_dimensions`) and the distances between layers (`layer_spacing`), each split into `base` and `extension` layers:
 
 ```yaml
-layers:                     # the layers the profile was made with
-  base: {oxide_diffusion: Activ, gate_poly: GatPoly, ...}
-  extension: []             # the class's extension entries
-entries:
-  '0.13':                   # one entry per scaling value (several parameters: '0.4,1.0')
-    origin_offset: !Coord {x_coord: 0.0, y_coord: 0.0}
-    layer_offset:
-      base: {oxide_diffusion: !Coord {x_coord: 0.18, y_coord: 0.19}, ...}
-      extension: {}
-    layer_dimensions:
-      base: {oxide_diffusion: [1.44, 0.3], ...}
-      extension: {}
-    layer_spacing:
-      base: {oxide_diffusion|gate_poly: {horizontal: 0.37, vertical: -0.18}, ...}
-      extension: {}
-default: true               # optional: this is the class's default profile
+'0.13':                     # the scaling value: finger_width 0.13 um
+  origin_offset: !Coord {x_coord: 0.0, y_coord: 0.0}
+  layer_offset:
+    base: {oxide_diffusion: !Coord {x_coord: 0.18, y_coord: 0.19}, ...}
+    extension: {}
+  layer_dimensions:
+    base: {oxide_diffusion: [1.44, 0.3], ...}
+    extension: {}
+  layer_spacing:
+    base: {oxide_diffusion|gate_poly: {horizontal: 0.37, vertical: -0.18}, ...}
+    extension: {}
 ```
 
-A cell uses its class's default profile: the one marked `default: true`, otherwise the one named `default`. To build a cell from another profile, set `settings['profile_name']` to the profile's file name (without `.yaml`), or to a per-class dictionary such as `{'default': None, 'standard_pmos': 'default'}`. A name the class does not have is refused with a `ParameterError` that lists the profiles it has. Every class you build cells with needs at least one profile.
+Every device class of the kind is drawn from this one file; a class's own layers come from its `layers.extension` entries in the primitives file. A device size that has no entry raises `CharacterizationError`, which lists the entries the file has.
 
-Profiles are part of the template: whoever writes the template adds them, and a cell script only chooses among them. `copilot.get_characterization_profiles()` lists the profiles of the active process and the default of each class. [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile) shows how a script chooses one for a cell, for one kind, or for every cell.
+{: .warning }
+Older templates kept one folder per device class with one file per profile (`characterization/transistor/<class key>/<profile>.yaml`). The core package reads only `characterization/<kind>.yaml`. A template with characterization folders is not loaded, and the error says which file to write instead. For the same reason, a cell's `settings` can no longer name a `profile_name`: a cell that does is refused with a `ParameterError`.
 
 ## Inspecting the loaded primitives
 
-The loaded primitives and their characterization profiles are part of the process context (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)):
+The loaded primitives and their characterization are part of the process context (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)):
 
 ```python
 # The copilot and the process contexts from the core package
@@ -211,13 +198,14 @@ print('transistor layers:', context.primitive_layers('transistor'))
 print('resistor layers:  ', context.primitive_layers('resistor'))
 print('capacitor layers: ', context.primitive_layers('capacitor'))
 
-# The size a high-voltage NMOS is characterized at (device_scaling)
-print('HV NMOS scaling:', context.primitives.transistor.scaling('high_voltage_nmos'))
+# The sizes the transistor is characterized at (device_scaling)
+scaling = context.primitives.transistor.scaling()
+print('transistor scaling:', scaling.parameters, scaling.values)
 
-# The characterization profiles that were loaded for each transistor class
-for class_key, profiles in context.characterization.transistor.classes.items():
-    print(class_key, '->', list(profiles))
+# The characterization entries that were loaded, one per scaling value
+print('transistor entries:', list(context.characterization.transistor.entries))
 
-# The same list with each class's default profile, here for the resistor S-Cells
-print(copilot.get_characterization_profiles('rscell'))
+# One entry: the size of the diffusion in the unit transistor
+entry = context.characterization.transistor.entries['0.13']
+print('diffusion size:', entry.table('layer_dimensions')['oxide_diffusion'])
 ```

@@ -20,7 +20,7 @@ copilot = AiclCopilot(process_name='ihpSG13G2')
 ```
 
 {: .note }
-`AiclCopilot` reads the process templates from the package's `aicl_core/config/` directory, or from `AICL_COP_CONFIG_DIR` when it is set. See [Installation]({% link docs/setup/install.md %}).
+`AiclCopilot` reads the process templates from `$AICL_COP_WORK_DIR/setup/process_templates`, so `AICL_COP_WORK_DIR` must be set first (for example with `source .aicl_setup.bash`). See [Installation]({% link docs/setup/install.md %}).
 
 ## The simplest S-Cell
 

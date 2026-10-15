@@ -6,7 +6,7 @@ nav_order: 2
 
 # Design Flow
 
-A layout is built bottom-up: device S-Cells first, then M-Cells that contain them, then placement and routing, and finally export, verification and simulation. An M-Cell can be assembled by hand, or it can be built from a SPICE netlist.
+A layout is built bottom-up: device S-Cells first, then M-Cells that contain them, then placement and routing, and finally export and verification. An M-Cell can be assembled by hand, or it can be built from a SPICE netlist.
 
 ```
  parameter dicts                          SPICE netlist
@@ -34,13 +34,10 @@ A layout is built bottom-up: device S-Cells first, then M-Cells that contain the
    preview_layout  /  generate_layout  --> GDS
        |
        v
-   run_drc  ->  run_lvs  ->  run_pex
+   generate_netlist  --> SPICE / CDL
        |
        v
-   run_simulation (pre-layout, and post-layout on the extracted netlist)
-       |
-       v
-   generate_schematic (optional)
+   run_drc  ->  run_lvs
 ```
 
 | Step | API | Tutorial |
@@ -51,10 +48,8 @@ A layout is built bottom-up: device S-Cells first, then M-Cells that contain the
 | 3. Place | `PlaceAndRouteManager.place_cell` / `place_hierarchical_cell` | [Modules]({{ site.baseurl }}/docs/tutorials/modules/) |
 | 4. Route | `PlaceAndRouteManager.route_cell` / `route_hierarchical_cell`, or `place_and_route_*` for steps 3 and 4 together | [Modules]({{ site.baseurl }}/docs/tutorials/modules/) |
 | 5. Preview and export | `preview_layout`, `generate_layout` | [Preview and Generate]({{ site.baseurl }}/docs/tutorials/generate.html) |
-| 6. Verify | `run_drc`, `run_lvs`, `run_pex` | [Verification]({{ site.baseurl }}/docs/tutorials/verification/) |
-| 7. Simulate | `run_simulation` | [Simulation]({{ site.baseurl }}/docs/tutorials/simulation/) |
-| 8. Draw a schematic | `generate_schematic` | [Schematic]({{ site.baseurl }}/docs/tutorials/schematic/) |
-| Keep results | `ParameterLibrary`, `CellDatabase` | [Databases]({{ site.baseurl }}/docs/tutorials/database/) |
+| 6. Write a netlist | `generate_netlist` | [Preview and Generate]({{ site.baseurl }}/docs/tutorials/generate.html) |
+| 7. Verify | `run_drc`, `run_lvs` | [Verification]({{ site.baseurl }}/docs/tutorials/verification/) |
 
 ## The flow in one script
 
@@ -147,4 +142,4 @@ if drc_status.available:
     print(lvs.summary())
 ```
 
-Simulation needs a testbench; see the [simulation tutorial]({{ site.baseurl }}/docs/tutorials/simulation/).
+To simulate the inverter, write its SPICE netlist with `copilot.generate_netlist(inverter, 'design_flow', 'inverter')` and load it in the simulator of your choice. Simulation itself is not part of the core package.

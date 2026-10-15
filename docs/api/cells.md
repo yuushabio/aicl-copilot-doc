@@ -52,10 +52,9 @@ Cell
 | `get_polygons(use_pcells=False)` | The drawn polygons. |
 | `get_guard_ring()`, `get_body_rail()` | The guard ring and body rail polygons. |
 | `get_pcell_parameters()` | The per-device PDK parameters, for p-cell based export. |
-| `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: the framework defaults, the process's `parameter_defaults.yaml` and the `SCellConfig` overrides, each over the one before (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)). Their `settings` block is what a new cell's `settings` start from. A `config` block in any of them raises `ValueError` (it is now `settings`). |
+| `get_effective_cell_defaults(cell_key)` *(static)* | The merged defaults for `'TSCELL'`, `'RSCELL'` or `'CSCELL'`: `cell_parameter_globals.yaml`, the process's `cell_parameter_locals.yaml` and the `SCellConfig` overrides, each over the one before (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)). Their `settings` block is what a new cell's `settings` start from. A `config` block in any of them raises `ValueError` (it is now `settings`). |
 | `SCell.create_from_params(parameters=None, name=None, **kwargs)` *(class method)* | Build an S-Cell from a saved parameter dictionary. See [below](#rebuilding-from-a-parameter-dictionary). |
-| `context` *(property)* | The process context the cell is built with: the active process's, with the overrides that apply to the cell (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)). Read-only. |
-| `get_context_override()` | The cell's own `ContextOverride` (the `context=` argument), or `None`. |
+| `context` *(property)* | The process context the cell is built with: the active process's when the cell was built, with the device configuration's values for the cell's size (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)). Read-only. |
 
 `TSCell`, `RSCell` and `CSCell` also share the device-setting methods:
 
@@ -66,8 +65,7 @@ Cell
 | `set_device_class(device_class)` | Check the class against the process template, then rebuild the cell in place at the same position. Raises `ParameterError` when the process has no model for it. |
 | `set_device_tech(device_tech)` | The same for the technology. Raises `ParameterError` for a technology that cannot be built or that the process does not offer. |
 | `device_tech_key()` | The internal name of the cell's technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`). |
-| `device_limits()` | The process limits for the cell's technology and class (`min_length`, `min_finger_width`, `min_width`, ...), with any per-class value resolved. |
-| `available_profiles()` | The names of the characterization profiles of the cell's device class: the values its `settings['profile_name']` can take. |
+| `device_limits()` | The process limits for the cell's technology (`min_length`, `min_finger_width`, `min_width`, ...). One set of limits applies to every device class. |
 
 ## TSCell
 
@@ -75,11 +73,11 @@ Cell
 from aicl_core.bin.core.engines.transistor import TSCell
 ```
 
-`TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False, context=None)`
+`TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
 
 `device_class` is a `TRANSISTOR_CLASS` (default `STANDARD_NMOS`) and `device_tech` a `TRANSISTOR_TECH` (default `MOSFET`). The cell is composed completely in the constructor. A parameter error raises `ParameterError`, and a pin that is claimed by two terminals raises `DeviceTerminalConflictPinError`.
 
-`context` is an optional `ContextOverride` (or its `{path: value}` dictionary): process values that are changed for this cell only, such as a spacing rule. It is stored in the cell's parameters under `'context'`, so a rebuilt or reloaded cell uses it again. `RSCell` and `CSCell` take the same argument. See [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#changing-values-for-some-cells).
+There is no per-cell `context=` argument. To build a cell with a changed process value, build it inside a `context_variant` block (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#trying-out-a-changed-value)).
 
 | Method | Description |
 |:--|:--|
@@ -88,7 +86,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 | `get_device_names()` | Every device name in `specifications['devices']`. |
 | `get_diffusion_plan()` | For each row, the net of every source/drain diffusion and the dummy spans, or `None`. |
 
-`sensitive`, `noisy` and `allow_rotation` are stored on the cell and saved with it in the cell database. The core placers do not use them yet.
+`sensitive`, `noisy` and `allow_rotation` are stored on the cell. The core placers do not use them yet.
 
 ## RSCell
 
@@ -96,7 +94,7 @@ from aicl_core.bin.core.engines.transistor import TSCell
 from aicl_core.bin.core.engines.resistor import RSCell
 ```
 
-`RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False, context=None)`
+`RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False)`
 
 `device_class` is a `RESISTOR_CLASS` (default `STANDARD_N2T`) and `device_tech` a `RESISTOR_TECH` (default `POLYSILICON`).
 
@@ -115,7 +113,7 @@ from aicl_core.bin.core.engines.resistor import RSCell
 from aicl_core.bin.core.engines.capacitor import CSCell
 ```
 
-`CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False, context=None)`
+`CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
 
 `device_class` is a `CAPACITOR_CLASS` (default `STANDARD_2T`) and `device_tech` a `CAPACITOR_TECH` (default `CMIM`, the only technology the core package builds).
 
@@ -128,7 +126,7 @@ from aicl_core.bin.core.engines.capacitor import CSCell
 
 ## Rebuilding from a parameter dictionary
 
-The dictionaries a cell hands out (`get_parameters()`, `get_default_user_parameters()`, a parameter library or cell database entry) carry the device class and technology as the root keys `'device_class'` and `'device_tech'`. A constructor refuses those keys in `parameters`; `create_from_params` takes them out and passes them as the arguments.
+The dictionaries a cell hands out (`get_parameters()` and `get_default_user_parameters()`) carry the device class and technology as the root keys `'device_class'` and `'device_tech'`. A constructor refuses those keys in `parameters`; `create_from_params` takes them out and passes them as the arguments.
 
 - Called on a concrete class (`TSCell.create_from_params(...)`), it builds that class.
 - Called on `SCell`, it builds the class that the dictionary's device class names: a `TRANSISTOR_CLASS` gives a `TSCell`, and so on. A dictionary with neither key raises `ParameterError`.

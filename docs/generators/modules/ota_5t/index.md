@@ -20,15 +20,14 @@ The classic five-transistor OTA with an enable circuit, from `templates/netlists
 1. Parse the netlist.
 2. Group the matched devices into three S-Cells: `input_pair`, `load_mirror` and `tail_mirror`. The enable devices are grouped automatically.
 3. Build the M-Cell and stack the analog core in the middle, with the enable cells on the right.
-4. Route with RMST, then run DRC, LVS and an open-loop simulation.
+4. Route with RMST, run DRC and LVS, and write the GDS file and a SPICE netlist.
 
 ```python
 # Python's built-in module for file paths and environment variables
 import os
 
-# Copilot, testbench builder and place-and-route helper from the core package
+# Copilot and place-and-route helper from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.simulation import testbench
 from aicl_core.bin.utilities.geometryutils import Coord
 from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
@@ -93,7 +92,7 @@ m11_m8_m13_place = {'cell_name': 'M11_M8_M13', 'use_reference': True, 'reference
 placer_constraints = [tail_mirror_place, input_pair_place, load_mirror_place,
                       m7_m12_place, m9_m10_place, m11_m8_m13_place]
 
-# --- 4. Route, check, simulate ---
+# --- 4. Route, check, export ---
 # Place with the reference placer, route with the RMST router, and list nets that failed
 place_result, route_result = PlaceAndRouteManager.place_and_route_cell(
     ota, 'REFERENCE_PLACER', 'RMST_ROUTER', placer_constraints=placer_constraints)
@@ -108,48 +107,19 @@ lvs = copilot.run_lvs(ota, library_name=library_name, view_name=view_name)
 print(drc.summary())
 print(lvs.summary())
 
-# run_simulation writes the OTA netlist first, then calls this function with its path
-# to get a testbench built around exactly that netlist
-def ota_testbench(dut_netlist):
-    # Folder for the testbench files
-    project_directory = os.environ['AICL_COP_PROJECT_DIR']
-    testbench_directory = os.path.join(project_directory, 'testbenches', view_name)
-
-    # Which OTA pins play which testbench role
-    roles = {'vdd': 'vdd', 'vss': 'vss', 'vinp': 'inp', 'vinn': 'inn', 'vout': 'out'}
-
-    # Supply, common-mode input, load capacitor and the frequency band to sweep
-    params = {'vdd': 1.5, 'vcm': 0.8, 'cload': 50e-15, 'band': (1, 1e10)}
-
-    # Fixed sources: 20 uA bias current from vdd, and enable tied high
-    fixed = {'ibias_20u': {'i': 20e-6, 'from': 'vdd'}, 'd_ena': {'v': 1.5}}
-
-    # Build a single-ended OTA testbench
-    return testbench.build('ota_se', dut_netlist, testbench_directory,
-                           roles=roles, params=params, fixed=fixed)
-
-# Simulate the OTA (pre-layout) and print the measured metrics
-simulation = copilot.run_simulation(ota_testbench, cell=ota, library_name=library_name, view_name=view_name)
-print(simulation.summary())
-
-# Write the GDS file
+# Write the GDS file, and a SPICE netlist of the same circuit (for a simulator of your choice)
 copilot.generate_layout(ota, library_name, view_name)
+netlist_path = copilot.generate_netlist(ota, library_name, view_name)
+print('netlist:', netlist_path)
 ```
 
 ![Placed and routed 5-transistor OTA: tail mirror at the bottom, input pair and mirror load stacked above, enable cells on the right]({{site.baseurl}}/assets/images/gen_ota_5t_lay.png){: width="760"}
 
 ## Results
 
-On `ihpSG13G2` all twelve nets route, KLayout DRC is clean, and LVS matches. The pre-layout simulation at the typical corner, into 50 fF, gives:
+On `ihpSG13G2` all twelve nets route, KLayout DRC is clean, and LVS matches.
 
-| Metric | Value |
-|:--|:--|
-| DC gain | 31.6 dB |
-| Unity-gain bandwidth | 32 MHz |
-| Phase margin | 53° |
-| Power | 36 µW |
-
-With the `[pex]` extra installed, pass `post_layout=True` to `run_simulation` to compare against the extracted layout (see [Simulation]({% link docs/tutorials/simulation/index.md %})).
+The netlist that `generate_netlist` writes has the OTA as one `.subckt ota_5t` with the netlist's pins as its ports, so it can be dropped into a testbench of your own. Simulation is not part of the core package.
 
 ## Variations
 

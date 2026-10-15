@@ -8,7 +8,7 @@ nav_order: 3
 # Process Constraints
 {: .no_toc }
 
-The `constraints/` directory holds the technology rules and the tool settings. Machine-specific paths, such as where the PDK and the tool binaries are installed, are not stored here. They go in `config.env`; see [Installation]({{ site.baseurl }}/docs/setup/install.html#configuration-configenv).
+The `constraints/` directory holds the technology rules and the tool settings. Machine-specific paths, such as where the PDK and the tool binaries are installed, are not stored here. They go in `setup/config.env`; see [Installation]({{ site.baseurl }}/docs/setup/install.html#configuration-configenv).
 
 1. TOC
 {:toc}
@@ -46,9 +46,9 @@ transistors:
   pcell:
     parameters: {total_width: ["w"], length: ["l"], number_of_fingers: ["ng"], multiplier: ['m']}
     limits:
-      min_length: {default: 0.13, high_voltage_nmos: 0.45, high_voltage_pmos: 0.40}
+      min_length: 0.13
       max_length: 20
-      min_finger_width: {default: 0.15, high_voltage_nmos: 0.30, high_voltage_pmos: 0.30}
+      min_finger_width: 0.15
       max_finger_width: 900
       min_total_width: 0.6
       max_total_width: 900
@@ -83,11 +83,11 @@ capacitors:
 | `process_name`, `process_tech` | Checked against the directory: the name must be the directory's name, and the family must be the folder the template is in. A mismatch makes the template invalid, and the error names both. |
 | `process_pdk_name` | The name the process has in its PDK, when it differs from the template's name. |
 | `layout_unit`, `layout_resolution` | Units and the snapping grid. |
-| `environment.api` | Which design bridge `generate_layout` and `generate_schematic` use. The core package provides `open_env`, which writes GDS files and xschem schematics. |
+| `environment.api` | Which design bridge `generate_layout` uses. The core package provides `open_env`, which writes GDS files. |
 | `bulk` | `available`: whether body taps (the tap of a three-terminal resistor or capacitor, a transistor's body rail) can be drawn. `tap_type`: `P` for a substrate tie, `N` for a well tie. The tap type also names the default bulk terminal of a passive cell: `vss` for `P`, `vdd` for `N`. |
 | `guard_ring` | `available`: whether guard rings can be drawn. |
 | `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`). They are not written as mask geometry. The shipped templates also list an `abstract_m-cell` layer, which the core package does not use. |
-| `<kind>.pcell.limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. A limit is a number, or `{default: v, <class key>: v}` for a limit that differs between device classes. |
+| `<kind>.pcell.limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. A limit is a number, and one set of limits applies to every device class of the kind. A limit written per device class (`{default: v, <class key>: v}`) is refused when the template is loaded. |
 | `<kind>.pcell.parameters`, `<kind>.netlist.parameters` | The PDK's instance parameter names, used when netlists are written and read. Each is a list of names; a netlist is written with the first one. For resistors, `number_of_segments` says how a segment count is written: `n` series segments are `b = n - 1` bends (`offset: 1`), and `n` parallel segments are `m = n` devices (`offset: 0`). A process without a bends parameter (such as `sky130A`) lists only the parallel rule. |
 
 The transistor section has no technology level: the family says which transistor technology the template is for. The resistor and capacitor sections are grouped by family (`polysilicon`, `metal_insulator_metal`, `metal_oxide_metal`). `inductors` may be present; it is not read.
@@ -144,7 +144,7 @@ local: {}
 | `global.bulk.width` | The width of each layer of a body tap. |
 | `global.transistor` | `extend_implant_layer`, the `gate_poly` strap (`connector_height`, `extension_height`), and `latch_up.max_tie_distance`. |
 | `global.poly_resistor.bulk`, `global.mim_capacitor.bulk` | Where the body tap of a three-terminal resistor or capacitor goes: `side` (`auto`, `vertical` or `horizontal`) and `offset`, its gap to the device in µm. A cell can choose another side with `settings['bulk_tap']`. |
-| `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. |
+| `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. `flush_connecting_wire: true` draws the wire that joins a row of plates as high as the plates, when the step it would leave at their edges is smaller than the plate metal's same-net gap (for a rule deck that flags such a step). Both are `false` by default, and the shipped templates leave them off. |
 | `global.spacing` | Spacing rules between the layers the devices draw. A key is one layer (the spacing between its own shapes) or a pair `a|b` (in either order). `base` holds the base layers of the primitives, `extension` the pairs that involve an extension layer. Each value is a table `[[width, parallel run, spacing], ...]`: of the rows whose width and run the two shapes reach, the largest spacing applies. A layer or pair without an entry has no rule. |
 | `global.min_width` | The least width of a layer, for example of an implant. When two cells are exported next to each other and their implants end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. |
 | `global.abut` | The abutment rule of a layer (for gate poly, the former `min_poly_abut_extension`), as a table like `spacing`. |
@@ -226,9 +226,12 @@ metals:
 
 `ihpSG13G2` defines `metal1` to `metal7`. `metal6` and `metal7` are the PDK's `TopMetal1` and `TopMetal2` (`TM1` and `TM2`). In `sky130A`, `metal1` is the local interconnect `li1` (its contact is `licon1`), and `metal2` to `metal6` are `met1` to `met5`. Every via must join two known layers, and every pair of adjacent metals must be joined by a via.
 
-## parameter_defaults.yaml
+## cell_parameter_locals.yaml
 
 Optional process defaults for S-Cell parameters, under `GLOBAL_CONFIG.SCELL.{tscell, rscell, cscell}`. Each kind has a `settings` block (the cell's `settings`) and a `terminals` block (the default wires of signal and power terminals). Keys directly under `SCELL` (outside the kind blocks) apply to every kind.
+
+{: .warning }
+This file was called `parameter_defaults.yaml` in earlier releases, and the defaults for every process were `global_defaults.yaml`. Files with the old names are not read at all, without an error, so rename them: `constraints/cell_parameter_locals.yaml` in the template and `process_templates/cell_parameter_globals.yaml` in the setup directory.
 
 ```yaml
 GLOBAL_CONFIG:
@@ -247,12 +250,10 @@ The block was called `config` in earlier releases. A file that still has a `conf
 
 The values are layered in this order, each over the one before:
 
-1. the framework defaults, `aicl_core/config/global_defaults.yaml`;
-2. the process's `parameter_defaults.yaml`;
+1. the defaults for every process, `setup/process_templates/cell_parameter_globals.yaml`;
+2. the process's `cell_parameter_locals.yaml`;
 3. the overrides set from a script with `SCellConfig` (see [Configure]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell));
 4. the cell's own parameters.
-
-The framework defaults set `SCELL.settings.profile_name: null` for every kind, so a cell is built from its class's default characterization profile unless a later layer or the cell chooses another one (see [Characterization profile]({% link docs/tutorials/scells/configure/index.md %}#characterization-profile)).
 
 `ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.0`, at the end of its row's connecting wire). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
 
@@ -271,7 +272,7 @@ metal6:
   gdsNumber: 126
   purpose: {polygon: 0, label: 25, pin: 2}
 
-thick_gate_oxide:                      # an extension layer of the high-voltage transistors
+thick_gate_oxide:                      # a layer that no shipped device class draws yet
   name: 'ThickGateOx'
   gdsNumber: 44
   purpose: {polygon: 0, label: 0, pin: 2}
@@ -304,35 +305,6 @@ DRC, LVS and export settings, under `Verification`.
 | `export.port_label_layers` | Layers that can carry a port label that the LVS deck reads. |
 | `backends.klayout.lvs_deck_additions` | Optional list of `{after, include}` entries: rule files of the template (`include`, relative to the template folder) that are added to the PDK's LVS deck right after the deck's own include line `after`. The run uses a copy of the deck with the additions, so the PDK stays untouched. An `after` that the deck does not include is an error. |
 
-## simulation.yaml
-
-Simulator settings, under `Simulation`. By default, the PDK root is the one that `verification.yaml` resolves.
-
-| Key | Description |
-|:--|:--|
-| `default_backend` | `ngspice`. `AICL_SIMULATION_BACKEND` overrides it. |
-| `pdk_root_env`, `pdk_relative_path` | Optional: where the models are, when that is not the PDK root of `verification.yaml`. They work like the keys of the same name in `verification.yaml`. `sky130A` uses them, because its verification root is the KLayout package and not the PDK: the models are found through `AICL_PDK_ROOT_SKY130A_MODELS`, else `$AICL_PDK_ROOT/sky130A`. |
-| `backends.ngspice.sourcepath` | Model directories, relative to the PDK root. They are added to ngspice's `sourcepath`. |
-| `backends.ngspice.osdi` | Compiled Verilog-A models to load (PSP103 and others for SG13G2). |
-| `backends.ngspice.corners` | Corner name to the `.lib` lines that load it: `tt`, `ss`, `ff`, `sf`, `fs` and `mc` (mismatch). |
-| `backends.ngspice.subckt_models` | Models the PDK defines as subcircuits. In an extracted netlist, their `M` elements are rewritten as `X` calls. |
-| `backends.ngspice.init` | Lines added to the ngspice control block. |
-
-### Simulation-only templates
-
-`mock32`, `mock45` and `mock65` contain only `constraints/simulation.yaml`. They are predictive (PTM-based) model sets for simulating netlists at other nodes, with no layout, verification or schematic support. Their models are found through `AICL_PDK_ROOT_PTMMOCK`, or `$AICL_PDK_ROOT/PTM-Mock`. A `model_set` section gives the nominal `vdd`, the minimum length `lmin`, the finger parameter name, and a role-to-model table (`nmos`, `pmos`, `nmos_lvt`, `res`, `cap`, ...).
-
-## schematic.yaml
-
-Schematic generation settings, under `Schematic`.
-
-| Key | Description |
-|:--|:--|
-| `default_backend` | `xschem`. `AICL_SCHEMATIC_BACKEND` overrides it. |
-| `backends.xschem.symbol_libraries` | Directories, relative to the PDK root, that are searched in order for `<model>.sym`. `AICL_XSCHEM_SYMBOLS_IHPSG13G2` replaces the list. |
-| `backends.xschem.devices_library` | Where xschem's own label and port symbols are found (`devices`). |
-| `backends.xschem.rcfile` | The `xschemrc` used to netlist a generated schematic back for checking. `AICL_XSCHEM_RCFILE_IHPSG13G2` overrides it. |
-
 ## Reading the settings from Python
 
 The loaded files can be read back from Python. The [Process Context]({{ site.baseurl }}/docs/setup/process/context.html) page explains the objects used here.
@@ -343,7 +315,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
 
 # Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_TECH
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_TECH
 
 # Start the copilot for the process we want to read
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -351,9 +323,9 @@ copilot = AiclCopilot(process_name='ihpSG13G2')
 # The active process's context: everything its template says
 context = ContextManager.current
 
-# technology.yaml: the layout grid and the transistor size limits for one device class
+# technology.yaml: the layout grid and the transistor size limits
 print('grid:', context.technology.layout_resolution, 'um')
-print('NMOS limits:', context.technology.limits(TRANSISTOR_TECH.MOSFET, TRANSISTOR_CLASS.STANDARD_NMOS))
+print('transistor limits:', context.technology.limits(TRANSISTOR_TECH.MOSFET))
 
 # configuration.yaml: the gate poly strap, and the spacing between gate poly shapes
 print('gate poly:', context.configuration.transistor.gate_poly)

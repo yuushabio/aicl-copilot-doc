@@ -11,7 +11,7 @@ Cells are described with generic device classes such as `TRANSISTOR_CLASS.STANDA
 
 The mapping is used in both directions:
 
-- **Class to PDK name.** When a cell is written as a netlist (for LVS, simulation or a schematic), each device is named with its PDK model, and the schematic symbol `<model>.sym` is looked up by that name.
+- **Class to PDK name.** When a cell is written as a netlist (for LVS, or with `generate_netlist`), each device is named with its PDK model.
 - **PDK name to class.** When a SPICE netlist is read (`create_circuit_from_netlist`), each device line is recognised by its model name and turned into a generic class. A model name that is not in `devices.yaml` is not a device of the process.
 
 A process template must have a non-empty `devices.yaml`. Without one, the process is invalid.
@@ -52,6 +52,19 @@ Write `null` for a class the process does not have. A cell built with a class th
 Error: RS-Cell (r_series) - process (ihpSG13G2) has no POLYSILICON model for STANDARD_N3T (devices.yaml); offered: ['STANDARD_N2T', 'STANDARD_P2T', 'STANDARD_P3T'].
 ```
 
+### Other netlist spellings of a model
+
+Some tools write a device under another name than the one the layout uses. An entry can therefore be a list of names. The first name is the model the cells are built with; the others are names a netlist may use for the same device:
+
+```yaml
+capacitors:
+  metal_insulator_metal:
+    standard:
+      Standard 3T: [cap_rfcmim, cap_rfcmim_cdl]    # cells use cap_rfcmim; a netlist may also say cap_rfcmim_cdl
+```
+
+When `create_circuit_from_netlist` reads a device line with one of the other names, it treats it as the first one. The shipped templates use single names only.
+
 ## Classes the core package builds
 
 The open-source core builds the **standard** classes:
@@ -62,7 +75,7 @@ The open-source core builds the **standard** classes:
 | `RESISTOR_CLASS` | `STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T`, `STANDARD_P3T` |
 | `CAPACITOR_CLASS` | `STANDARD_2T`, `STANDARD_3T` |
 
-`devices.yaml` can list more classes than these, for example the low- and high-threshold or high-voltage transistors. Those entries describe the PDK completely, and their geometry (for example the thick-oxide layer of the high-voltage devices) is part of the template, but the core package does not build cells for them.
+`devices.yaml` can list more classes than these, for example the low- and high-threshold transistors. Those entries describe the PDK completely, and their extra layers (for example the threshold implants of `sky130A`) are part of the template, but the core package does not build cells for them.
 
 ## ihpSG13G2
 
@@ -70,8 +83,6 @@ The open-source core builds the **standard** classes:
 |:--|:--|:--|
 | `TRANSISTOR_CLASS.STANDARD_NMOS` | `standard / nmos / Standard NMOS` | `sg13_lv_nmos` |
 | `TRANSISTOR_CLASS.STANDARD_PMOS` | `standard / pmos / Standard PMOS` | `sg13_lv_pmos` |
-| (high-voltage NMOS) | `standard / nmos / High-voltage NMOS` | `sg13_hv_nmos` |
-| (high-voltage PMOS) | `standard / pmos / High-voltage PMOS` | `sg13_hv_pmos` |
 | `RESISTOR_CLASS.STANDARD_N2T` | `poly_silicon / standard / n_poly_silicon / Standard N-2T` | `rsil` |
 | `RESISTOR_CLASS.STANDARD_N3T` | `poly_silicon / standard / n_poly_silicon / Standard N-3T` | (none) |
 | `RESISTOR_CLASS.STANDARD_P2T` | `poly_silicon / standard / p_poly_silicon / Standard P-2T` | `rppd` |
@@ -80,7 +91,7 @@ The open-source core builds the **standard** classes:
 | `CAPACITOR_CLASS.STANDARD_3T` (`CMIM`) | `metal_insulator_metal / standard / Standard 3T` | `cap_rfcmim` |
 | `CAPACITOR_CLASS.*` (`CMOM`) | `metal_oxide_metal / standard / Standard 2T`, `Standard 3T` | (none) |
 
-SG13G2 has a single low-voltage core transistor, so the low- and high-threshold entries are `null`. The thick-oxide `sg13_hv_*` devices are mapped to the high-voltage entries.
+SG13G2 has a single low-voltage core transistor, so the low- and high-threshold entries are `null`. The template does not list the thick-oxide `sg13_hv_*` devices.
 
 ## sky130A
 

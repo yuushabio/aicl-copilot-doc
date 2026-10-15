@@ -8,7 +8,7 @@ nav_order: 4
 # Process Context
 {: .no_toc }
 
-When an `AiclCopilot` starts, it reads every valid process template into a **process context**: one object that holds everything the template says. The cells read their design rules from it. This page shows how to look at a context from Python, and how to change a value for some cells without editing the template.
+When an `AiclCopilot` starts, it reads every valid process template into a **process context**: one object that holds everything the template says. The cells read their design rules from it. This page shows how to look at a context from Python, and how to try out a changed value without editing the template.
 
 1. TOC
 {:toc}
@@ -28,13 +28,13 @@ A context is **read-only**. Its parts are read by attribute, and each part is on
 | Attribute | Template file | Examples |
 |:--|:--|:--|
 | `name` | the directory name | `'ihpSG13G2'` |
-| `technology` | `constraints/technology.yaml` | `layout_resolution`, `process_tech`, `limits(tech, device_class)`, `parameters(tech, 'netlist')` |
+| `technology` | `constraints/technology.yaml` | `layout_resolution`, `process_tech`, `limits(tech)`, `parameters(tech, 'netlist')` |
 | `configuration` | `constraints/configuration.yaml` | `transistor.gate_poly.extension_height`, `guard_ring.width`, `spacing.value('gate_poly')` |
 | `connectivity` | `constraints/connectivity.yaml` | `metal('metal2')`, `metal_ids`, `metal_names`, `via_ids`, `contact('default')` |
 | `primitives` | `primitives/*.yaml` | `transistor`, `poly_resistor`, `mim_capacitor`, and `primitive_layers(kind)` on the context |
-| `characterization` | `characterization/` | `transistor.classes`, `transistor.default_profile(class_key)` |
-| `devices` | `constraints/devices.yaml` | `to_data()` (the file as a dictionary), `entries()` |
-| `parameter_defaults` | `constraints/parameter_defaults.yaml` | the `GLOBAL_CONFIG` block |
+| `characterization` | `characterization/*.yaml` | `transistor.entries` (one entry per scaling value), `transistor.entry(primitive, sizes)` |
+| `devices` | `constraints/devices.yaml` | `to_data()` (the file as a dictionary), `entries()`, `netlist_spellings()` |
+| `cell_parameter_locals` | `constraints/cell_parameter_locals.yaml` | the `GLOBAL_CONFIG` block |
 
 A table of the template (a mapping) can be read by key or by attribute: `context.configuration.guard_ring.width['metal1']` and `context.configuration.guard_ring.width.metal1` are the same value. A layer ID can be written in any case (`'Metal2'` is `metal2`). To get plain Python dictionaries and lists back, pass any part to `thaw` from `aicl_core.bin.core.context`.
 
@@ -62,43 +62,37 @@ print('metal3 minimum width:', context.connectivity.metal('Metal3').min_width, '
 print(thaw(context.configuration.transistor.gate_poly))
 ```
 
-Trying to change a value of a context raises `ContextError`. This keeps one cell from changing the rules for the next one. To change a value, use an override.
+Trying to change a value of a context raises `ContextError`. This keeps one cell from changing the rules for the next one. To try another value, derive a variant (below).
 
-## Changing values for some cells
+## Trying out a changed value
 
-A `ContextOverride` (from `aicl_core.bin.core.context`) is a list of changes to a context: each change has a **path**, the attributes and keys that lead to a value, and the new value. A path starts at one of the parts above (`technology`, `configuration`, `connectivity`, `primitives`, `characterization`, `devices`, `parameter_defaults`).
-
-Write the changes in either form:
+To see what a different value in the template would do, without editing the template, make a **process variant**. `context.derive(changes)` returns a new context with some values changed. Each change is a **path** (the attributes and keys that lead to a value, written with dots) and its new value. A path starts at one of the parts above (`technology`, `configuration`, `connectivity`, `primitives`, `characterization`, `devices`, `cell_parameter_locals`). The context you derive from does not change.
 
 ```
-# by attribute and key, the way the context is read
-override = ContextOverride()
-override.configuration.transistor.gate_poly.extension_height = 0.5
-
-# or as a dictionary of 'dotted.path': value
-override = ContextOverride({'configuration.transistor.gate_poly.extension_height': 0.5})
+variant = ContextManager.current.derive({'configuration.transistor.gate_poly.extension_height': 0.5})
 ```
 
-Then use it in one of two ways:
+The values are checked when the variant is made: a path that does not exist, or a value of the wrong kind (a word for a number, for example), raises `ContextError` with the path in the message.
 
-- **For one cell**: pass it to the cell as `context=`, for example `TSCell(..., context=override)`. `RSCell` and `CSCell` take the same argument. The override is stored in the cell's parameters (under `'context'`), so the cell keeps it when it is rebuilt, copied, or saved and loaded from a database.
-- **For every cell of a kind or a device class**: `ContextManager.add_override(override, kinds=['tscell'], device_classes=[TRANSISTOR_CLASS.STANDARD_PMOS], name='...')`. It applies to the cells built after it, until `ContextManager.remove_override(name)` (or `clear_overrides()`) takes it away. `kinds` are `'tscell'`, `'rscell'` and `'cscell'`; an empty list means every kind (or every class).
+A cell is always built with the context of the active process. To build cells with a variant, use one of the `with` blocks of `aicl_core.bin.core.context.testing`. Inside the block the variant is the active process; at the end of the block the original process comes back:
 
-A cell is built with the active process's context, then the global overrides that apply to it (in the order they were added), then its own override. The process context itself never changes. `cell.context` is the context a cell was built with.
+| Helper | What it does |
+|:--|:--|
+| `context_variant(changes)` | Derives a variant of the active process with `changes` and makes it active for the block. |
+| `process_variant(context)` | Makes a context you derived yourself active for the block. |
 
-The values are checked when an override is used: a path that does not exist, or a value of the wrong kind (a word for a number, for example), raises `ContextError` with the path in the message.
+`cell.context` is the context a cell was built with, so a cell built inside the block keeps the changed value after the block ends.
 
-The example below builds the same NMOS twice, once with a larger gap between the fingers and the gate poly strap. Then it makes every PMOS built afterwards use that gap, while the NMOS cells keep the process value:
+The example below builds the same NMOS twice: once with the process's gap between the fingers and the gate poly strap, and once with a larger gap:
 
 ```python
 # The copilot, the process contexts and the transistor S-Cell engine from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.contextmanager import ContextManager
-from aicl_core.bin.core.context import ContextOverride
+from aicl_core.bin.core.context.testing import context_variant
 from aicl_core.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
@@ -121,32 +115,24 @@ def transistor_parameters():
     }
 
 
-# --- 1. One cell with its own value ---
-# A 0.5 um gap between the fingers and the gate poly strap (the process says 0.2 um)
-taller_gate = ContextOverride()
-taller_gate.configuration.transistor.gate_poly.extension_height = 0.5
-
+# --- 1. A cell with the process's own value (0.2 um) ---
 plain = TSCell(name='plain', parameters=transistor_parameters())
-tall = TSCell(name='tall', parameters=transistor_parameters(), context=taller_gate)
+
+# --- 2. The same cell, built while a 0.5 um gap is the active value ---
+with context_variant({'configuration.transistor.gate_poly.extension_height': 0.5}):
+    tall = TSCell(name='tall', parameters=transistor_parameters())
+
+# Each cell keeps the value it was built with
 for cell in (plain, tall):
     print(cell.get_name(), 'height:', cell.get_boundbox().height, 'um',
           '| extension:', cell.context.configuration.transistor.gate_poly.extension_height)
 
-# --- 2. The same value for every PMOS built from now on ---
-ContextManager.add_override({'configuration.transistor.gate_poly.extension_height': 0.5},
-                            kinds=['tscell'], device_classes=[TRANSISTOR_CLASS.STANDARD_PMOS], name='tall_pmos')
-pmos = TSCell(name='pmos', parameters=transistor_parameters(), device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
-nmos = TSCell(name='nmos', parameters=transistor_parameters(), device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
-print('PMOS extension:', pmos.context.configuration.transistor.gate_poly.extension_height)
-print('NMOS extension:', nmos.context.configuration.transistor.gate_poly.extension_height)
-
-# Take the global override away again; the process value was never changed
-ContextManager.remove_override('tall_pmos')
+# The process itself was never changed
 print('process value:', ContextManager.current.configuration.transistor.gate_poly.extension_height)
 ```
 
 {: .note }
-For a change inside a block of code only, `context_override(values, kinds=(), device_classes=())` from `aicl_core.bin.core.context.testing` is a `with` statement that adds a global override and removes it again at the end of the block.
+Earlier releases could attach a changed context to one cell (`TSCell(..., context=...)`) or to every cell of a kind (`ContextManager.add_override`). The core package no longer has these. Build the cells inside a `context_variant` block instead, or change the value in the template.
 
 {: .warning }
-An override changes the rules the layout is drawn with, not the PDK. A value below a design rule of the PDK gives a layout that fails DRC. Use overrides to make a layout more conservative, or to try a value before you change it in the template.
+A variant changes the rules the layout is drawn with, not the PDK. A value below a design rule of the PDK gives a layout that fails DRC. Use variants to make a layout more conservative, or to try a value before you change it in the template.

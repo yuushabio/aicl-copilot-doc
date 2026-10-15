@@ -6,7 +6,7 @@ has_children: true
 
 # Tutorials
 
-The tutorials follow the design flow of the Co-pilot, from a single device to a verified, simulated and exported block. Each page is self-contained: every code block has its imports and runs as it is on the open IHP SG13G2 process (`'ihpSG13G2'`). Run the code blocks from the root of your `aicl-copilot-core` checkout, with the environment set up as in [Installation]({% link docs/setup/install.md %}).
+The tutorials follow the design flow of the Co-pilot, from a single device to a verified and exported block. Each page is self-contained: every code block has its imports and runs as it is on the open IHP SG13G2 process (`'ihpSG13G2'`). Run the code blocks from the root of your `aicl-copilot-core` checkout, with the environment set up as in [Installation]({% link docs/setup/install.md %}).
 
 Suggested order:
 
@@ -14,10 +14,7 @@ Suggested order:
 2. [Modules]({% link docs/tutorials/modules/index.md %}): combine cells in M-Cells, and place and route them, also hierarchically.
 3. [From a Netlist]({% link docs/tutorials/netlist/index.md %}): let the Co-pilot build the M-Cell tree from a SPICE netlist.
 4. [Preview and Generate]({% link docs/tutorials/generate.md %}): view layouts and export them as GDSII.
-5. [Verification]({% link docs/tutorials/verification/index.md %}): DRC, LVS and PEX with KLayout, Magic/Netgen and KLayout-PEX.
-6. [Simulation]({% link docs/tutorials/simulation/index.md %}): pre- and post-layout simulation with ngspice.
-7. [Schematic]({% link docs/tutorials/schematic/index.md %}): draw a cell as an xschem schematic.
-8. [Databases]({% link docs/tutorials/database/index.md %}): store parameter sets and built cells for reuse.
+5. [Verification]({% link docs/tutorials/verification/index.md %}): DRC and LVS with KLayout or Magic/Netgen.
 
 Ready-made circuits built with these steps are collected in [Generators]({% link docs/generators/index.md %}).
 

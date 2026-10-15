@@ -4,15 +4,14 @@ parent: Tutorials
 nav_order: 6
 ---
 
-# Verification: DRC, LVS and PEX
+# Verification: DRC and LVS
 
-`AiclCopilot` runs design-rule checks (DRC), layout-versus-schematic comparisons (LVS) and parasitic extraction (PEX) with the open-source sign-off tools of the process. When called with a cell, each command first exports the cell with `generate_layout`, then checks the file it wrote.
+`AiclCopilot` runs design-rule checks (DRC) and layout-versus-schematic comparisons (LVS) with the open-source sign-off tools of the process. When called with a cell, each command first exports the cell with `generate_layout`, then checks the file it wrote.
 
 | Command | Backends for `ihpSG13G2` | Returns |
 |:--|:--|:--|
 | `run_drc(cell, library_name, view_name, backend='')` | `'klayout'` (default), `'magic'` | `DrcResult` |
 | `run_lvs(cell, library_name, view_name, schematic='', backend='')` | `'klayout'` (default), `'magic'` (Magic extracts, Netgen compares) | `LvsResult` |
-| `run_pex(cell, library_name, view_name, schematic='', backend='KPEX')` | `'KPEX'` (KLayout-PEX) | `PexResult` |
 
 ## Requirements
 
@@ -21,14 +20,14 @@ The tools and the PDK are found through environment variables, usually set in `c
 | Variable | Used for |
 |:--|:--|
 | `AICL_PDK_ROOT_IHPSG13G2` (or `AICL_PDK_ROOT`) | The IHP Open PDK: rule decks, Magic tech files, Netgen setup |
-| `AICL_KLAYOUT_BIN` | KLayout DRC and LVS, and KPEX. KLayout 0.30.2 or newer is recommended |
+| `AICL_KLAYOUT_BIN` | KLayout DRC and LVS. KLayout 0.30.2 or newer is recommended |
 | `AICL_MAGIC_BIN`, `AICL_NETGEN_BIN` | The `'magic'` backend |
 | `AICL_VERIFICATION_BACKEND` | Overrides the default backend of the process |
 | `AICL_VERIFICATION_DIR` | Where run artifacts go (default `~/.aicl_copilot/verification`) |
 
-A blank binary variable means the tool is looked up on `PATH`. PEX also needs the optional package: `pip install -e ".[pex]"`.
+A blank binary variable means the tool is looked up on `PATH`.
 
-A missing tool does not raise. The result's `status` is `RunStatus.NOT_AVAILABLE` and `message` says what is missing. Asking such a result `clean`, `matched` or `extracted` raises `VerificationStateError`, so a check that never ran cannot pass.
+A missing tool does not raise. The result's `status` is `RunStatus.NOT_AVAILABLE` and `message` says what is missing. Asking such a result `clean` or `matched` raises `VerificationStateError`, so a check that never ran cannot pass.
 
 A device the process does not support is different: `run_drc` and `run_lvs` refuse it before anything is exported. When the cell (or a `schematic` you pass) holds a device whose class and technology the process's `devices.yaml` maps to no model, they raise `UnsupportedDeviceError`, which names the devices. A rule deck cannot be trusted to report a device it does not know; it might pass it as plain metal.
 
@@ -215,66 +214,10 @@ if lvs_magic.status is RunStatus.COMPLETED:
 
 The reference netlist is written in the dialect each backend's extractor expects. The same cell can therefore be compared with KLayout and with Netgen. The generated netlist is kept next to the layout, at `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.spice`.
 
-To write that netlist without running LVS, for example to hand it to another tool, call `copilot.generate_netlist(cell, library_name, view_name)`. It returns the path of the file. `style='cdl'` writes an auCdl netlist instead (see [AiclCopilot]({% link docs/api/copilot.md %}#preview-and-export)).
+To write that netlist without running LVS, for example to hand it to another tool, call `copilot.generate_netlist(cell, library_name, view_name)`. It returns the path of the file. `style='cdl'` writes an auCdl netlist instead (see [Preview and Generate]({% link docs/tutorials/generate.md %}#writing-a-netlist)).
 
-## PEX
-
-Extract parasitics only from a layout that passed LVS: parasitics of the wrong circuit mean nothing. `run_pex` writes the reference netlist the same way as `run_lvs`. The extracted nets keep the schematic's names. Keyword options are passed to the extractor:
-
-- `engine`: the extraction engine.
-- `mode`: `'CC'`, `'RC'` or `'R'`.
-- `blackbox_devices`: leave MIM/MOM capacitors to their SPICE models.
-- `netlist_out` and `timeout_s`.
-
-```python
-# The copilot and the cell engines from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
-
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
-
-# The status values a verification result can have
-from aicl_core.bin.verification.results import RunStatus
-
-# Start the copilot for the IHP SG13G2 process
-copilot = AiclCopilot(process_name='ihpSG13G2')
-
-# Describe a small NMOS S-Cell: one device M1 with 4 fingers
-nmos_parameters = {
-    'specifications': {
-        'finger_width': 2.0,        # um, per finger
-        'length': 0.5,              # um
-        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
-    },
-    'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
-    'terminals': [
-        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
-        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]},
-    ],
-}
-nmos_scell = TSCell(name='input_nmos', parameters=nmos_parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
-
-# Extract the coupling capacitances ('CC' mode) of the layout
-pex = copilot.run_pex(nmos_scell, library_name='tutorial_library', view_name='input_nmos_pex', mode='CC')
-print(pex.summary())
-
-# If the extraction ran, show the netlist file and the capacitance found
-if pex.status is RunStatus.COMPLETED and pex.extracted:
-    print('extracted netlist:', pex.netlist)
-    total_capacitance_ff = pex.total_capacitance_f * 1e15     # farad to femtofarad
-    print(pex.capacitors, 'capacitors,', total_capacitance_ff, 'fF in total')
-```
-
-`PexResult` fields:
-
-- `netlist`: the extracted netlist.
-- `capacitors`, `resistors` and `total_capacitance_f`.
-- `engine`, `mode` and `artifacts`.
-
-To use the parasitics in a simulation, pass `post_layout=True` to `run_simulation`. It runs LVS, then PEX, then the simulation (see [Simulation]({% link docs/tutorials/simulation/index.md %})).
+{: .note }
+Parasitic extraction (PEX) is not part of the core package. The result of `run_lvs` holds the paths of the GDS file it checked (`layout`) and of the netlist it compared against (`schematic`), so you can hand both to an extraction tool of your choice.
 
 {: .note }
 Verification needs device geometry in the export. Before running the deck, the commands check that transistor layers (`Activ`, `GatPoly`, `Cont`) were written. A layout without them would pass DRC trivially. As a result, a cell that holds only resistors or only capacitors is refused with an `ExportManifestError` in this release. Verify such cells as part of a module that also holds transistors.

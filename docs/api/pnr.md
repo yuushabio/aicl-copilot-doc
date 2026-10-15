@@ -66,52 +66,43 @@ router_details = RouterManager.get_router_details('ALIGN_ROUTER')
 print(router_details['constraints'])
 ```
 
-### Options as an object
+### Checking option values
 
-In an `options` dictionary, an unknown name raises `ValueError` when the engine is built, but a value of the wrong type only logs a warning and the default is used. `PlacerOptionsModel` and `RouterOptionsModel` (`from aicl_core.bin.pnr import ...`) hold the same options as attributes and check each value as it is set, so a mistake stops the script on the line where it was made.
+Options are passed as a plain dictionary, `{name: value}`. When the engine is built, `resolve_options` checks the dictionary against the engine's `options_schema`:
 
-| Member | Description |
-|:--|:--|
-| `PlacerOptionsModel.for_placer(name)`, `RouterOptionsModel.for_router(name)` *(class methods)* | The options of a registered engine, all at their defaults. `EngineOptionsModel.for_engine(engine)` does the same for an engine class or instance. |
-| `options.<name> = value`, `set(name, value)`, `update(dict, **values)` | Set options. An unknown name or a value of the wrong type raises `ValueError`. |
-| `options.<name>` | The value, or the default when it was not set. |
-| `reset(name)` | Back to the default. |
-| `to_dict()` | Only the options that were set. This is what the engine receives. |
-| `resolved()` | Every option, with the defaults filled in. |
-| `names()`, `describe()` | The option names, and each option's name, type, default, description and current value. |
+- an unknown name raises `ValueError`, which lists the accepted names;
+- a value of the wrong type (or one that fails the option's check) logs a warning, and the default is used instead.
 
-The object can be passed wherever an options dictionary goes: `options=` of `place_cell` and the other `PlaceAndRouteManager` methods, `placer_options=` / `router_options=`, and `resolve_placer` / `resolve_router`.
+To catch a wrong value before a long run, check it yourself with the option's `OptionSpec`: `accepts(value)` is `True` when the engine would use the value.
 
 ```python
 # The copilot from the core package
 from aicl_core.bin.core.copilot import AiclCopilot
 
-# The checked option objects, and the place-and-route helpers
-from aicl_core.bin.pnr import PlacerOptionsModel, RouterOptionsModel
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# The placer registry, and the function that checks an options dictionary
+from aicl_core.bin.utilities.helpers.placers import PlacerManager
+from aicl_core.bin.pnr import resolve_options
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
 
-# The options of the default placer, at their defaults
-placer_options = PlacerOptionsModel.for_placer('CUSTOM_RPS_PLACER')
-placer_options.seed = 120
-placer_options.simanneal_minutes = 0.05
-print('set:', placer_options.to_dict())
-print('all:', placer_options.resolved())
+# The options of the default placer, by name
+schema = PlacerManager.get_placer_options('CUSTOM_RPS_PLACER')
+specs = {spec.name: spec for spec in schema}
+print('options:', list(specs))
 
-# A typo or a wrong type is caught at once
-try:
-    placer_options.seed = 'one hundred'
-except ValueError as error:
-    print('refused:', error)
+# Our options: a seed and a short annealing budget
+options = {'seed': 120, 'simanneal_minutes': 0.05}
 
-# The option names of a router
-print(RouterOptionsModel.for_router('ALIGN_ROUTER').names())
+# Is every value one the placer will use?
+for name, value in options.items():
+    print(name, '=', value, '| accepted:', specs[name].accepts(value))
 
-# Hand the object over like an options dictionary
-placer = PlaceAndRouteManager.resolve_placer('CUSTOM_RPS_PLACER', options=placer_options)
-print(type(placer).__name__)
+# A word where a number belongs would be replaced by the default
+print('seed = "one hundred" | accepted:', specs['seed'].accepts('one hundred'))
+
+# Every option, with the defaults filled in (an unknown name would raise ValueError)
+print(resolve_options(schema, options, owner='CUSTOM_RPS_PLACER'))
 ```
 
 ## PlaceAndRouteManager

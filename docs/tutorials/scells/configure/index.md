@@ -7,7 +7,7 @@ nav_order: 3
 
 # Configure
 
-The `settings` section of the S-Cell parameters holds the options around the devices: guard ring, dummy fingers, dummy rows, gate poly, vias, the power rail and the characterization profile. Each key is optional. A missing key takes its default (see [Defaults for every cell](#defaults-for-every-cell)). Most invalid values are replaced by a safe one with a warning; an unknown `profile_name` is refused with a `ParameterError`.
+The `settings` section of the S-Cell parameters holds the options around the devices: guard ring, dummy fingers, dummy rows, gate poly, vias and the power rail. Each key is optional. A missing key takes its default (see [Defaults for every cell](#defaults-for-every-cell)). Most invalid values are replaced by a safe one with a warning.
 
 ## Guard ring, dummy fingers and dummy rows
 
@@ -133,7 +133,6 @@ copilot.preview_layout(pmos_scell, enable_culling=False)
 | `route_source_drain_over_poly` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals source/drain wires may use over the gates |
 | `extend_source_drain_via_enclosures` | `False` | Keep the source/drain via enclosures flush with the ends of the metal, instead of moving the wire track for them |
 | `terminal_sides` | not set | `'both'`: in a single row, every gate and source/drain net gets a base wire on both sides of the row |
-| `profile_name` | `None` | The characterization profile to build the devices from (`None`: the class's default profile). See [Characterization profile](#characterization-profile) |
 | `power` | metal1 rail, stacked | Power rail, see above |
 
 `route_over_cell` and `route_source_drain_over_poly` take a list `[enable, METAL_LAYER_SELECTION, layers]`. `METAL_LAYER_SELECTION.ALL` allows every metal. `METAL_LAYER_SELECTION.PART` allows only the listed layers, for example `[True, METAL_LAYER_SELECTION.PART, ['metal3', 'metal4']]`. The enum is in `aicl_core.bin.utilities.enums.metalenums`.
@@ -186,17 +185,17 @@ copilot.preview_layout(pair)
 
 A setting that a cell leaves out is taken from these sources, each over the one before:
 
-1. the framework defaults, `aicl_core/config/global_defaults.yaml`;
-2. the process template's `parameter_defaults.yaml` (see [Constraints]({% link docs/setup/process/constraints.md %}#parameter_defaultsyaml));
+1. the defaults for every process, `setup/process_templates/cell_parameter_globals.yaml`;
+2. the process template's `cell_parameter_locals.yaml` (see [Constraints]({% link docs/setup/process/constraints.md %}#cell_parameter_localsyaml));
 3. the overrides you set in your script with `SCellConfig`;
 4. the cell's own `settings` and terminal wires.
 
 The cell's own values always win. A value you set in `SCellConfig` wins over both files, but only for the keys you set; every other key keeps its file default.
 
 {: .note }
-`SCellConfig` changes the cell *parameters* (`settings` and terminal wires). To change a *process rule* for some cells, such as a spacing or the gate poly strap height of `configuration.yaml`, use a context override instead (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#changing-values-for-some-cells)).
+`SCellConfig` changes the cell *parameters* (`settings` and terminal wires). To try another *process rule*, such as a spacing or the gate poly strap height of `configuration.yaml`, build the cells inside a process variant instead (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#trying-out-a-changed-value)).
 
-`SCellConfig` (`aicl_core.config.global_config`) changes a default for every cell built after it, without editing a file. It has one block per cell kind:
+`SCellConfig` (`aicl_core.bin.config.global_config`) changes a default for every cell built after it, without editing a file. It has one block per cell kind:
 
 | Block | Applies to |
 |:--|:--|
@@ -215,7 +214,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 from aicl_core.bin.core.engines.transistor import TSCell
 
 # The user overrides of the S-Cell defaults
-from aicl_core.config.global_config import SCellConfig
+from aicl_core.bin.config.global_config import SCellConfig
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -255,73 +254,10 @@ SCellConfig.reset()
 `SCellConfig.reset('tscell')` drops the overrides of one kind only.
 
 {: .note }
-The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read: a `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError` that tells you to rename it to `settings`.
+The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read: a `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError` that tells you to rename it to `settings`. `SCellConfig` itself moved from `aicl_core.config.global_config` to `aicl_core.bin.config.global_config`.
 
-## Characterization profile
-
-A process template describes the geometry of each device class in one or more **characterization profiles** (see [Characterization]({% link docs/setup/process/device.md %}#characterization)). The profiles come with the template. Your script does not make them; it only chooses which existing profile a cell is built from, with the `profile_name` setting:
-
-| `profile_name` | The cell is built from |
-|:--|:--|
-| `None` (the default) | The default profile of its device class |
-| `'default'` (a name) | The profile with that name |
-| `{'default': None, 'standard_pmos': 'default'}` | Per device class: the entry of the cell's class key, otherwise the `'default'` entry |
-
-To see which profiles you can choose from, ask the copilot (`get_characterization_profiles`) or a cell (`available_profiles()`). Each class lists its profiles and its default one. `ihpSG13G2` ships one profile, `default`, for every class.
-
-```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
-
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-
-# The user overrides of the S-Cell defaults
-from aicl_core.config.global_config import SCellConfig
-
-# Start the copilot for the process we lay out in
-copilot = AiclCopilot(process_name='ihpSG13G2')
-
-# Every profile of the process, per cell kind and device class
-print(copilot.get_characterization_profiles())
-
-# Only the transistor profiles of one class
-print(copilot.get_characterization_profiles('tscell', TRANSISTOR_CLASS.STANDARD_PMOS))
-
-# Choose a profile by name in the cell's own settings
-parameters = {
-    'specifications': {
-        'finger_width': 2.0,
-        'length': 0.5,
-        'devices': [{'names': ['M1'], 'number_of_fingers': [2]}],
-    },
-    'settings': {'profile_name': 'default'},
-}
-pmos = TSCell(name='pmos_profile', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
-print('profiles of this cell:', pmos.available_profiles())
-print('built from:', pmos.get_parameters()['settings']['profile_name'])
-
-# Choose per device class: PMOS cells use 'default', every other class its own default
-parameters['settings'] = {'profile_name': {'default': None, 'standard_pmos': 'default'}}
-pmos = TSCell(name='pmos_per_class', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_PMOS)
-print('built from:', pmos.get_parameters()['settings']['profile_name'])
-
-# Choose one profile for every TS-Cell built from now on
-SCellConfig.TSCELL.settings.profile_name = 'default'
-nmos = TSCell(name='nmos_global_profile', parameters={'specifications': parameters['specifications']})
-print('built from:', nmos.get_parameters()['settings']['profile_name'])
-SCellConfig.reset()
-
-# A name the class does not have is refused, and the error lists the ones it has
-parameters['settings'] = {'profile_name': 'slow_corner'}
-try:
-    TSCell(name='unknown_profile', parameters=parameters)
-except Exception as error:
-    print('refused:', error)
-```
-
-A per-class dictionary may only use `'default'` and class keys of the process (such as `standard_nmos` or `standard_p_2t`), so a misspelt class is refused instead of quietly falling back to the default profile. The same `profile_name` setting works for resistor and capacitor S-Cells.
+{: .note }
+Earlier releases had a `profile_name` setting that chose one of several characterization profiles of a device class. The core package reads one characterization per kind of device (see [Characterization]({% link docs/setup/process/device.md %}#characterization)), so the setting is gone. A cell whose `settings` still name a `profile_name` is refused with a `ParameterError`; remove the key.
 
 ## Bulk connection and via limits
 
