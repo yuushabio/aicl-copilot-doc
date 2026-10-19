@@ -122,7 +122,7 @@ Each entry of `devices`:
 | `default_number_of_vias` | int | `1` | Via count used when a wire does not give one. |
 | `multi_row_gate_contacts` | bool | `False` | Use several rows of gate contacts. |
 | `route_over_cell` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether terminal wires may cross the cell, and on which metals. |
-| `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. When they may not, they take the gate side. |
+| `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. In a cell given no terminals, the default source/drain wires run over the source/drain region (`SD_TOP`) when they may, and on the gate track away from the gates when they may not. |
 | `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
 | `terminal_sides` | str | not set | `'both'` gives every gate and source/drain net of a single row a base wire on both sides of the row, joined by its top wire. |
 | `gate_poly` | dict | see below | Gate connection. |
@@ -143,7 +143,7 @@ Each entry of `devices`:
 | a side | `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`, or its name as a string: `'top'`, `'bottom'`, `'both'`. Strings are what a YAML defaults file can hold. |
 | a mapping | One side per kind of device: `{<class key>: side, 'pmos': side, 'nmos': side, 'default': side}`. A cell looks up its class key first (for example `'standard_pmos'` or `'low_threshold_nmos'`; the keys are listed in the process's `devices.yaml`), then its type (`'pmos'` or `'nmos'`), then `'default'`. When none of them is given, the cell takes the built-in default above. |
 
-Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`) and the power rail goes to the top; with the gates at the top, a source/drain wire takes `SD_CENTER_DOWN` and the rail goes to the bottom.
+Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`) and the power rail goes to the top; with the gates at the top, a source/drain wire takes `SD_CENTER_DOWN` and the rail goes to the bottom. A cell given no terminals at all follows the same sides: each gate wire runs on the gate track (`GATE_TOP` with the gates at the top or on both sides, `GATE_BOTTOM` with the gates at the bottom), the bulk wire on the other gate track, and each source/drain wire on `SD_TOP` (see [`route_source_drain_over_poly`](#settings)).
 
 The value can be set in each of the default layers (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)): `cell_parameter_globals.yaml` (where it is `location: null`), the process's `cell_parameter_locals.yaml`, `SCellConfig` in your script, or the cell's own `settings`. The cell's own value wins. A misspelt side (`'up'`) or a mapping key that is neither a class key of the process nor `pmos`, `nmos` or `default` (`'pmoss'`) is refused with a `ParameterError`, so a typo never falls back to the default without notice.
 

@@ -43,7 +43,7 @@ copilot.preview_layout(nmos_scell)
 
 ![Default transistor S-Cell with one minimum-size NMOS device]({{site.baseurl}}/assets/images/tscell_default_lay.png){: width="220"}
 
-The default cell names each device pin after the device (`dev_0_G`, `dev_0_S`, `dev_0_D`). The pins that no terminal claims go to the power rail: `VSS` for NMOS, `VDD` for PMOS.
+The default cell names each device pin after the device (`dev_0_G`, `dev_0_S`, `dev_0_D`). The pins that no terminal claims go to the power rail: `VSS` for NMOS, `VDD` for PMOS. The gate wire runs on the side of the gate contacts (the top for an NMOS, the bottom for a PMOS, by default), the bulk wire on the other side, and the source and drain wires over the source/drain region (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %}#wire-keys)).
 
 ## Name and parameters
 

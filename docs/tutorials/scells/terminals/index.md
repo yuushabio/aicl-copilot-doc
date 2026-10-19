@@ -45,6 +45,15 @@ Values that are left out come from the process defaults. A width below the layer
 
 A `base_wire` without a `track` follows the side of the gate contacts ([`gate_poly.location`]({% link docs/setup/template/parameters.md %}#gate-side)): a gate net runs on the gate side, a source/drain net over the half of the source/drain region away from the gates, and the power rail on the far side. With the defaults, an NMOS (gates at the top) gets `GATE_TOP`, `SD_CENTER_DOWN` and a `GATE_BOTTOM` rail, and a PMOS (gates at the bottom) gets `GATE_BOTTOM`, `SD_CENTER_UP` and a `GATE_TOP` rail.
 
+A cell given no `terminals` gets the default terminals of its layout composer (the gate and source/drain nets of the devices, named `<device>_G`, `<device>_S` and `<device>_D`) and a bulk terminal, with these base wire tracks:
+
+| Terminal | Gates at the top or on both sides (NMOS default) | Gates at the bottom (PMOS default) |
+|:--|:--|:--|
+| Gate (`<device>_G`) | `GATE_TOP` | `GATE_BOTTOM` |
+| Bulk (`VSS` for NMOS, `VDD` for PMOS) | `GATE_BOTTOM` | `GATE_TOP` |
+| Source / drain (`<device>_S`, `<device>_D`) | `SD_TOP` | `SD_TOP` |
+| Source / drain, with `route_source_drain_over_poly` off | `GATE_BOTTOM` | `GATE_TOP` |
+
 ## Example
 
 The differential pair below names every net and gives the source pins a common `v_tail` net. The two bulk pins get an explicit `VSS` terminal, typed as `GROUND`.
