@@ -43,6 +43,8 @@ Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use 
 
 Values that are left out come from the process defaults. A width below the layer minimum is raised to it.
 
+A `base_wire` without a `track` follows the side of the gate contacts ([`gate_poly.location`]({% link docs/setup/template/parameters.md %}#gate-side)): a gate net runs on the gate side, a source/drain net over the half of the source/drain region away from the gates, and the power rail on the far side. With the defaults, an NMOS (gates at the top) gets `GATE_TOP`, `SD_CENTER_DOWN` and a `GATE_BOTTOM` rail, and a PMOS (gates at the bottom) gets `GATE_BOTTOM`, `SD_CENTER_UP` and a `GATE_TOP` rail.
+
 ## Example
 
 The differential pair below names every net and gives the source pins a common `v_tail` net. The two bulk pins get an explicit `VSS` terminal, typed as `GROUND`.

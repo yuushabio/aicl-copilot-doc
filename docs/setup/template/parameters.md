@@ -128,9 +128,93 @@ Each entry of `devices`:
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
-`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), `location` (`TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
+`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), `location` (the side of the gate contacts, see [Gate side](#gate-side)), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
 
 `power` keys: `stack_metals` (bool), `base_wire` (`layer`, `width`, `offset`, `number_of_via_rows`, `number_of_via_cols`), `base_to_top_wire` (`layer`, `number_of_vias`), and `top_wire` (`layer`, `width`, `track` as a `TOP_WIRE_TRACK`, `offset`).
+
+### Gate side (`gate_poly.location`)
+{: #gate-side }
+
+`settings['gate_poly']['location']` says on which side of the row the gates are contacted. It takes one of three forms:
+
+| Value | Meaning |
+|:--|:--|
+| not set, or `None` | The default: a PMOS has its gates at the **bottom**, an NMOS at the **top**. The two are mirror images, so in an inverter (PMOS above NMOS) the gates face each other and each cell's power rail faces its supply. |
+| a side | `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`, or its name as a string: `'top'`, `'bottom'`, `'both'`. Strings are what a YAML defaults file can hold. |
+| a mapping | One side per kind of device: `{<class key>: side, 'pmos': side, 'nmos': side, 'default': side}`. A cell looks up its class key first (for example `'standard_pmos'` or `'low_threshold_nmos'`; the keys are listed in the process's `devices.yaml`), then its type (`'pmos'` or `'nmos'`), then `'default'`. When none of them is given, the cell takes the built-in default above. |
+
+Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`) and the power rail goes to the top; with the gates at the top, a source/drain wire takes `SD_CENTER_DOWN` and the rail goes to the bottom.
+
+The value can be set in each of the default layers (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)): `cell_parameter_globals.yaml` (where it is `location: null`), the process's `cell_parameter_locals.yaml`, `SCellConfig` in your script, or the cell's own `settings`. The cell's own value wins. A misspelt side (`'up'`) or a mapping key that is neither a class key of the process nor `pmos`, `nmos` or `default` (`'pmoss'`) is refused with a `ParameterError`, so a typo never falls back to the default without notice.
+
+The example builds the same transistor as a PMOS and as an NMOS, first with the defaults, then with one side for all, then with a mapping:
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# The user overrides of the S-Cell defaults
+from aicl_core.bin.config.global_config import SCellConfig
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# One device M1 with 2 fingers; the parameters say nothing about the gate side
+parameters = {
+    'specifications': {'finger_width': 1.0, 'length': 0.5,
+                       'devices': [{'names': ['M1'], 'number_of_fingers': [2]}]},
+    'terminals': [{'name': 'g', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+                  {'name': 'd', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]]}],
+}
+
+
+def gate_side(device_class):
+    """Build a cell of this class and return the name of the gate side it was given."""
+    cell = TSCell(name='probe', parameters=parameters, device_class=device_class)
+    return cell.get_parameters()['settings']['gate_poly']['location'].name
+
+
+# 1. Nothing set: PMOS gates at the bottom, NMOS gates at the top
+print('default  PMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_PMOS), '| NMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_NMOS))
+
+# 2. One side for every transistor built from now on
+SCellConfig.set('tscell', 'settings.gate_poly.location', 'top')
+print('top      PMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_PMOS), '| NMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_NMOS))
+
+# 3. A mapping: every PMOS on top, any other transistor ('default') on both sides
+SCellConfig.set('tscell', 'settings.gate_poly.location', {'pmos': 'top', 'default': 'both'})
+print('mapping  PMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_PMOS), '| NMOS:', gate_side(TRANSISTOR_CLASS.STANDARD_NMOS))
+
+# Drop the override again
+SCellConfig.reset()
+```
+
+It prints:
+
+```
+default  PMOS: bottom | NMOS: top
+top      PMOS: top | NMOS: top
+mapping  PMOS: top | NMOS: both
+```
+
+The same mapping in a defaults file (`cell_parameter_locals.yaml`) reads:
+
+```yaml
+GLOBAL_CONFIG:
+  SCELL:
+    tscell:
+      settings:
+        gate_poly:
+          location: {pmos: top, default: both}
+```
+
+{: .note }
+Earlier releases put the gates of every transistor at the top unless a cell said otherwise, and the netlist flow did the same. A PMOS now has its gates at the bottom by default, also in a netlist-built cell. To get the old layout back, set `location` to `'top'` (in `SCellConfig` or a defaults file) or give the cell `TRANSISTOR_GATE_CONNECTOR.top`.
 
 ### terminals
 
@@ -165,6 +249,7 @@ from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WI
 copilot = AiclCopilot(process_name='ihpSG13G2')
 
 # A PMOS pair sharing its source, with a guard ring, end dummies and the gate contact on top
+# (a PMOS has it at the bottom by default)
 parameters = {
     'specifications': {
         'finger_width': 1.5,

@@ -135,6 +135,15 @@ global:
   abut:
     base: {gate_poly: [[0.0, 0.0, 0.0]]}
     extension: {}
+  region_spacing:                      # between the layer regions of two different cells (placers)
+    base:                              # cells on different nets
+      oxide_diffusion: [[0.0, 0.0, 0.21]]
+      n_well: [[0.0, 0.0, 1.8]]
+      n_well|oxide_diffusion: [[0.0, 0.0, 0.31]]
+      ...
+    extension: {}
+    same_net:                          # regions on one net: they may also touch and merge
+      n_well: [[0.0, 0.0, 0.62]]
 local: {}
 ```
 
@@ -144,10 +153,11 @@ local: {}
 | `global.bulk.width` | The width of each layer of a body tap. |
 | `global.transistor` | `extend_implant_layer`, the `gate_poly` strap (`connector_height`, `extension_height`), and `latch_up.max_tie_distance`. |
 | `global.poly_resistor.bulk`, `global.mim_capacitor.bulk` | Where the body tap of a three-terminal resistor or capacitor goes: `side` (`auto`, `vertical` or `horizontal`) and `offset`, its gap to the device in µm. A cell can choose another side with `settings['bulk_tap']`. |
-| `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. `flush_connecting_wire: true` draws the wire that joins a row of plates as high as the plates, when the step it would leave at their edges is smaller than the plate metal's same-net gap (for a rule deck that flags such a step). Both are `false` by default, and the shipped templates leave them off. |
+| `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. `flush_connecting_wire: true` draws the wire that joins a row of plates as high as the plates, when the step it would leave at their edges is smaller than the plate metal's same-net gap (for a rule deck that flags such a step). Both are `false` by default, and the shipped templates leave them off. In a process whose MIM has a single cap metal, the top plate is contacted by a comb of metal strips: `min_number_of_top_metal_combs` and `max_number_of_top_metal_combs` limit how many strips cross it (`null`: at least one, as many as fit), and `top_metal_comb_distribution` spreads them with the outer strips at the plate edges (`edges`, the default) or with equal gaps (`even`). A cell can override all three in its `settings`. `ihpSG13G2` has two cap metals, so these keys have no effect there. |
 | `global.spacing` | Spacing rules between the layers the devices draw. A key is one layer (the spacing between its own shapes) or a pair `a|b` (in either order). `base` holds the base layers of the primitives, `extension` the pairs that involve an extension layer. Each value is a table `[[width, parallel run, spacing], ...]`: of the rows whose width and run the two shapes reach, the largest spacing applies. A layer or pair without an entry has no rule. |
-| `global.min_width` | The least width of a layer, for example of an implant. When two cells are exported next to each other and their implants end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. |
+| `global.min_width` | The least width of a layer, for example of an implant. When two cells are exported next to each other and their implants end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. The fills count as implant too: the check is repeated over the shapes and the fills so far until it finds no new gap, so a small pocket left between two fills is filled as well. |
 | `global.abut` | The abutment rule of a layer (for gate poly, the former `min_poly_abut_extension`), as a table like `spacing`. |
+| `global.region_spacing` | The spacing between the layer regions of two **different** cells, used by the `REFERENCE_PLACER` (see [Region spacing](#region-spacing) below). Optional. |
 | `local` | Values for devices of a certain size only (see below). |
 
 The three keys `min_poly_spacing`, `min_distance_poly_to_implant` and `min_poly_abut_extension` of older templates are now `global.spacing.base.gate_poly`, `global.spacing.base.gate_poly|<implant>` and `global.abut.base.gate_poly`.
@@ -175,6 +185,44 @@ A process can set more options under `global.transistor`. The shipped templates 
 | `gate_poly.contact` | `cap` | How a gate is contacted. `cap` draws a poly cap wide enough for a contact on every side. `inline` draws no cap: the gate runs straight on past the diffusion, and the contact sits on it, enclosed by `gate_poly.contact_end_enclosure` at its two ends. |
 | `source_drain_via_rows` | `shared` | `shared` puts the source and drain via landings on one row. `separate` gives the sources and the drains rows of their own, so the landings only have to clear the neighbouring finger's metal. |
 | `poly_contact_cut` | not set | A layer drawn around every contact on poly, with its `enclosure` (SKY130's `npc`). |
+
+### Region spacing
+
+A cell's *layer region* is the box around all the shapes it draws on one layer (its N-well, its diffusion, its gate poly, ...). `cell.get_layer_regions()` returns them as `{layer: LayerRegion}`, where each `LayerRegion` has a `boundbox` and a `width` (the narrow side of the layer's widest shape). An M-Cell's regions are those of its sub-cells and of its own wiring. The regions are measured where the shapes are now, so they follow every move, rotation and flip.
+
+`global.region_spacing` says how far apart the regions of two different cells must be. When the reference placer puts one cell next to another, it does not let their bounding boxes simply touch: it looks at the regions that face each other and keeps the largest gap that their rules ask for, less how far each region already lies inside its cell's box. Two PMOS cells next to each other, for example, need their N-wells 1.8 µm apart in `ihpSG13G2` when the wells are on different nets.
+
+| Key | Meaning |
+|:--|:--|
+| `base`, `extension` | The rules between cells on different nets, in the `spacing` table format: one layer (between its own regions) or a pair `a|b`. `base` holds base layers, `extension` pairs with an extension layer. |
+| `same_net` | The rules between two regions on one net. A layer listed here is *net-aware*: two of its regions on one net (the N-wells of two PMOS cells on the same supply) may also touch, and then merge into one region. |
+| `merge` | Layers whose regions may touch whatever their nets, because touching shapes of the layer are one shape (an implant). A gap between them still keeps the rule. |
+
+A metal that has no rule here takes its spacing table from `connectivity.yaml`. A pair with no rule needs no gap. The section is optional; without it, only the metals keep the cells apart, and the reference placer logs a warning. The `ihpSG13G2` and `sky130A` templates ship values from their rule decks: diffusion, gate poly, contact, N-well and deep N-well spacings (for example `NW.b1`, 1.8 µm, between N-wells on different nets in `ihpSG13G2`, and `NW.b`, 0.62 µm, on one net).
+
+The process context answers the rule for a pair with `region_spacing(layer_a, layer_b, width=0.0, parallel_run=0.0, same_net=False)`:
+
+```python
+# The copilot and the process context manager from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.contextmanager import ContextManager
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+context = ContextManager.current
+
+# N-well to N-well of another cell: on different nets, and on one net
+print('n_well, different nets:', context.region_spacing('n_well', 'n_well'), 'um')
+print('n_well, same net:', context.region_spacing('n_well', 'n_well', same_net=True), 'um')
+
+# N-well of one cell to the diffusion of another
+print('n_well | oxide_diffusion:', context.region_spacing('n_well', 'oxide_diffusion'), 'um')
+
+# A metal without a region rule takes its connectivity spacing
+print('metal2:', context.region_spacing('metal2', 'metal2'), 'um')
+```
+
+How the placer uses the rules, and how to turn them off, is described in [Placement]({% link docs/tutorials/modules/place/index.md %}#region-spacing).
 
 ## connectivity.yaml
 

@@ -66,18 +66,18 @@ Dummy devices are tied to the power rail of the cell.
 
 `gate_poly` controls how the gate fingers are strapped:
 
-- `location` is a `TRANSISTOR_GATE_CONNECTOR`: `top`, `bottom` or `both`.
+- `location` is the side of the gate contacts: `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both` (or the names `'top'`, `'bottom'`, `'both'`). When it is not set, a PMOS has its gates at the bottom and an NMOS at the top. It can also be a mapping with one side per device type or class, for example `{'pmos': 'top', 'default': 'both'}`; see [Gate side]({% link docs/setup/template/parameters.md %}#gate-side) for the lookup order and a tested example.
 - `connect_gate_with_poly` joins the fingers with a poly strap instead of metal.
 - `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` set the contact density.
 - `split_gate_poly_metal` splits the gate metal between fingers.
 
 `power` configures the rail that collects the pins no terminal claims (`VSS` for NMOS, `VDD` for PMOS):
 
-- `base_wire` sets the horizontal rail: `layer`, `width`, `offset`, `number_of_via_rows` and `number_of_via_cols`.
+- `base_wire` sets the horizontal rail: `layer`, `width`, `offset`, `number_of_via_rows` and `number_of_via_cols`. Without a `track`, the rail goes to the side away from the gates (top for a PMOS, bottom for an NMOS, by default). A rail asked for over the source/drain region (an `SD_...` track) that has no room there moves to the side away from the gates, with a warning.
 - `stack_metals` stacks the rail on the metals above it.
 - `top_wire` is the vertical wire used when the cell is routed inside a module.
 
-The next example contacts the gates at the bottom and widens the power rail:
+The next example writes out the gate side of a PMOS (the bottom, which is also its default) and widens the power rail:
 
 ```python
 # The copilot and the transistor S-Cell engine from the core package
@@ -101,7 +101,7 @@ parameters = {
     },
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR},
     'settings': {
-        # Contact the gates at the bottom instead of the top
+        # Contact the gates at the bottom (a PMOS's default, written out here)
         'gate_poly': {'location': TRANSISTOR_GATE_CONNECTOR.bottom},
         # A wider metal1 power rail
         'power': {'base_wire': {'layer': 'metal1', 'width': 0.4}},
@@ -126,7 +126,7 @@ copilot.preview_layout(pmos_scell, enable_culling=False)
 | `guard_ring` | `{'enable': False, 'offset': 0.0}` | Guard ring around the cell |
 | `number_of_dummy_fingers` | `{'start': 0, 'end': 0}` | Dummy fingers at each end of a row |
 | `dummy_rows` | `{'top': {'enable': False}, 'bottom': {'enable': False}}` | Dummy rows: `enable`, `offset`, `height` |
-| `gate_poly` | `location: top`, 3 / 5 contacts per unit width | Gate strap, see above |
+| `gate_poly` | `location` not set (PMOS bottom, NMOS top), 3 / 5 contacts per unit width | Gate strap, see above |
 | `default_number_of_vias` | 1 | Vias per connection when a wire does not say |
 | `multi_row_gate_contacts` | `False` | More than one row of gate contacts |
 | `route_over_cell` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals a parent router may use over the cell |

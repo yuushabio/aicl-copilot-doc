@@ -92,7 +92,7 @@ print('netlist:', netlist_path)
 ## Results
 
 {: .warning }
-This recipe does **not** give a clean layout in the current release. With this seed the RMST router cannot finish the `vdd` net (`route_result.failed` is `['vdd']`), so LVS reports a mismatch: the layout has no `VDD` pin, and the supply nets of the cells are not joined. KLayout DRC also reports a few violations: minimum width on routed metal (rule `M2.a`) and an N-well spacing (`NW.b1`). Check `route_result.failed`, `lvs.report()`, `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
+This recipe does **not** give a clean layout in the current release. With this seed the RMST router cannot finish the `vss` net (`route_result.failed` is `['vss']`), so the supply nets of the cells are not joined and LVS reports a mismatch (the IHP deck's top-level port check fails). KLayout DRC is clean with this seed. Check `route_result.failed`, `lvs.report()`, `drc.report()` and the report database under `drc.artifacts.directory` before using the layout. A different `seed`, a larger `padding` or another router (`'MAGICAL_ROUTER'`, `'ALIGN_ROUTER'`) changes the result.
 
 ## Variations
 

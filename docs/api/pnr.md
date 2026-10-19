@@ -24,7 +24,7 @@ Placers and routers are registered by name. The names are exact strings.
 | Name | Class | Kind | Constraints |
 |:--|:--|:--|:--|
 | `CUSTOM_RPS_PLACER` | `CustomRPS` | Placer. It packs rectangles with a sequence pair, optimised by simulated annealing. This is the default placer. | `{'padding': float | dict | list | tuple, 'width_limit': float, 'height_limit': float}`. Sub-cells inherit them. |
-| `REFERENCE_PLACER` | `ReferencePlacer` | Placer. It puts each cell at a fixed position, or against an already-placed reference cell, in the order given. | A list of entries `{'cell_name', 'position': Coord, 'offset': Coord, 'use_reference': bool, 'reference_cell_name': str, 'reference_abut_side': CELL_ABUT_SIDE, 'reference_abut_align': CELL_ABUT_ALIGN}`, or `{cell_name: {'placer_constraints': [...], 'sub_modules': {...}}}` for a hierarchy. `reference_cell_name` may join several cells with `|`. Cells that no entry names are placed at the origin. |
+| `REFERENCE_PLACER` | `ReferencePlacer` | Placer. It puts each cell at a fixed position, or against an already-placed reference cell, in the order given. | A list of entries `{'cell_name', 'position': Coord, 'offset': Coord, 'use_reference': bool, 'reference_cell_name': str, 'reference_abut_side': CELL_ABUT_SIDE, 'reference_abut_align': CELL_ABUT_ALIGN}`, or `{cell_name: {'placer_constraints': [...], 'sub_modules': {...}}}` for a hierarchy. `reference_cell_name` may join several cells with `|`. Cells that no entry names are placed at the origin. An abutment keeps the process's region spacing (`configuration.yaml` `global.region_spacing`). |
 | `RMST_ROUTER` | `RectilinearMstMCellRouter` | Router. A rectilinear minimum spanning tree router. This is the default router. | `{'top_wire': {'min_width': float, 'min_number_of_vias': int, 'number_of_vias': int}}` |
 | `ALIGN_ROUTER` | `AlignMCellRouter` | Router. A port of ALIGN's router: tile-based global routing, then A* track routing per net. Symmetry is soft. | `{'min_width', 'min_layer', 'max_layer', 'nets': {name: {'min_layer', 'max_layer', 'multi_connection', 'do_not_route'}}, 'symmetry': {'net_pairs', 'axis'}, 'sub_cells': {name: {...}}}` |
 | `MAGICAL_ROUTER` | `MagicalMCellRouter` | Router. A port of MAGICAL's anaroute: grid A* with negotiated rip-up and reroute. Symmetry is mirrored. | `{'min_width', 'power_min_width', 'nets': {name: {'min_width', 'cuts': [rows, cols]}}, 'symmetry': {'net_pairs', 'self_nets', 'axis'}, 'sub_cells': {name: {...}}}` |
@@ -34,7 +34,7 @@ Placers and routers are registered by name. The names are exact strings.
 | Engine | Options (default) |
 |:--|:--|
 | `CUSTOM_RPS_PLACER` | `simanneal_minutes` (0.1), `simanneal_steps` (100), `show_progress` (False), `seed` (111), `place` (True; with False it only solves), `visualize` (False) |
-| `REFERENCE_PLACER` | none |
+| `REFERENCE_PLACER` | `region_spacing` (True: keep the process's region spacing between the cells' facing layer regions, see [Region spacing]({% link docs/tutorials/modules/place/index.md %}#region-spacing)), `well_nets` (`'netlist'`, or `'unrouted'`) |
 | `RMST_ROUTER` | none |
 | `ALIGN_ROUTER` | `tile_size` (0 = automatic), `candidates` (5), `via_cost` (0.36), `sym_factor` (8.0), `ilp_node_limit` (200000), `max_explore` (0 = unlimited) |
 | `MAGICAL_ROUTER` | `grid_step` (0 = the Metal1 pitch), `signal_top_layer` (5), `power_top_layer` (6), `nrr_iterations` (15), `nrr_retry_iterations` (20), `symmetry_fail_limit` (5), `detect_symmetry` (True) |

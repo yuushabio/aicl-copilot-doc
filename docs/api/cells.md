@@ -33,6 +33,7 @@ Cell
 | `get_primitive_type()` | `PRIMITIVE_TYPE.SCELL` or `MCELL`. |
 | `get_boundbox()` | The cell's `Boundbox` (`start_x_coord`, `start_y_coord`, `end_x_coord`, `end_y_coord`, `width`, `height`). |
 | `get_position()` | Lower-left corner, as a `Coord`. |
+| `get_layer_regions()` | `{layer: LayerRegion}`: the box around all the cell's shapes on each layer it draws (`boundbox`), and the narrow side of the layer's widest shape (`width`). An M-Cell's are its sub-cells' and its own wiring's. Measured where the shapes are now. The reference placer keeps the process's [region spacing]({% link docs/setup/process/constraints.md %}#region-spacing) between them. |
 | `translate(new_pos: Coord)` | Move the cell so that its lower-left corner is at `new_pos`. |
 | `rotate(pivot: Coord | None = None)` | Rotate a quarter turn (R90). |
 | `flip_horizontal(pivot=None)`, `flip_vertical(pivot=None)` | Mirror in the x axis (MX) or in the y axis (MY). |

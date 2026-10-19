@@ -51,7 +51,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `RESISTOR_COMPOSER` | `LINEAR`, `INTER_DIGITATE` | RSCell `composer['composer_type']` |
 | `CAPACITOR_COMPOSER` | `LINEAR` | CSCell `composer['composer_type']` |
 | `DEVICE_SEPARATOR` | `DUMMY`, `IMPLANT` | TSCell `composer['device_separator']` |
-| `TRANSISTOR_GATE_CONNECTOR` | `top`, `both`, `bottom` | TSCell `settings['gate_poly']['location']`, and `top` / `bottom` in `settings['gate_poly']['device_sides']` |
+| `TRANSISTOR_GATE_CONNECTOR` | `top`, `both`, `bottom` | TSCell `settings['gate_poly']['location']` (also as the strings `'top'`, `'both'`, `'bottom'`, or a per-device mapping; unset: PMOS `bottom`, NMOS `top`, see [Gate side]({% link docs/setup/template/parameters.md %}#gate-side)), and `top` / `bottom` in `settings['gate_poly']['device_sides']` |
 | `CELL_ABUT_SIDE` | `left`, `right`, `top`, `bottom` | `REFERENCE_PLACER` `reference_abut_side` |
 | `CELL_ABUT_ALIGN` | `lower`, `middle`, `upper` | `REFERENCE_PLACER` `reference_abut_align` |
 | `CELL_ORIENTATION` | `R0`, `R90`, `R0_MX`, `R0_MY`, `R0_MX_MY`, `R90_MX`, `R90_MY`, `R90_MX_MY` | `cell.set_orientation(...)`, `cell.get_orientation()` |
