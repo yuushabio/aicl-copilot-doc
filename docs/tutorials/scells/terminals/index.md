@@ -39,9 +39,46 @@ Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use 
 | `SD_CENTER_UP`, `SD_CENTER_DOWN` | Over the source/drain region, upper or lower half |
 | `ABS` | Absolute, at `offset` |
 
-`top_wire` accepts `layer`, `width`, `offset` and a `TOP_WIRE_TRACK`: `CELL_LEFT`, `CELL_RIGHT`, `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `ROUTE_LEFT`, `ROUTE_RIGHT`, `LOWER`, `MIDDLE`, `UPPER` or `ABS`. Base wires must use a horizontal metal and top wires a vertical one. A wrong direction is moved to the nearest valid layer, with a warning.
+`top_wire` accepts `layer`, `width`, `offset`, `number_of_vias` and a `TOP_WIRE_TRACK`: `CELL_LEFT`, `CELL_RIGHT`, `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `ROUTE_LEFT`, `ROUTE_RIGHT`, `LOWER`, `MIDDLE`, `UPPER` or `ABS`. Base wires must use a horizontal metal and top wires a vertical one. A wrong direction is moved to the nearest valid layer, with a warning.
 
-Values that are left out come from the process defaults. A width below the layer minimum is raised to it.
+Values that are left out come from the process defaults. A signal wire without a `width` is drawn at the *terminal wire minimum* of its layer, and a power rail at 0.3 µm or that minimum, whichever is wider. The terminal wire minimum is the minimum width of the layer, and where a via lands on the wire, the via cut plus the smaller enclosure on both sides across the wire. In `ihpSG13G2` it is 0.21 µm for Metal1 and Metal2 and 0.2 µm for Metal3 and Metal4. A `width` below it is raised to it.
+
+### Via counts
+
+`number_of_vias` is the number of cuts at every place where the wire lands. For a `base_wire` that is each source/drain strip or gate pad it lands on. For a `base_to_top_wire` it is the cuts of the connector. For a `top_wire` it is each crossing with the base wires of the rows in a multi-row cell. When the asked number does not fit where the wire is drawn, the cell uses the most that fits and logs a warning. `get_via_clamps()` of the cell lists every count that was lowered: the terminal, the wire key, the number asked for and the number used.
+
+```python
+# The copilot and the transistor S-Cell engine from the core package
+from aicl_core.bin.core.copilot import AiclCopilot
+from aicl_core.bin.core.engines.transistor import TSCell
+
+# Option lists (enums) from the core package
+from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+
+# Start the copilot for the process we lay out in
+copilot = AiclCopilot(process_name='ihpSG13G2')
+
+# One NMOS with 4 fingers; the drain wire asks for 12 vias at every landing
+parameters = {
+    'specifications': {
+        'finger_width': 2.0,
+        'length': 0.5,
+        'devices': [{'names': ['M1'], 'number_of_fingers': [4]}],
+    },
+    'terminals': [
+        {'name': 'v_in', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},
+        {'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.DRAIN]],
+         'base_wire': {'layer': 'metal2', 'number_of_vias': 12}},
+    ],
+}
+
+# Build the cell; the warning in the log says how many vias fit
+nmos = TSCell(name='many_vias', parameters=parameters, device_class=TRANSISTOR_CLASS.STANDARD_NMOS)
+
+# The counts that were lowered
+print('lowered via counts:', nmos.get_via_clamps())
+```
 
 A `base_wire` without a `track` follows the side of the gate contacts ([`gate_poly.location`]({% link docs/setup/template/parameters.md %}#gate-side)): a gate net runs on the gate side, a source/drain net over the half of the source/drain region away from the gates, and the power rail on the far side. With the defaults, an NMOS (gates at the top) gets `GATE_TOP`, `SD_CENTER_DOWN` and a `GATE_BOTTOM` rail, and a PMOS (gates at the bottom) gets `GATE_BOTTOM`, `SD_CENTER_UP` and a `GATE_TOP` rail.
 

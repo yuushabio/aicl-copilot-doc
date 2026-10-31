@@ -85,6 +85,7 @@ There is no per-cell `context=` argument. To build a cell with a changed process
 | `get_scell_parameters()` | Same as `get_parameters()`. |
 | `get_composer_specs()` | The realized `composer` section. |
 | `get_device_names()` | Every device name in `specifications['devices']`. |
+| `get_via_clamps()` | The via counts of the terminals that did not fit and were lowered, as a list of `{'terminal', 'key', 'number_of_vias', 'used'}`. Empty when every count fitted. |
 | `get_diffusion_plan()` | For each row, the net of every source/drain diffusion and the dummy spans, or `None`. |
 
 `sensitive`, `noisy` and `allow_rotation` are stored on the cell. The core placers do not use them yet.

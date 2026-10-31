@@ -137,4 +137,4 @@ Both checks pass on `ihpSG13G2`: KLayout DRC is clean and LVS matches.
 - **Diode-connected load**: give the PMOS gate and drain one terminal, `{'name': 'v_out', 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE, TRANSISTOR_PIN_TYPE.DRAIN]]}`, and drop `v_bias`.
 - **Larger devices**: raise `number_of_fingers`. Use `number_of_rows` to keep the cell square (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 - **Guard rings**: add `'guard_ring': {'enable': True}` to each S-Cell's `settings`.
-- **Dummy fingers**: add `'number_of_dummy_fingers': {'start': 1, 'end': 1}` to each S-Cell's `settings`. The generated LVS netlist states each cell's dummies with that cell's own device (the PMOS dummies as `sg13_lv_pmos`), so the recipe still passes DRC and LVS.
+- **Dummy fingers**: add `'dummies': {'start': {'fingers': 1}, 'end': {'fingers': 1}}` to each S-Cell's `settings`. The generated LVS netlist states each cell's dummies with that cell's own device (the PMOS dummies as `sg13_lv_pmos`), so the recipe still passes DRC and LVS.

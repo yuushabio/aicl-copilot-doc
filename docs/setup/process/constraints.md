@@ -263,13 +263,16 @@ metals:
     name: 'Metal1'
     dimensions: {min_width: 0.16, min_height: 0.16, max_width: [12, 50], max_height: [50, 20], min_area: 0.09, max_area: 600}
     spacing: [[0.16, 0.16, 0.18], [0.3, 1.0, 0.22], [10.0, 10.0, 0.6]]   # [[line width, parallel run, spacing], ...]
-    abut: {use_unit_abut: False, unit_abut: [[0.16, 0.0]], multi_abut: [[0.16, 0.0, 0.0]]}
+    abut:
+      multi: [[0.16, 0.0, 0.0]]
+      unit: [[0.16, 0.0]]
   # metal2 ... metal7
 ```
 
+- A key that a block does not take is an error, not ignored: the template is refused and the message names the block and lists the valid keys (a metal takes `name`, `dimensions`, `spacing`, `abut`, `euclidean`, `index` and `direction`). Older templates wrote the `abut` keys as `unit_abut` and `multi_abut`; rename them to `unit` and `multi`.
 - A contact's `spacing` has one block per layer pair (`gate_poly|metal1`, `oxide_diffusion|metal1`), so a contact on poly and a contact on diffusion can have different rules. A file whose contact `spacing` still has `middle` and `edge` directly under it is in the old format and is refused.
 - `edge.multi_spacing` gives `[min, max]` enclosures: the smaller one on one axis and the larger on the other. With `use_unit_spacing: True`, `unit_spacing` is used on every side instead.
-- `abut` is the margin a junction adds around a metal: `unit_abut` (`[[min width, edge]]`, both axes) when `use_unit_abut` is set, otherwise `multi_abut` (`[[min width, axis a, axis b]]`).
+- `abut` holds the outline rules of a metal. `multi` (`[[min width, axis 1, axis 2]]`) is the step check: at a corner, one of the two edges next to it must be at least `axis 1` and the other at least `axis 2`, either way round. The row is chosen by the narrow side of the wider piece, and `0.0, 0.0` checks nothing. `unit` (`[[min width, edge]]`) is the same with one value for both edges; it is used instead of `multi` when `use_unit_abut: true` is set (the default is `false`). `line_end` (`[[end width, required end gap, corner extension, min end edge]]`, the last value optional) is the line-end rule: an end edge shorter than `end width` (both its corners convex) needs `required end gap` to any metal in front of it, and the area checked reaches `corner extension` past each corner. An edge shorter than `min end edge` is a jog, not an end; it defaults to the larger `multi` margin.
 - The `name` of a via or metal is its PDK layer name. The keys (`metal1`, `via1`) are the IDs used everywhere else. Cell parameters may write an ID in any case (`'Metal2'` is `metal2`).
 
 `ihpSG13G2` defines `metal1` to `metal7`. `metal6` and `metal7` are the PDK's `TopMetal1` and `TopMetal2` (`TM1` and `TM2`). In `sky130A`, `metal1` is the local interconnect `li1` (its contact is `licon1`), and `metal2` to `metal6` are `met1` to `met5`. Every via must join two known layers, and every pair of adjacent metals must be joined by a via.
@@ -287,11 +290,17 @@ GLOBAL_CONFIG:
     tscell:
       settings:                       # the cell's 'settings'
         default_number_of_vias: 1
-        number_of_dummy_fingers: {start: 0, end: 0}
+        dummies:
+          start: {fingers: 0}
+          end: {fingers: 0}
+          gate_caps: 'gate_side'
+          rows:
+            top: {enable: False, height: null, offset: 0.0}
+            bottom: {enable: False, height: null, offset: 0.0}
         guard_ring: {enable: False, offset: 0.0}
       terminals:
         signals:
-          - base_wire: {layer: 'metal2', width: 0.3, offset: 0.0, number_of_vias: 1}
+          - base_wire: {layer: 'metal2', width: null, offset: 0.0, number_of_vias: 1}
 ```
 
 The block was called `config` in earlier releases. A file that still has a `config` block makes the next cell stop with a `ValueError`; rename it to `settings`.
@@ -303,7 +312,7 @@ The values are layered in this order, each over the one before:
 3. the overrides set from a script with `SCellConfig` (see [Configure]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell));
 4. the cell's own parameters.
 
-`ihpSG13G2` sets, for example, 0.3 µm wide signal base and top wires, an extra resistor `segment_spacing` of `0.02` (0.2 µm between the segments with the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.0`, at the end of its row's connecting wire). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
+`ihpSG13G2` leaves the width of the signal wires at `null`, which is the terminal wire minimum of the layer (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %}#wire-keys); 0.21 µm for Metal2 and 0.2 µm for Metal3), leaves the extra resistor `segment_spacing` at `null` (the segments sit at the 0.18 µm minimum gap), and the default capacitor terminal wire (`width: 0.4`, `offset: 0.0`, at the end of its row's connecting wire). The guard ring is off by default (`guard_ring.enable: False`); turn it on in a cell's `settings`.
 
 ## gds_mapping.yaml
 

@@ -22,7 +22,7 @@ from aicl_core.bin.core.copilot import AiclCopilot
 
 | Argument | Description |
 |:--|:--|
-| `process_name` | Process to make active, for example `'ihpSG13G2'`. If it is not a valid process, another valid process is used and a warning is logged. |
+| `process_name` | Process to make active, for example `'ihpSG13G2'`. If the name has no template, another valid process is used and a warning is logged. If it has a template that is invalid, `SetupException` is raised with the reason. |
 | `aicl_home_directory` | Storage root. The default is `~/.aicl_copilot`. It is used only if it exists and is writable. |
 | `project_directory` | Where `layouts/` and `schematics/` (the folder for the netlists of `generate_netlist`) are created. The default is the home directory. |
 
@@ -32,6 +32,7 @@ The constructor reads everything from the setup directory `$AICL_COP_WORK_DIR/se
 |:--|:--|
 | `current_process` | Name of the active process. |
 | `valid_processes`, `invalid_processes` | Results of the template validation (see [Process Technology]({{ site.baseurl }}/docs/setup/process/)). |
+| `invalid_reasons` | `{process: message}`: why each invalid template failed to load. |
 | `home_directory`, `current_project_directory` | The resolved directories. |
 
 ## Process and environment

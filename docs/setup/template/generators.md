@@ -54,7 +54,7 @@ parameters = {
     },
     'settings': {
         'guard_ring': {'enable': True, 'offset': 0.05},
-        'number_of_dummy_fingers': {'start': 1, 'end': 1},
+        'dummies': {'start': {'fingers': 1}, 'end': {'fingers': 1}},
     },
     'terminals': [
         {'name': 'v_in_1', 'type': TERMINAL_TYPE.ANALOG_INPUT, 'pins': [['M1', TRANSISTOR_PIN_TYPE.GATE]]},

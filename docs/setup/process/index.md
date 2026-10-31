@@ -64,7 +64,7 @@ When an `AiclCopilot` is created, every process directory under `process_templat
 | List | Condition |
 |:--|:--|
 | `valid_processes` | It has `constraints/technology.yaml`, `constraints/configuration.yaml`, `constraints/connectivity.yaml` and `primitives/transistor.yaml`, and it loads. `devices.yaml` must also be present and non-empty, and the connectivity must be consistent. For example, every via must join two known layers, and every pair of adjacent metals must be joined by a via. |
-| `invalid_processes` | Anything else, or a template that fails to load. The reason is logged. |
+| `invalid_processes` | Anything else, or a template that fails to load. The reason is logged and kept in `copilot.invalid_reasons`. |
 
 A template also fails to load, and is listed in `invalid_processes`, when:
 
@@ -92,7 +92,7 @@ print('family:              ', technology.process_tech)
 print('layout resolution:   ', technology.layout_resolution)
 ```
 
-If the requested process is not valid, `AiclCopilot` logs a warning and falls back to another valid process. Check `copilot.current_process` when you add a new template.
+If the requested process has a template that is invalid, `AiclCopilot` raises a `SetupException` that gives the reason, for example `process template ihpSG13G2 is invalid: metals.metal1.abut: unknown key 'unit_abut' (valid: ...)`. It does not fall back to another process. The reasons of all invalid templates are also in `copilot.invalid_reasons`, a dictionary of process name to message. Only a name that has no template at all falls back, with a warning, to another valid process. Check `copilot.current_process` when you add a new template.
 
 {: .warning }
 Older templates used other file names: `config.yaml` (later `configuration.yaml`, and now `technology.yaml`; see the note below), `mos.yaml`, `resistor.yaml` and `capacitor.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`), and `characterization/MOS.yaml`, `RES.yaml` and `CAP.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`, see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). A template that still uses an old name is not loaded, and an error names the files to rename.

@@ -117,16 +117,19 @@ Each entry of `devices`:
 | Key | Type | Default | Description |
 |:--|:--|:--|:--|
 | `guard_ring` | dict | `{'enable': False, 'offset': 0.0}` | Draw a guard ring at `offset` from the devices. |
-| `number_of_dummy_fingers` | dict | `{'start': 0, 'end': 0}` | Dummy fingers at the start and end of each row. |
-| `dummy_rows` | dict | `{'top': {'enable': False}, 'bottom': {'enable': False}}` | A row of dummy devices above or below. Each side also takes `offset` and `height`. |
+| `dummies` | dict | see below | Every dummy setting. |
 | `default_number_of_vias` | int | `1` | Via count used when a wire does not give one. |
 | `multi_row_gate_contacts` | bool | `False` | Use several rows of gate contacts. |
 | `route_over_cell` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether terminal wires may cross the cell, and on which metals. |
 | `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. In a cell given no terminals, the default source/drain wires run over the source/drain region (`SD_TOP`) when they may, and on the gate track away from the gates when they may not. |
 | `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
-| `terminal_sides` | str | not set | `'both'` gives every gate and source/drain net of a single row a base wire on both sides of the row, joined by its top wire. |
+| `symmetric_geometry` | bool | `False` | Draw the cell as its own mirror image where the construction allows: contact, via and tap arrays are spread symmetrically about their centre. |
+| `matched_tracks` | bool | `False` | In a single row, place the matched source/drain nets (the same pin roles, one device each) together over the devices. A cell with several rows always does. |
+| `bulk_rail_sides` | str | `'row'` | Where the body is tapped: `'row'` (a tap strip under the bulk rail along the row) or `'left_right'` (two tap strips at the ends of the row, for a single row without guard ring or dummy rows). |
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
+
+`dummies` keys: `start` and `end` (each `{'fingers': 0}`: the number of dummy fingers at that end of each row), `gate_caps` (`'gate_side'` or `'both'`: the sides on which a dummy finger's gate is capped) and `rows` (`{'top': {...}, 'bottom': {...}}`, each `{'enable': False, 'height': None, 'offset': 0.0}`: a row of dummy devices above or below the active row; `height` `None` is the process minimum). See [Configure]({% link docs/tutorials/scells/configure/index.md %}#guard-ring-dummy-fingers-and-dummy-rows). A key that is not listed is refused with a `ParameterError`.
 
 `gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), `location` (the side of the gate contacts, see [Gate side](#gate-side)), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
 
@@ -142,6 +145,8 @@ Each entry of `devices`:
 | not set, or `None` | The default: a PMOS has its gates at the **bottom**, an NMOS at the **top**. The two are mirror images, so in an inverter (PMOS above NMOS) the gates face each other and each cell's power rail faces its supply. |
 | a side | `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`, or its name as a string: `'top'`, `'bottom'`, `'both'`. Strings are what a YAML defaults file can hold. |
 | a mapping | One side per kind of device: `{<class key>: side, 'pmos': side, 'nmos': side, 'default': side}`. A cell looks up its class key first (for example `'standard_pmos'` or `'low_threshold_nmos'`; the keys are listed in the process's `devices.yaml`), then its type (`'pmos'` or `'nmos'`), then `'default'`. When none of them is given, the cell takes the built-in default above. |
+
+The side without gate contacts is kept compact. When the gates are contacted on one side only, the other side holds no gate caps on the dummy fingers (unless `dummies.gate_caps` is `'both'`), the implant ends at the poly-to-implant distance from the poly, and the rails on that side start at the poly end.
 
 Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`) and the power rail goes to the top; with the gates at the top, a source/drain wire takes `SD_CENTER_DOWN` and the rail goes to the bottom. A cell given no terminals at all follows the same sides: each gate wire runs on the gate track (`GATE_TOP` with the gates at the top or on both sides, `GATE_BOTTOM` with the gates at the bottom), the bulk wire on the other gate track, and each source/drain wire on `SD_TOP` (see [`route_source_drain_over_poly`](#settings)).
 
@@ -261,7 +266,7 @@ parameters = {
     'composer': {'composer_type': TRANSISTOR_COMPOSER.LINEAR, 'device_separator': []},
     'settings': {
         'guard_ring': {'enable': True, 'offset': 0.1},
-        'number_of_dummy_fingers': {'start': 1, 'end': 1},
+        'dummies': {'start': {'fingers': 1}, 'end': {'fingers': 1}},
         'gate_poly': {'location': TRANSISTOR_GATE_CONNECTOR.top},
     },
     # Both gates on v_bias, one drain net per device, and both sources on the VDD supply
