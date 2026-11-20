@@ -7,13 +7,13 @@ has_children: true
 
 # Process Technology
 
-AICL Co-pilot has no design rules or layer names built into its code. Everything it knows about a technology, such as its layers, design rules, device names and verification decks, is read from a **process template**. A process template is a directory of YAML files under:
+ANALACE Lite has no design rules or layer names built into its code. Everything it knows about a technology, such as its layers, design rules, device names and verification decks, is read from a **process template**. A process template is a directory of YAML files under:
 
 ```
 $AICL_COP_WORK_DIR/setup/process_templates/<family>/<process name>/
 ```
 
-- The **setup directory** `$AICL_COP_WORK_DIR/setup` is where AICL Co-pilot reads all its settings (see [Installation]({% link docs/setup/install.md %}#the-work-directory-and-setup)). Its `process_templates/` folder also holds `cell_parameter_globals.yaml`, the S-Cell defaults for every process.
+- The **setup directory** `$AICL_COP_WORK_DIR/setup` is where ANALACE Lite reads all its settings (see [Installation]({% link docs/setup/install.md %}#the-work-directory-and-setup)). Its `process_templates/` folder also holds `cell_parameter_globals.yaml`, the S-Cell defaults for every process.
 - The **family** is the device technology the template is for: `planar` (bulk CMOS, such as `ihpSG13G2` and `sky130A`) or `finfet`. The family decides the transistor technology: a `planar` template builds `MOSFET` transistors.
 - The **process directory's name** is the process name that is passed to `AiclCopilot(process_name=...)` and `set_process(...)`.
 
@@ -64,19 +64,22 @@ When an `AiclCopilot` is created, every process directory under `process_templat
 | List | Condition |
 |:--|:--|
 | `valid_processes` | It has `constraints/technology.yaml`, `constraints/configuration.yaml`, `constraints/connectivity.yaml` and `primitives/transistor.yaml`, and it loads. `devices.yaml` must also be present and non-empty, and the connectivity must be consistent. For example, every via must join two known layers, and every pair of adjacent metals must be joined by a via. |
-| `invalid_processes` | Anything else, or a template that fails to load. The reason is logged and kept in `copilot.invalid_reasons`. |
+| `invalid_processes` | Anything else, or a template that fails to load. The reason is logged and kept in `copilot.invalid_reasons`; it names what is wrong, for example a missing `constraints/connectivity.yaml`. |
 
 A template also fails to load, and is listed in `invalid_processes`, when:
 
 - `technology.yaml` names a `process_name` that is not the directory's name, or a `process_tech` (family) that is not the folder it is in.
 - A file is still in the old template format: a `config.yaml`, a top-level `Configuration`, `Connectivity`, `Primitives` or `primitive_construction` key, a `configuration.yaml` that still holds the technology keys (`process_name`, `layout_resolution`, `transistors`, ...), CamelCase sections such as `Transistors:` in `devices.yaml`, old characterization file names (`MOS.yaml`, `RES.yaml`, `CAP.yaml`), or characterization folders with one profile per device class (`characterization/transistor/<class>/<profile>.yaml`).
-- A file gives values per device class where the core reads one value per kind: a `polygon_profiles` block or a per-class `device_scaling` in a primitives file, or a P-cell limit written as `{default: ..., <class key>: ...}` in `technology.yaml`.
+- A file gives values per device class where ANALACE Lite reads one value per kind: a `polygon_profiles` block or a per-class `device_scaling` in a primitives file, or a P-cell limit written as `{default: ..., <class key>: ...}` in `technology.yaml`.
+
+- A file has a key that its loader does not know: the message names the file, the key and the valid keys, so a misspelt key is never ignored silently.
+- A value is of the wrong kind where the loaders do not check it yet: the template is listed as invalid with the Python error as its reason, and the other templates still load.
 
 The logged error names the file and what to change.
 
 ```python
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # Start the copilot; it checks every process template it finds
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -102,7 +105,7 @@ In the current release the file that used to be called `configuration.yaml` is *
 
 ## Finding a template from code
 
-`aicl_core.bin.core.process_templates` finds template directories the same way the copilot does. Every function takes the setup directory as its first argument:
+`analace_kernel.bin.core.process_templates` finds template directories the same way the copilot does. Every function takes the setup directory as its first argument:
 
 | Function | Returns |
 |:--|:--|
@@ -110,12 +113,12 @@ In the current release the file that used to be called `configuration.yaml` is *
 | `template_dir(config_root, process_name)` | The template directory of one process, or `None`. |
 | `template_file(config_root, process_name, *parts)` | A path inside the template, for example `template_file(root, 'ihpSG13G2', 'constraints', 'gds_mapping.yaml')`, or `None` when the process has no template. |
 
-`aicl_core.bin.core.config_paths.active_config_dir()` returns the setup directory in use (`$AICL_COP_WORK_DIR/setup`).
+`analace_kernel.bin.core.config_paths.active_config_dir()` returns the setup directory in use (`$AICL_COP_WORK_DIR/setup`).
 
 ```python
 # The copilot, and the helpers that find the setup directory and its templates
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core import config_paths, process_templates
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core import config_paths, process_templates
 
 # Start the copilot; it reads the setup directory $AICL_COP_WORK_DIR/setup
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -155,14 +158,14 @@ The sky130A KLayout DRC deck is not complete. Its own README says it does not ch
 The process is used like any other:
 
 ```python
-# The copilot, the process contexts and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot, the process contexts and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for SKY130
 copilot = AiclCopilot(process_name='sky130A')

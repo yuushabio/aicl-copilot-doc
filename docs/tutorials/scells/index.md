@@ -7,13 +7,13 @@ has_children: true
 
 # Super Cells (S-Cells)
 
-An S-Cell is the smallest block the Co-pilot lays out: one or more devices of the same kind, composed into a single DRC-aware layout with its own wiring, guard ring and pins. Core has three S-Cell engines:
+An S-Cell is the smallest block ANALACE Lite lays out: one or more devices of the same kind, composed into a single DRC-aware layout with its own wiring, guard ring and pins. ANALACE Lite has three S-Cell engines:
 
 | Class | Module | Devices |
 |:--|:--|:--|
-| `TSCell` | `aicl_core.bin.core.engines.transistor` | MOS transistors (NMOS/PMOS, standard/low-VT/high-VT) |
-| `RSCell` | `aicl_core.bin.core.engines.resistor` | Poly-silicon resistors built from segments |
-| `CSCell` | `aicl_core.bin.core.engines.capacitor` | MIM capacitors built as a unit matrix |
+| `TSCell` | `analace_kernel.bin.core.engines.transistor` | MOS transistors (NMOS/PMOS, standard/low-VT/high-VT) |
+| `RSCell` | `analace_kernel.bin.core.engines.resistor` | Poly-silicon resistors built from segments |
+| `CSCell` | `analace_kernel.bin.core.engines.capacitor` | MIM capacitors built as a unit matrix |
 
 Every S-Cell is created from a name, a `parameters` dictionary and the device class (`device_class=`, for example `TRANSISTOR_CLASS.STANDARD_PMOS`). The dictionary has four sections:
 

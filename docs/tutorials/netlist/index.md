@@ -6,7 +6,7 @@ nav_order: 3
 
 # Layout from a SPICE Netlist
 
-Instead of writing S-Cell and M-Cell parameters by hand, the Co-pilot can derive them from a SPICE netlist. The flow has five steps:
+Instead of writing S-Cell and M-Cell parameters by hand, ANALACE Lite can derive them from a SPICE netlist. The flow has five steps:
 
 1. `create_circuit_from_netlist`: parse the netlist into a `Circuit` tree, one level per sub-circuit instance.
 2. `create_circuit_device_grouper`: decide which devices share an S-Cell.
@@ -14,7 +14,7 @@ Instead of writing S-Cell and M-Cell parameters by hand, the Co-pilot can derive
 4. `build_mcell`: build the `MCell` tree.
 5. Place and route, usually with `place_and_route_hierarchical_cell`.
 
-The netlists used here ship with core in `templates/netlists/`. The parser reads xschem SPICE exports (`**.subckt` / `.subckt` with `*.ipin` pin comments) and auCdl netlists (`.SUBCKT` with `*.PININFO`).
+The netlists used here ship with ANALACE Lite in `templates/netlists/`. The parser reads xschem SPICE exports (`**.subckt` / `.subckt` with `*.ipin` pin comments) and auCdl netlists (`.SUBCKT` with `*.PININFO`).
 
 ## 1. Parse the netlist
 
@@ -24,8 +24,8 @@ The netlists used here ship with core in `templates/netlists/`. The parser reads
 # Python's standard module for file paths and environment variables
 import os
 
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -50,6 +50,17 @@ print('ports:', circuit.ports)
 
 `circuit.devices` is the list of all devices, and `get_circuit_device(name)` looks one up by its netlist name. Each device carries its port nets and its dimensions converted to layout parameters (`finger_width`, `length`, `number_of_fingers`). `circuit.sub_circuits` holds one `Circuit` per sub-circuit instance, named after the instance (for example `x2`).
 
+### Which sub-circuit is the top
+
+The top circuit is the `.subckt` that no other `.subckt` calls. When a file has several of them, the parser picks the one that is named like `circuit_name` (in any case). Without such a name it picks the only one that itself instantiates other sub-circuits, which is the top of a file that also carries a library's unused primitive wrappers. If none of these rules chooses one, the parser raises `SPICE Parser: Netlist has more than one top circuit` and names the candidates, so give the circuit the name of the top `.subckt`. The sub-circuits that the top does not use are left out and never read; an information message names the ones that nothing calls.
+
+### What the parser reads
+
+- A line that starts with `+` continues the line before it.
+- A `.subckt` header can end with `name=value` defaults (after the ports, or after `PARAMS:`), and `.param` lines give values to the whole netlist or to one sub-circuit. A device parameter or an instance value can use them, so `w=wn` and `w='wn*2'` work. An instance's values are evaluated in the scope of its parent.
+- A line that starts with `*` is a comment, and a `*` inside a value (`w='w*nf'`) is not.
+- The `/` that auCdl writes before a sub-circuit name (`XI1 a b / inv`) is dropped.
+
 ## 2. Device groups
 {: #device-groups }
 
@@ -58,7 +69,7 @@ A *device group* is a set of devices built as one S-Cell. `create_circuit_device
 - **Without manual groups**, the constructor recognises common structures and groups them: differential pairs, current mirrors, cross-coupled pairs, cascodes and MOS capacitors. The remaining devices get an S-Cell each. A current mirror takes every device on its bias, however many legs it has: the diode-connected reference sits in the middle of the row and the legs are split around it. When a bias has several diode-connected references, each reference is its own mirror cell and the legs are shared out between them in order. A cascode current mirror is one cell. Each cross-coupled pair gets its own cell.
 - **With `create_transistor_group(device_names, group_name, composer_type)`**, you choose the groups. The devices of a group must have the same type (all NMOS or all PMOS), and a device can be in only one group. A group is always built as **one** S-Cell: each structure found inside it (a pair, a mirror, ...) becomes a device entry of that cell. Devices you leave out are still grouped automatically.
 
-`composer_type` defaults to `TRANSISTOR_COMPOSER.LINEAR`, which is the composer core provides (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})). The devices of a group are placed side by side in one S-Cell, sharing diffusion where their nets allow. This is how matched devices are kept together in core.
+`composer_type` defaults to `TRANSISTOR_COMPOSER.LINEAR`, which is the composer ANALACE Lite provides (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})). The devices of a group are placed side by side in one S-Cell, sharing diffusion where their nets allow. This is how matched devices are kept together in core.
 
 The netlist flow sets only what it must decide for each cell: whether wires may run over it, and the layer and vias of its power rail. Every other setting comes from the same defaults as a hand-built cell: the guard ring, dummy fingers and rows, vias, and also the side of the gate contacts (a PMOS at the bottom, an NMOS at the top, unless you set [`gate_poly.location`]({% link docs/setup/template/parameters.md %}#gate-side)) and the tracks of the signal and power wires, which follow that side. You can change any of them for every cell of the netlist with `SCellConfig` before you build. For example, `SCellConfig.TSCELL.settings.guard_ring.enable = True` gives every transistor cell a guard ring (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)).
 
@@ -84,13 +95,13 @@ The complete flow for the differential amplifier in `templates/netlists/diff_amp
 # Python's standard module for file paths and environment variables
 import os
 
-# The copilot and the place-and-route helper from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# The copilot and the place-and-route helper from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
-# Option lists (enums) and the Coord point type from the core package
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.geometryutils import Coord
+# Option lists (enums) and the Coord point type from ANALACE Lite
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.geometryutils import Coord
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -164,9 +175,9 @@ A netlist with sub-circuit instances becomes an M-Cell tree: one sub-M-Cell per 
 # Python's standard module for file paths and environment variables
 import os
 
-# The copilot and the place-and-route helper from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# The copilot and the place-and-route helper from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')

@@ -6,9 +6,11 @@ nav_order: 1
 
 # Introduction
 
-AICL Co-pilot core is a Python package (`aicl_core`) that generates analog IC layouts from code. You describe a circuit with parameter dictionaries or a SPICE netlist. The framework then builds the device layouts, places and routes them, writes GDS and SPICE netlists, and checks the result with open-source DRC and LVS tools.
+ANALACE Lite (Analog LACE: Layout Automation and Compilation Engine) is a Python package (distribution `analace-lite`, imported as `analace_kernel`) that generates analog IC layouts from code. You describe a circuit with parameter dictionaries or a SPICE netlist. The framework then builds the device layouts, places and routes them, writes GDS and SPICE netlists, and checks the result with open-source DRC and LVS tools.
 
-The core package is released under the GNU GPLv3. Layouts, netlists and other files that you generate with it are **not** covered by the GPL, and you can use them in proprietary designs. See the repository's `README.md` and `LICENSE.txt`.
+ANALACE Lite is released under the GNU GPLv3. Layouts, netlists and other files that you generate with it are **not** covered by the GPL, and you can use them in proprietary designs. See the repository's `README.md` and `LICENSE.txt`.
+
+ANALACE Lite is the open generator edition of ANALACE, the full Analog LACE product, which has more placers, routers and cell types than this site describes.
 
 ## Concepts
 
@@ -22,7 +24,7 @@ The core package is released under the GNU GPLv3. Layouts, netlists and other fi
 
 ## Package map
 
-| Package (`aicl_core/bin/...`) | Contents |
+| Package (`analace_kernel/bin/...`) | Contents |
 |:--|:--|
 | `core/` | `AiclCopilot` (`copilot.py`), the process context, and the cell engines in `core/engines/` (`TSCell`, `RSCell`, `CSCell`, `MCell`). Composers, connectors and factories build the device geometry. |
 | `netlisting/` | SPICE parsing (`NetlistParser`), the `Circuit` tree, the device grouper (`CircuitDeviceGrouper`) and the atomic hierarchy (`MCellAtomic`), which builds an `MCell` from a netlist. |
@@ -47,7 +49,7 @@ The process templates, the S-Cell defaults (`cell_parameter_globals.yaml`), `con
 `sky130A` builds the standard transistors, its N-poly and P-poly resistors and its MIM capacitor; see [sky130A]({{ site.baseurl }}/docs/setup/process/#sky130a).
 
 {: .note }
-Circuit simulation, schematic drawing, parasitic extraction (PEX) and the cell and parameter databases are not part of the core package. The core writes SPICE and CDL netlists of your cells (`generate_netlist`), which you can simulate or check with any tool you like.
+Circuit simulation, schematic drawing, parasitic extraction (PEX) and the cell and parameter databases are not part of ANALACE Lite. ANALACE Lite writes SPICE and CDL netlists of your cells (`generate_netlist`), which you can simulate or check with any tool you like.
 
 See [Process Technology]({{ site.baseurl }}/docs/setup/process/) for adding a process.
 

@@ -12,15 +12,15 @@ An `MCell` is created from a name. Its sub-cells are added with `add_cell` (one 
 The inverter below uses one NMOS and one PMOS S-Cell. Each S-Cell names its terminals `v_in` and `v_out`, and ties its source and bulk to a rail terminal (`vss` or `vdd`). The M-Cell joins them in the [routing]({% link docs/tutorials/modules/route/index.md %}) step.
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

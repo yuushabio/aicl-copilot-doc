@@ -4,21 +4,21 @@ layout: home
 nav_order: 1
 ---
 
-# AICL Co-pilot
+# ANALACE Lite
 
-AICL Co-pilot (Analog Integrated Circuit Layout Co-pilot) is a Python framework for generating analog IC layouts. This site documents **AICL Co-pilot core** ([`aicl-copilot-core`](https://github.com/yuushabio/aicl-copilot-core)), the open-source (GPLv3) engine. It provides:
+ANALACE Lite (Analog LACE: Layout Automation and Compilation Engine) is a Python framework for generating analog IC layouts. This site documents **ANALACE Lite** ([`analace-lite`](https://github.com/yuushabio/analace-lite)), the open-source (GPLv3) generator engine. It provides:
 
 - parameterised device generators (S-Cells) for transistors, resistors and capacitors;
 - hierarchical M-Cells, built by hand or from a SPICE netlist;
 - placers and routers for M-Cells;
 - GDS export, SPICE/CDL netlist export, and DRC and LVS with KLayout or Magic/Netgen.
 
-Everything a technology needs is read from YAML process templates. The core package ships templates for the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) and [SkyWater SKY130](https://github.com/google/skywater-pdk) (`sky130A`) open PDKs.
+Everything a technology needs is read from YAML process templates. ANALACE Lite ships templates for the [IHP SG13G2](https://github.com/IHP-GmbH/IHP-Open-PDK) and [SkyWater SKY130](https://github.com/google/skywater-pdk) (`sky130A`) open PDKs.
 
 ```python
-# The copilot and the transistor S-Cell generator from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell generator from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -45,4 +45,4 @@ copilot.preview_layout(nmos)
 | [API Reference]({{ site.baseurl }}/docs/api/) | Classes, methods and enums. |
 
 {: .note }
-AICL Co-pilot is under active development, and its interfaces still change between releases. The examples on this site were checked against the current version of the core package. If an example no longer works, please open an issue on [GitHub](https://github.com/yuushabio/aicl-copilot-core/issues).
+ANALACE Lite is under active development, and its interfaces still change between releases. The examples on this site were checked against the current version of ANALACE Lite. If an example no longer works, please open an issue on [GitHub](https://github.com/yuushabio/analace-lite/issues).

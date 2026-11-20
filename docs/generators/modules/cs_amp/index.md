@@ -23,18 +23,18 @@ The recipe goes through these steps:
 5. It checks the result with DRC and LVS, and exports GDS.
 
 ```python
-# Copilot, cell classes and helpers from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.verification.results import RunStatus
+# Copilot, cell classes and helpers from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.verification.results import RunStatus
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE
 
 # Where the layout goes: library 'generators', cell 'cs_amp'
 library_name = 'generators'

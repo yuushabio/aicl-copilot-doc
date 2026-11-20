@@ -21,18 +21,20 @@ The layout engines (S-Cells, M-Cells, placement, routing and GDS export) need no
 ## Install the package
 
 ```bash
-git clone https://github.com/yuushabio/aicl-copilot-core.git
-cd aicl-copilot-core
+git clone https://github.com/yuushabio/analace-lite.git
+cd analace-lite
 
 python3 -m venv .venv
 source .venv/bin/activate
 
-pip install -e .            # the core package
+pip install -e .            # installs the `analace-lite` distribution
 ```
+
+The distribution is called `analace-lite`. In Python, the package is imported as `analace_kernel` (`from analace_kernel.bin.core.copilot import AiclCopilot`). The class `AiclCopilot` and the `AICL_COP_*` environment variables keep their names.
 
 ## The work directory and setup/
 
-AICL Co-pilot reads everything it needs at startup from one folder, the **setup directory**: `$AICL_COP_WORK_DIR/setup`. The package itself holds no process templates. The clone ships a ready `setup/` folder:
+ANALACE Lite reads everything it needs at startup from one folder, the **setup directory**: `$AICL_COP_WORK_DIR/setup`. The package itself holds no process templates. The clone ships a ready `setup/` folder:
 
 ```
 setup/
@@ -56,7 +58,7 @@ source .aicl_setup.bash
 This sets `AICL_COP_WORK_DIR` to the current directory and `PYTHONPATH` to the same directory, so the package can also be imported without `pip install`. Run it from the repository root, because it uses `pwd`. You can also export the variable yourself, for example in your `~/.bashrc`:
 
 ```bash
-export AICL_COP_WORK_DIR=/path/to/aicl-copilot-core
+export AICL_COP_WORK_DIR=/path/to/analace-lite
 ```
 
 {: .note }
@@ -73,7 +75,7 @@ cp setup/config.env.example setup/config.env
 Every variable can be left blank. A blank tool binary is looked up on `PATH`. A path that is set but wrong is an error; there is no fallback to `PATH`, so a run is never done silently with a different binary.
 
 {: .note }
-The example file also lists variables for simulation, schematics and parasitic extraction (`AICL_NGSPICE_BIN`, `AICL_XSCHEM_BIN` and others). The core package does not read them, and you can leave them blank.
+The example file also lists variables for simulation, schematics and parasitic extraction (`AICL_NGSPICE_BIN`, `AICL_XSCHEM_BIN` and others). ANALACE Lite does not read them, and you can leave them blank.
 
 ### Output
 
@@ -142,9 +144,9 @@ Verification runs are stored under the home directory too, in `verification/`.
 Run this from the activated environment:
 
 ```python
-# The copilot and the transistor S-Cell generator from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell generator from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Start the copilot and show which processes it found and where it writes its output
 copilot = AiclCopilot(process_name='ihpSG13G2')

@@ -9,10 +9,10 @@ nav_order: 2
 
 The `composer` section of the S-Cell parameters chooses how the devices are arranged. Its `composer_type` key takes a `TRANSISTOR_COMPOSER` member; the other keys are options of that composer.
 
-The open-source core ships the **linear** composer (`TRANSISTOR_COMPOSER.LINEAR`), and every transistor S-Cell uses it. It places the devices side by side in one row. It can also stack the whole row several times.
+ANALACE Lite ships the **linear** composer (`TRANSISTOR_COMPOSER.LINEAR`), and every transistor S-Cell uses it. It places the devices side by side in one row. It can also stack the whole row several times.
 
 {: .important }
-`TRANSISTOR_COMPOSER` also lists `INTER_DIGITATE` and `COMMON_CENTROID`, but core has no builder for them. Passing either to a `TSCell` raises a `ParameterError`. To place matched devices in core, [group them into one S-Cell]({% link docs/tutorials/netlist/index.md %}#device-groups) and use the linear composer.
+`TRANSISTOR_COMPOSER` also lists `INTER_DIGITATE` and `COMMON_CENTROID`, but core has no builder for them. Passing either to a `TSCell` raises a `ParameterError`. To place matched devices in ANALACE Lite, [group them into one S-Cell]({% link docs/tutorials/netlist/index.md %}#device-groups) and use the linear composer.
 
 ## Linear composer
 
@@ -21,22 +21,22 @@ Devices are placed left to right in the order they appear in `specifications['de
 | Separator | Value | Effect |
 |:--|:--|:--|
 | `DEVICE_SEPARATOR.DUMMY` | number of dummy fingers (at least 2) | The two devices are joined by dummy gate fingers on shared diffusion |
-| `DEVICE_SEPARATOR.IMPLANT` | spacing in µm | The diffusion is broken and the devices are separated by the implant spacing |
+| `DEVICE_SEPARATOR.IMPLANT` | spacing in µm, or `None` for the process minimum | The diffusion is broken and the devices are separated by the implant spacing |
 
-Without `device_separator`, the composer uses an implant separator for every gap.
+Without `device_separator`, the composer uses an implant separator for every gap. Its value is `None`, which stands for the process minimum spacing of the implants; a number in µm sets it wider, and is never taken as less than that minimum.
 
 ### Dummy separator
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.composer import DEVICE_SEPARATOR
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -76,15 +76,15 @@ copilot.preview_layout(scell, enable_culling=False)
 Replace the separator with `[DEVICE_SEPARATOR.IMPLANT, 0.5]` to break the diffusion between the devices and keep them 0.5 µm apart:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.composer import DEVICE_SEPARATOR
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -126,14 +126,14 @@ Set `number_of_rows` to stack the linear arrangement several times. Each row has
 The composer also switches to several rows by itself when `finger_width` is wider than the process allows (`max_finger_width` in `technology.yaml`). It takes the fewest rows that split the width into equal fingers on the layout grid, each within the process limits, so the device keeps its total width. When no number of rows does that, the cell is refused with a `ParameterError`; change the finger width or the number of fingers.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -172,7 +172,7 @@ copilot.preview_layout(scell)
 
 | Key | Type | Default | Meaning |
 |:--|:--|:--|:--|
-| `composer_type` | `TRANSISTOR_COMPOSER` | `LINEAR` | The composer. Core builds `LINEAR` only |
+| `composer_type` | `TRANSISTOR_COMPOSER` | `LINEAR` | The composer. ANALACE Lite builds `LINEAR` only |
 | `device_separator` | list of `[DEVICE_SEPARATOR, value]` | implant separators | One separator for each gap between `devices` entries |
 | `number_of_rows` | int | 1 | Number of stacked rows |
 | `row_spacing` | float | 0.0 | Minimum spacing between rows (µm) |

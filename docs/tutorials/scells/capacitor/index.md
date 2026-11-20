@@ -7,14 +7,14 @@ nav_order: 6
 
 # Capacitor S-Cells
 
-`CSCell` (`aicl_core.bin.core.engines.capacitor`) builds a capacitor as a matrix of equal unit capacitors whose plates are joined by two rails.
+`CSCell` (`analace_kernel.bin.core.engines.capacitor`) builds a capacitor as a matrix of equal unit capacitors whose plates are joined by two rails.
 
 ## Device class and technology
 
 Like every S-Cell, `CSCell` takes the device class and technology as constructor arguments:
 
 - `device_class`: `CAPACITOR_CLASS.STANDARD_2T` (default, plus and minus), or `STANDARD_3T` (with a bulk pin).
-- `device_tech`: `CAPACITOR_TECH.CMIM` (default), a metal-insulator-metal capacitor. It is the technology the core package builds. `CAPACITOR_TECH.CMOM` is refused with a `ParameterError`.
+- `device_tech`: `CAPACITOR_TECH.CMIM` (default), a metal-insulator-metal capacitor. It is the technology ANALACE Lite builds. `CAPACITOR_TECH.CMOM` is refused with a `ParameterError`.
 
 The IHP SG13G2 template maps `STANDARD_2T` to `cap_cmim` and `STANDARD_3T` to `cap_rfcmim`.
 
@@ -65,14 +65,14 @@ When a pad's via stack would pass through the other plate's metal (for example a
 Four 6 µm × 6 µm MIM units as a 2 × 2 matrix. The plus terminal is the top plates' own connecting wire on `metal6`, at the right end. The minus terminal is a `metal4` pad below the bottom plates, in the middle of each row:
 
 ```python
-# The copilot and the capacitor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.capacitor import CSCell
+# The copilot and the capacitor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.capacitor import CSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
-from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, CAPACITOR_TRACK, TERMINAL_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
+from analace_kernel.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, CAPACITOR_TRACK, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -123,14 +123,14 @@ A `STANDARD_3T` capacitor has a `BULK` pin, and the cell draws a substrate tap f
 With `'side': 'auto'` the tap goes along the shorter sides of the matrix: left or right for a wide matrix, bottom or top for a tall one. Of the two, it takes the side nearer the terminal its bulk pin shares (here `vss`, on the left), else the side nearer the minus terminal. Give `'vertical'` (left or right) or `'horizontal'` (bottom or top) to choose the direction yourself.
 
 ```python
-# The copilot and the capacitor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.capacitor import CSCell
+# The copilot and the capacitor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.capacitor import CSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

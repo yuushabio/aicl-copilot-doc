@@ -34,17 +34,17 @@ A device the process does not support is different: `run_drc` and `run_lvs` refu
 ## DRC
 
 ```python
-# The copilot and the cell engines from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # The status values a verification result can have
-from aicl_core.bin.verification.results import RunStatus
+from analace_kernel.bin.verification.results import RunStatus
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -105,22 +105,22 @@ To check a GDS file that already exists, pass `gds=` (and `topcell=`) instead of
 With a cell and no `schematic`, the reference netlist is written from the cell itself. That proves the layout is what the cell describes: no router shorts, opens or missing vias. It does not prove that the cell matches your design intent. To compare against a netlist you wrote, pass it as `schematic=`. The result records which of the two was used, in `schematic_source` (`'generated'` or `'user'`).
 
 ```python
-# The copilot and the cell engines from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
-# The Coord point type and the place-and-route helper from the core package
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# The Coord point type and the place-and-route helper from ANALACE Lite
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # The status values a verification result can have
-from aicl_core.bin.verification.results import RunStatus
+from analace_kernel.bin.verification.results import RunStatus
 
 # Start the copilot for the IHP SG13G2 process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -217,7 +217,7 @@ The reference netlist is written in the dialect each backend's extractor expects
 To write that netlist without running LVS, for example to hand it to another tool, call `copilot.generate_netlist(cell, library_name, view_name)`. It returns the path of the file. `style='cdl'` writes an auCdl netlist instead (see [Preview and Generate]({% link docs/tutorials/generate.md %}#writing-a-netlist)).
 
 {: .note }
-Parasitic extraction (PEX) is not part of the core package. The result of `run_lvs` holds the paths of the GDS file it checked (`layout`) and of the netlist it compared against (`schematic`), so you can hand both to an extraction tool of your choice.
+Parasitic extraction (PEX) is not part of ANALACE Lite. The result of `run_lvs` holds the paths of the GDS file it checked (`layout`) and of the netlist it compared against (`schematic`), so you can hand both to an extraction tool of your choice.
 
 {: .note }
 Verification needs device geometry in the export. Before running the deck, the commands check that transistor layers (`Activ`, `GatPoly`, `Cont`) were written. A layout without them would pass DRC trivially. As a result, a cell that holds only resistors or only capacitors is refused with an `ExportManifestError` in this release. Verify such cells as part of a module that also holds transistors.

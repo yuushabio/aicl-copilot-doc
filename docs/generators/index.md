@@ -11,4 +11,4 @@ Generators are complete, runnable recipes. Each one builds a circuit from start 
 - [S-Cells]({% link docs/generators/scells/index.md %}): parameter recipes for common single-cell structures, such as differential pairs, current mirrors, resistors and capacitor arrays.
 - [Modules]({% link docs/generators/modules/index.md %}): multi-cell circuits, from a hand-built common-source amplifier to netlist-driven OTAs.
 
-All recipes use the IHP SG13G2 process and the netlists that ship in `templates/netlists/` of the core repository. Run them from the repository root with `AICL_COP_WORK_DIR` set (see [Installation]({% link docs/setup/install.md %})).
+All recipes use the IHP SG13G2 process and the netlists that ship in `templates/netlists/` of the ANALACE Lite repository. Run them from the repository root with `AICL_COP_WORK_DIR` set (see [Installation]({% link docs/setup/install.md %})).

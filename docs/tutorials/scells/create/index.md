@@ -7,13 +7,13 @@ nav_order: 1
 
 # Creating an S-Cell
 
-## Set up the Co-pilot
+## Set up ANALACE Lite
 
-Every script starts by creating an `AiclCopilot` for a process technology. The Co-pilot loads the process templates and makes the chosen process the active context. Every cell you create afterwards is built against it.
+Every script starts by creating an `AiclCopilot` for a process technology. ANALACE Lite loads the process templates and makes the chosen process the active context. Every cell you create afterwards is built against it.
 
 ```python
-# The copilot class from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot class from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -27,9 +27,9 @@ copilot = AiclCopilot(process_name='ihpSG13G2')
 A `TSCell` created without arguments uses the process defaults: one minimum-size NMOS device named `dev_0`. `preview_layout` opens the layout viewer on the cell.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -64,14 +64,14 @@ Each entry in `devices` has:
 The example below builds one NMOS with four fingers and names two terminals. The type of transistor is not in the dictionary: it is the `device_class` argument of `TSCell` (see [Device class and technology](#device-class-and-technology)). The `composer` section selects the linear composer (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -110,14 +110,14 @@ The source pin is not named in `terminals`, so it is tied to `VSS`. `enable_cull
 Put several names in one `devices` entry to build devices that share diffusion, such as a differential pair with a common source. Use separate entries to build devices that sit side by side with a separator between them. The next example builds a PMOS pair with a common source, three fingers per device.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -154,18 +154,18 @@ copilot.preview_layout(pair_scell)
 
 Every S-Cell constructor (`TSCell`, `RSCell`, `CSCell`) takes two device arguments:
 
-- `device_class`: which device to draw. The core package builds `TRANSISTOR_CLASS.STANDARD_NMOS` and `TRANSISTOR_CLASS.STANDARD_PMOS`. Left out, a `TSCell` is a `STANDARD_NMOS`.
-- `device_tech`: the device technology, for example `TRANSISTOR_TECH.MOSFET`. Left out, the cell uses the default technology of its kind, which is the one the core package builds.
+- `device_class`: which device to draw. ANALACE Lite builds `TRANSISTOR_CLASS.STANDARD_NMOS` and `TRANSISTOR_CLASS.STANDARD_PMOS`. Left out, a `TSCell` is a `STANDARD_NMOS`.
+- `device_tech`: the device technology, for example `TRANSISTOR_TECH.MOSFET`. Left out, the cell uses the default technology of its kind, which is the one ANALACE Lite builds.
 
 The process template maps each class to a PDK device (see [Mapping]({% link docs/setup/process/mapping.md %})). Both arguments are checked when the cell is built: a class the process has no device for raises a `ParameterError` that lists the classes it does have. The values can be read back and changed later:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

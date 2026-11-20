@@ -42,13 +42,13 @@ Placers and routers are registered by name. The names are exact strings.
 The registry can list them at run time:
 
 ```python
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
-# The placer and router registries from the core package
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
-from aicl_core.bin.utilities.helpers.routers import RouterManager
+# The placer and router registries from ANALACE Lite
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
+from analace_kernel.bin.utilities.helpers.routers import RouterManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -76,12 +76,12 @@ Options are passed as a plain dictionary, `{name: value}`. When the engine is bu
 To catch a wrong value before a long run, check it yourself with the option's `OptionSpec`: `accepts(value)` is `True` when the engine would use the value.
 
 ```python
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # The placer registry, and the function that checks an options dictionary
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
-from aicl_core.bin.pnr import resolve_options
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
+from analace_kernel.bin.pnr import resolve_options
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -108,7 +108,7 @@ print(resolve_options(schema, options, owner='CUSTOM_RPS_PLACER'))
 ## PlaceAndRouteManager
 
 ```
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 ```
 
 A set of static methods over the registries. Wherever a `placer` or `router` is expected, you can pass an engine **instance**, an engine **class**, a registry **name**, or `None` for the default (`CUSTOM_RPS_PLACER` and `RMST_ROUTER`). Options go with a class or a name. Passing options together with an instance raises `ValueError`, because the instance already has its options.
@@ -131,8 +131,8 @@ A set of static methods over the registries. Wherever a `placer` or `router` is 
 ## PlacerManager and RouterManager
 
 ```
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
-from aicl_core.bin.utilities.helpers.routers import RouterManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
+from analace_kernel.bin.utilities.helpers.routers import RouterManager
 ```
 
 | PlacerManager | RouterManager | Description |
@@ -146,7 +146,7 @@ from aicl_core.bin.utilities.helpers.routers import RouterManager
 
 ## Engine base classes
 
-`aicl_core.bin.placers.placer.Placer` and `aicl_core.bin.routers.mcell.router.Router` are abstract. An engine is constructed with options only, `Engine(**options)`, and is then run on as many cells as needed.
+`analace_kernel.bin.placers.placer.Placer` and `analace_kernel.bin.routers.mcell.router.Router` are abstract. An engine is constructed with options only, `Engine(**options)`, and is then run on as many cells as needed.
 
 | Placer | Router |
 |:--|:--|
@@ -156,12 +156,12 @@ from aicl_core.bin.utilities.helpers.routers import RouterManager
 
 To write a new engine, implement `place(cell, constraints)` (or `route(cell, terminal_names, constraints, grid=None)`), `parse_constraints(raw, cell)` and `sub_cell_constraints(cell, sub_cell, constraints)`. Declare `options_schema` as a tuple of `OptionSpec`, then register the class with `PlacerManager.register` or `RouterManager.register`.
 
-`register_level_hook(hook)` in `aicl_core.bin.placers.placer` adds a function that runs after every level that any placer places, as `hook(cell, symmetry)` (`symmetry` is the level's `LevelSymmetry` or `None`). Use it for a placement rule that every placer must keep.
+`register_level_hook(hook)` in `analace_kernel.bin.placers.placer` adds a function that runs after every level that any placer places, as `hook(cell, symmetry)` (`symmetry` is the level's `LevelSymmetry` or `None`). Use it for a placement rule that every placer must keep.
 
 ## Contract types
 
 ```
-from aicl_core.bin.pnr import PlaceRequest, RouteRequest, PlaceResult, RouteResult, OptionSpec, LevelSymmetry, CellOverlap, cell_overlaps
+from analace_kernel.bin.pnr import PlaceRequest, RouteRequest, PlaceResult, RouteResult, OptionSpec, LevelSymmetry, CellOverlap, cell_overlaps
 ```
 
 | Type | Fields |
@@ -179,20 +179,20 @@ Every placer reports the cells that overlap once it has placed a level: `PlaceRe
 ## Example
 
 ```python
-# The copilot, the cell types and the routing request from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
-from aicl_core.bin.pnr import RouteRequest
-from aicl_core.bin.routers.mcell import RectilinearMstMCellRouter
+# The copilot, the cell types and the routing request from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.pnr import RouteRequest
+from analace_kernel.bin.routers.mcell import RectilinearMstMCellRouter
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
-# The placer and router registries from the core package
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
+# The placer and router registries from ANALACE Lite
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

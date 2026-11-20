@@ -8,7 +8,7 @@ nav_order: 1
 {: .no_toc }
 
 ```
-from aicl_core.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.copilot import AiclCopilot
 ```
 
 `AiclCopilot` loads the environment and the process templates, and it is the entry point for previewing, exporting, netlisting and verifying cells. Create it before you create any cell.
@@ -52,7 +52,7 @@ The constructor reads everything from the setup directory `$AICL_COP_WORK_DIR/se
 | Method | Description |
 |:--|:--|
 | `preview_layout(cell, enable_culling=True, wheel_zoom=True)` | Open the layout viewer on an `SCell` or `MCell`. Another object raises `TypeError`. `enable_culling` leaves contacts and vias out of the drawing. `wheel_zoom` makes the mouse wheel zoom. |
-| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. Where two same-type implants of neighbouring cells end closer than the process's implant spacing, the gap between them is filled, and the number of fills is logged. |
+| `generate_layout(cell, library_name: str, view_name: str)` | Write `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds` from an `SCell` or `MCell`. `view_name` is also the GDS top cell. Inside each S-Cell, a gap between two same-type implants that is under the process's implant spacing is filled, and the number of fills is logged. The gap between neighbouring cells is not filled: the placers keep the implant spacing between cells. |
 | `generate_netlist(cell, library_name='', view_name='', style='spice', path='', include_dummies=None, lvs_backend='')` | Write the cell as a netlist file with one top-level `.subckt <view_name>`, and return its path (a `pathlib.Path`). `style='spice'` writes the SPICE dialect of the technology's LVS backend (or of `lvs_backend`); this is the file `run_lvs` writes when it gets no schematic. `style='cdl'` writes an auCdl netlist. The default file is `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl`); `library_name` defaults to `'schematics'` and `view_name` to the cell's name. `include_dummies=None` states the dummy fingers the way the backend's extractor sees them. |
 | `get_layout_primitives(cell)` | The polygons, labels and canvas size that the viewer would draw, as a dict. |
 | `get_export_manifest()` | What the most recent export placed (an `ExportManifest`), or `None`. |
@@ -67,12 +67,12 @@ Layouts and netlists are kept in one folder per process, so one circuit generate
 | LVS netlist of a layout | `$AICL_COP_LAY_DIR/<process>/<library>/<view>.spice` |
 | `generate_netlist` output | `$AICL_COP_SCH_DIR/<process>/<library>/<view>.spice` (`.cdl`) |
 
-`aicl_core.bin.api.design_paths` builds these paths: `layout_directory(process, library)`, `layout_file(process, library, view, suffix='.gds')`, `schematic_directory(process, library)` and `schematic_file(process, library, view, suffix='.sch')`. Despite its name, `schematic_file` is also what `generate_netlist` uses, with the suffix `.spice` or `.cdl`.
+`analace_kernel.bin.api.design_paths` builds these paths: `layout_directory(process, library)`, `layout_file(process, library, view, suffix='.gds')`, `schematic_directory(process, library)` and `schematic_file(process, library, view, suffix='.sch')`. Despite its name, `schematic_file` is also what `generate_netlist` uses, with the suffix `.spice` or `.cdl`.
 
 ```python
 # The copilot, and the helper that builds the output paths
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.api import design_paths
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.api import design_paths
 
 # Start the copilot; it sets AICL_COP_LAY_DIR and AICL_COP_SCH_DIR
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -96,7 +96,7 @@ These methods export the cell first and check the file that was written. Without
 | `verification_for(backend: str = '')` | A bridge for a named backend (`'klayout'` or `'magic'`). Bridges are cached per process and backend. |
 
 - `backend` overrides the technology's `default_backend` for one run.
-- `run_drc` and `run_lvs` first check that the process supports every device of the cell (and of a `schematic` you pass): its `devices.yaml` must map the device's class and technology to a model. Otherwise they raise `UnsupportedDeviceError` (`aicl_core.bin.verification.process_support`, a `VerificationError`) that names the devices, before anything is exported. A rule deck cannot be trusted to report a device it does not know.
+- `run_drc` and `run_lvs` first check that the process supports every device of the cell (and of a `schematic` you pass): its `devices.yaml` must map the device's class and technology to a model. Otherwise they raise `UnsupportedDeviceError` (`analace_kernel.bin.verification.process_support`, a `VerificationError`) that names the devices, before anything is exported. A rule deck cannot be trusted to report a device it does not know.
 - The layout is written to `$AICL_COP_LAY_DIR/<process>/<library_name>/<view_name>.gds`, and generated netlists go next to it.
 - `run_drc` runs every deck the process lists: the main `drc_deck` and then each of `drc_extra_decks` (for `ihpSG13G2`, `sg13g2_maximal.drc`). Their violations are added together. `DrcResult.extra_decks` lists the extra decks, and `artifacts.extra_reports` their reports.
 - `run_lvs` with a `cell` and no `schematic` writes the reference netlist from the cell itself, and the result records `schematic_source='generated'`. That checks that the layout was built as the cell describes (router shorts, opens, missing vias). Pass a separately authored `schematic` to check the design intent.
@@ -109,7 +109,7 @@ Result fields:
 | `DrcResult` | `status` (`RunStatus`), `clean` *(property; raises if the run did not complete)*, `total`, `counts_by_rule`, `violations`, `extra_decks`, `summary()`, `report(limit=20)`, `artifacts`. Each violation has `bbox` (in the coordinates of its `cell`) and `locations` (the same box in top-cell coordinates, once per placement), both `BBox` in µm; `report()` lists where the first violations of each rule are. |
 | `LvsResult` | `status`, `verdict` (`MatchStatus.MATCH`, `MISMATCH` or `UNKNOWN`), `matched` *(property)*, `mismatches`, `layout_device_counts`, `schematic_device_counts`, `schematic_source`, `message`, `summary()`. A mismatch with a layout side (KLayout backend) has `locations` (top-cell `BBox` es, µm) and the `layers` its net is on. `message` explains a verdict that differs from the result database, for example when the deck's log ends in "Netlists don't match" after its port check. |
 
-`RunStatus`, `MatchStatus` and `BBox` (`left`, `bottom`, `right`, `top`, `center`, `width`, `height`) are in `aicl_core.bin.verification.results`.
+`RunStatus`, `MatchStatus` and `BBox` (`left`, `bottom`, `right`, `top`, `center`, `width`, `height`) are in `analace_kernel.bin.verification.results`.
 
 ## Netlist import
 
@@ -126,13 +126,13 @@ See [Cells]({{ site.baseurl }}/docs/api/cells.html#netlist-hierarchy) for the gr
 ## Example
 
 ```python
-# The copilot and the transistor S-Cell generator from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell generator from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

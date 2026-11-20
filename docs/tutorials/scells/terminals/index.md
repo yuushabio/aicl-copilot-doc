@@ -20,7 +20,7 @@ The `terminals` section of the S-Cell parameters is a list of nets. Each entry n
 | `base_to_top_wire` | dict | The connector from the base wire up to the top wire |
 | `top_wire` | dict | The wire a parent M-Cell connects to |
 
-Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use `RESISTOR_PIN_TYPE` and capacitors use `CAPACITOR_PIN_TYPE`, with `PLUS`, `MINUS` and `BULK`. All are in `aicl_core.bin.utilities.enums.terminals`.
+Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use `RESISTOR_PIN_TYPE` and capacitors use `CAPACITOR_PIN_TYPE`, with `PLUS`, `MINUS` and `BULK`. All are in `analace_kernel.bin.utilities.enums.terminals`.
 
 `TERMINAL_TYPE` values: `ANALOG_INPUT`, `ANALOG_OUTPUT`, `BIAS`, `SUPPLY`, `GROUND`, `CLOCK`, `SENSITIVE_NODE`, `NOISY_NODE`, `REFERENCE`, `GENERIC`.
 
@@ -29,7 +29,8 @@ Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use 
 `base_wire` accepts:
 
 - `layer`, `width`, `offset` and `number_of_vias`.
-- `track`: a `BASE_WIRE_TRACK`, which says where the wire runs in the cell.
+- `track`: a `BASE_WIRE_TRACK`, which says where the wire runs in the cell. It can be given as the member or as its name (`'SD_TOP'`, in any case); a name that is no track is refused with the valid ones.
+- `via_orientation`: `'horizontal'` or `'vertical'`, how the cuts lie where the wire lands on a strip with two or more cuts (side by side along the wire, or stacked). `None`, the default, takes the cell's `settings['via_orientation']`.
 - `use_reference` / `reference_terminal`: place the wire relative to another terminal's wire.
 
 | `BASE_WIRE_TRACK` | Position |
@@ -39,22 +40,24 @@ Pins are `TRANSISTOR_PIN_TYPE.GATE`, `DRAIN`, `SOURCE` or `BULK`. Resistors use 
 | `SD_CENTER_UP`, `SD_CENTER_DOWN` | Over the source/drain region, upper or lower half |
 | `ABS` | Absolute, at `offset` |
 
-`top_wire` accepts `layer`, `width`, `offset`, `number_of_vias` and a `TOP_WIRE_TRACK`: `CELL_LEFT`, `CELL_RIGHT`, `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `ROUTE_LEFT`, `ROUTE_RIGHT`, `LOWER`, `MIDDLE`, `UPPER` or `ABS`. Base wires must use a horizontal metal and top wires a vertical one. A wrong direction is moved to the nearest valid layer, with a warning.
+`top_wire` accepts `layer`, `width`, `offset`, `number_of_vias` and a `TOP_WIRE_TRACK`: `CELL_LEFT`, `CELL_RIGHT`, `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `ROUTE_LEFT`, `ROUTE_RIGHT`, `LOWER`, `MIDDLE`, `UPPER` or `ABS`. Base wires must use a horizontal metal and top wires a vertical one. A wrong direction is moved to the nearest valid layer, with a warning. A `track` can also be given by name, as for the base wire.
+
+The `offset` of a `base_wire` or a `top_wire` is a distance of 0 or more in the direction of its track. A negative or non-numeric `offset` is refused with a `ParameterError` instead of being reset: to move a wire the other way, pick the track on that side (`GATE_TOP` / `GATE_BOTTOM`, `SD_TOP` / `SD_BOTTOM`, `SD_CENTER_UP` / `SD_CENTER_DOWN`) or use `ABS`, and to move a `top_wire` to the left use a left track (`LOWER`, `CELL_LEFT`, `CELL_CENTER_LEFT` or `ROUTE_LEFT`) with a positive `offset`, or `ABS`.
 
 Values that are left out come from the process defaults. A signal wire without a `width` is drawn at the *terminal wire minimum* of its layer, and a power rail at 0.3 µm or that minimum, whichever is wider. The terminal wire minimum is the minimum width of the layer, and where a via lands on the wire, the via cut plus the smaller enclosure on both sides across the wire. In `ihpSG13G2` it is 0.21 µm for Metal1 and Metal2 and 0.2 µm for Metal3 and Metal4. A `width` below it is raised to it.
 
 ### Via counts
 
-`number_of_vias` is the number of cuts at every place where the wire lands. For a `base_wire` that is each source/drain strip or gate pad it lands on. For a `base_to_top_wire` it is the cuts of the connector. For a `top_wire` it is each crossing with the base wires of the rows in a multi-row cell. When the asked number does not fit where the wire is drawn, the cell uses the most that fits and logs a warning. `get_via_clamps()` of the cell lists every count that was lowered: the terminal, the wire key, the number asked for and the number used.
+`number_of_vias` is the number of cuts at every place where the wire lands. A wire that does not give it takes the cell's `settings['default_number_of_vias']` (1 by default). For a `base_wire` that is each source/drain strip or gate pad it lands on. For a `base_to_top_wire` it is the cuts of the connector. For a `top_wire` it is each crossing with the base wires of the rows in a multi-row cell. When the asked number does not fit where the wire is drawn, the cell uses the most that fits and logs a warning. `get_via_clamps()` of the cell lists every count that was lowered: the terminal, the wire key, the number asked for and the number used.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -96,14 +99,14 @@ A cell given no `terminals` gets the default terminals of its layout composer (t
 The differential pair below names every net and gives the source pins a common `v_tail` net. The two bulk pins get an explicit `VSS` terminal, typed as `GROUND`.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -168,14 +171,14 @@ A device pin that no terminal lists is joined to the power terminal of the cell:
 When the power terminal is not in `terminals`, it is created. It may also be listed with an empty `pins` list, to set its wire only:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

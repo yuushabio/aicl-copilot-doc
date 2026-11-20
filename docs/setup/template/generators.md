@@ -22,14 +22,14 @@ The templates call `preview_layout`, which opens the interactive layout viewer. 
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK
+from analace_kernel.bin.utilities.enums.composer import DEVICE_SEPARATOR
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, TERMINAL_TYPE, BASE_WIRE_TRACK
 
 # Start the copilot first: the cells read the active process when they are created
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -78,13 +78,13 @@ copilot.preview_layout(scell)
 
 ```python
 # The copilot and the resistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION, RESISTOR_TECH
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, RESISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION, RESISTOR_TECH
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TERMINAL_TYPE, RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -127,13 +127,13 @@ copilot.preview_layout(scell)
 
 ```python
 # The copilot and the capacitor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.capacitor import CSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.capacitor import CSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
-from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TERMINAL_TYPE, CAPACITOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import CAPACITOR_CLASS, CAPACITOR_TECH
+from analace_kernel.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TERMINAL_TYPE, CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -183,18 +183,18 @@ An M-Cell (`MCell`) holds S-Cells and other M-Cells. Its terminal parameters say
 
 ```python
 # The copilot and the cell engines (M-Cell and transistor S-Cell)
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters and placement below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Helpers: an (x, y) point, and the tool that places and routes an M-Cell
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -275,9 +275,9 @@ The template uses `templates/netlists/ota-5t.spice`, which ships with the reposi
 import os
 
 # The copilot, plus the tools that place and route cells
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')

@@ -178,16 +178,16 @@ The file has one entry per scaling value (with several scaling parameters the ke
 Every device class of the kind is drawn from this one file; a class's own layers come from its `layers.extension` entries in the primitives file. A device size that has no entry raises `CharacterizationError`, which lists the entries the file has.
 
 {: .warning }
-Older templates kept one folder per device class with one file per profile (`characterization/transistor/<class key>/<profile>.yaml`). The core package reads only `characterization/<kind>.yaml`. A template with characterization folders is not loaded, and the error says which file to write instead. For the same reason, a cell's `settings` can no longer name a `profile_name`: a cell that does is refused with a `ParameterError`.
+Older templates kept one folder per device class with one file per profile (`characterization/transistor/<class key>/<profile>.yaml`). ANALACE Lite reads only `characterization/<kind>.yaml`. A template with characterization folders is not loaded, and the error says which file to write instead. For the same reason, a cell's `settings` can no longer name a `profile_name`: a cell that does is refused with a `ParameterError`.
 
 ## Inspecting the loaded primitives
 
 The loaded primitives and their characterization are part of the process context (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html)):
 
 ```python
-# The copilot and the process contexts from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
+# The copilot and the process contexts from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
 
 # Start the copilot; this loads the process context
 copilot = AiclCopilot(process_name='ihpSG13G2')

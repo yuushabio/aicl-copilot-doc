@@ -26,13 +26,13 @@ The classic five-transistor OTA with an enable circuit, from `templates/netlists
 # Python's built-in module for file paths and environment variables
 import os
 
-# Copilot and place-and-route helper from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# Copilot and place-and-route helper from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Option lists (enums) for placing one cell next to another
-from aicl_core.bin.utilities.enums.primitives import CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.primitives import CELL_ABUT_SIDE, CELL_ABUT_ALIGN
 
 # Where the layout goes: library 'generators', cell 'ota_5t'
 library_name = 'generators'
@@ -119,7 +119,7 @@ print('netlist:', netlist_path)
 
 On `ihpSG13G2` all twelve nets route, KLayout DRC is clean, and LVS matches.
 
-The netlist that `generate_netlist` writes has the OTA as one `.subckt ota_5t` with the netlist's pins as its ports, so it can be dropped into a testbench of your own. Simulation is not part of the core package.
+The netlist that `generate_netlist` writes has the OTA as one `.subckt ota_5t` with the netlist's pins as its ports, so it can be dropped into a testbench of your own. Simulation is not part of ANALACE Lite.
 
 ## Variations
 

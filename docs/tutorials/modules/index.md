@@ -7,13 +7,13 @@ has_children: true
 
 # Modules (M-Cells)
 
-An M-Cell (`MCell`, in `aicl_core.bin.core.engines.mcell`) is a container of cells. It can hold S-Cells and other M-Cells, so a design is a tree with S-Cells at the leaves. An M-Cell adds three things to its sub-cells:
+An M-Cell (`MCell`, in `analace_kernel.bin.core.engines.mcell`) is a container of cells. It can hold S-Cells and other M-Cells, so a design is a tree with S-Cells at the leaves. An M-Cell adds three things to its sub-cells:
 
 1. **Placement**: where each sub-cell sits.
 2. **Terminal parameters**: which sub-cell terminals form each net of the module.
 3. **Routing**: the wires that join those terminals, and the module's own terminals for its parent.
 
-Placement and routing are done by engines behind one façade, `PlaceAndRouteManager` (`aicl_core.bin.utilities.helpers.place_and_route`). Engines are chosen by registry name:
+Placement and routing are done by engines behind one façade, `PlaceAndRouteManager` (`analace_kernel.bin.utilities.helpers.place_and_route`). Engines are chosen by registry name:
 
 | Kind | Registry name | Engine |
 |:--|:--|:--|

@@ -65,7 +65,9 @@ capacitors:
 
 When `create_circuit_from_netlist` reads a device line with one of the other names, it treats it as the first one. The shipped templates use single names only.
 
-## Classes the core package builds
+When the process maps one model to both a two-terminal and a three-terminal class of a resistor or capacitor, the class follows the node count of the netlist line: a line with a bulk node is read as the three-terminal class, one without as the two-terminal class.
+
+## Classes ANALACE Lite builds
 
 The open-source core builds the **standard** classes:
 
@@ -75,7 +77,7 @@ The open-source core builds the **standard** classes:
 | `RESISTOR_CLASS` | `STANDARD_N2T`, `STANDARD_N3T`, `STANDARD_P2T`, `STANDARD_P3T` |
 | `CAPACITOR_CLASS` | `STANDARD_2T`, `STANDARD_3T` |
 
-`devices.yaml` can list more classes than these, for example the low- and high-threshold transistors. Those entries describe the PDK completely, and their extra layers (for example the threshold implants of `sky130A`) are part of the template, but the core package does not build cells for them.
+`devices.yaml` can list more classes than these, for example the low- and high-threshold transistors. Those entries describe the PDK completely, and their extra layers (for example the threshold implants of `sky130A`) are part of the template, but ANALACE Lite does not build cells for them.
 
 ## ihpSG13G2
 
@@ -109,7 +111,7 @@ SG13G2 has a single low-voltage core transistor, so the low- and high-threshold 
 
 ## Device class and technology of a cell
 
-A cell takes its class and technology as the constructor arguments `device_class=` and `device_tech=` (see [Device class and technology]({% link docs/tutorials/scells/create/index.md %}#device-class-and-technology)). Both are checked against `devices.yaml` when the cell is built. Without them, a cell uses the defaults of its kind: `STANDARD_NMOS` / `MOSFET` for a `TSCell`, `STANDARD_N2T` / `POLYSILICON` for an `RSCell` and `STANDARD_2T` / `CMIM` for a `CSCell`. The core package builds `MOSFET` transistors, `POLYSILICON` resistors and `CMIM` capacitors; another technology is refused with a `ParameterError`.
+A cell takes its class and technology as the constructor arguments `device_class=` and `device_tech=` (see [Device class and technology]({% link docs/tutorials/scells/create/index.md %}#device-class-and-technology)). Both are checked against `devices.yaml` when the cell is built. Without them, a cell uses the defaults of its kind: `STANDARD_NMOS` / `MOSFET` for a `TSCell`, `STANDARD_N2T` / `POLYSILICON` for an `RSCell` and `STANDARD_2T` / `CMIM` for a `CSCell`. ANALACE Lite builds `MOSFET` transistors, `POLYSILICON` resistors and `CMIM` capacitors; another technology is refused with a `ParameterError`.
 
 ## PDK parameter names
 
@@ -118,8 +120,8 @@ The device instance parameters (for example `w`, `l`, `ng` and `m` on an IHP MOS
 ## Checking the mapping
 
 ```python
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # Start the copilot and read the device mapping (devices.yaml)
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -131,18 +133,18 @@ print('NMOS:', transistor_mapping['nmos'])
 print('PMOS:', transistor_mapping['pmos'])
 ```
 
-To ask whether the process has a model for one class, use `device_model` from `aicl_core.bin.utilities.methods.devicemappings`. `offered_device_classes` lists every class the process maps:
+To ask whether the process has a model for one class, use `device_model` from `analace_kernel.bin.utilities.methods.devicemappings`. `offered_device_classes` lists every class the process maps:
 
 ```python
-# The copilot and the process contexts from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
+# The copilot and the process contexts from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
 
 # The device-mapping lookups
-from aicl_core.bin.utilities.methods.devicemappings import device_model, offered_device_classes
+from analace_kernel.bin.utilities.methods.devicemappings import device_model, offered_device_classes
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_TECH
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_TECH
 
 # Start the copilot and read the device mapping of the active process
 copilot = AiclCopilot(process_name='ihpSG13G2')

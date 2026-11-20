@@ -83,14 +83,16 @@ capacitors:
 | `process_name`, `process_tech` | Checked against the directory: the name must be the directory's name, and the family must be the folder the template is in. A mismatch makes the template invalid, and the error names both. |
 | `process_pdk_name` | The name the process has in its PDK, when it differs from the template's name. |
 | `layout_unit`, `layout_resolution` | Units and the snapping grid. |
-| `environment.api` | Which design bridge `generate_layout` uses. The core package provides `open_env`, which writes GDS files. |
+| `environment.api` | Which design bridge `generate_layout` uses. ANALACE Lite provides `open_env`, which writes GDS files. |
 | `bulk` | `available`: whether body taps (the tap of a three-terminal resistor or capacitor, a transistor's body rail) can be drawn. `tap_type`: `P` for a substrate tie, `N` for a well tie. The tap type also names the default bulk terminal of a passive cell: `vss` for `P`, `vdd` for `N`. |
 | `guard_ring` | `available`: whether guard rings can be drawn. |
-| `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`). They are not written as mask geometry. The shipped templates also list an `abstract_m-cell` layer, which the core package does not use. |
+| `boundary_layers` | Annotation layers for cell outlines (`s-cell`, `m-cell`). They are not written as mask geometry. The shipped templates also list an `abstract_m-cell` layer, which ANALACE Lite does not use. |
 | `<kind>.pcell.limits` | Parameter limits. A cell parameter outside a limit is changed to it, with a warning. A limit is a number, and one set of limits applies to every device class of the kind. A limit written per device class (`{default: v, <class key>: v}`) is refused when the template is loaded. |
 | `<kind>.pcell.parameters`, `<kind>.netlist.parameters` | The PDK's instance parameter names, used when netlists are written and read. Each is a list of names; a netlist is written with the first one. For resistors, `number_of_segments` says how a segment count is written: `n` series segments are `b = n - 1` bends (`offset: 1`), and `n` parallel segments are `m = n` devices (`offset: 0`). A process without a bends parameter (such as `sky130A`) lists only the parallel rule. |
 
 The transistor section has no technology level: the family says which transistor technology the template is for. The resistor and capacitor sections are grouped by family (`polysilicon`, `metal_insulator_metal`, `metal_oxide_metal`). `inductors` may be present; it is not read.
+
+The same holds for the other files: a key that `technology.yaml`, a primitives file or the `global` block of `configuration.yaml` does not know is refused, with the file, the key and the valid keys in the message. `technology.yaml` may also carry the informational keys `description`, `version` and `netlist_scale` (the size of a plain number in a netlist, in metres, for a process whose models set `.option scale`; `1e-6` for `sky130A`).
 
 `technology.yaml` must not hold the keys that moved to `configuration.yaml`. A template that still has `min_poly_spacing`, `min_distance_poly_to_implant` or `min_poly_abut_extension` here is refused, and the error says where each one goes now.
 
@@ -155,7 +157,7 @@ local: {}
 | `global.poly_resistor.bulk`, `global.mim_capacitor.bulk` | Where the body tap of a three-terminal resistor or capacitor goes: `side` (`auto`, `vertical` or `horizontal`) and `offset`, its gap to the device in µm. A cell can choose another side with `settings['bulk_tap']`. |
 | `global.mim_capacitor` | The smallest and largest via array on each plate (`min_/max_number_of_via_rows`, `..._columns`). `null` or `0` as a minimum means 1, and `null`, `0` or `.inf` as a maximum means as many as fit. `extend_bottom_cap_plates: true` joins the bottom plates of a unit matrix into one plate, in a process whose two plates are on different dielectric layers. `flush_connecting_wire: true` draws the wire that joins a row of plates as high as the plates, when the step it would leave at their edges is smaller than the plate metal's same-net gap (for a rule deck that flags such a step). Both are `false` by default, and the shipped templates leave them off. In a process whose MIM has a single cap metal, the top plate is contacted by a comb of metal strips: `min_number_of_top_metal_combs` and `max_number_of_top_metal_combs` limit how many strips cross it (`null`: at least one, as many as fit), and `top_metal_comb_distribution` spreads them with the outer strips at the plate edges (`edges`, the default) or with equal gaps (`even`). A cell can override all three in its `settings`. `ihpSG13G2` has two cap metals, so these keys have no effect there. |
 | `global.spacing` | Spacing rules between the layers the devices draw. A key is one layer (the spacing between its own shapes) or a pair `a|b` (in either order). `base` holds the base layers of the primitives, `extension` the pairs that involve an extension layer. Each value is a table `[[width, parallel run, spacing], ...]`: of the rows whose width and run the two shapes reach, the largest spacing applies. A layer or pair without an entry has no rule. |
-| `global.min_width` | The least width of a layer, for example of an implant. When two cells are exported next to each other and their implants end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. The fills count as implant too: the check is repeated over the shapes and the fills so far until it finds no new gap, so a small pocket left between two fills is filled as well. |
+| `global.min_width` | The least width of a layer, for example of an implant. When two implants of one S-Cell end closer than `spacing`, the gap is filled, and each fill is at least `min_width` long. The fills count as implant too: the check is repeated over the shapes and the fills so far until it finds no new gap, so a small pocket left between two fills is filled as well. Gaps between neighbouring cells are not filled; the placers keep the implant `spacing` between cells (see [Region spacing](#region-spacing)). |
 | `global.abut` | The abutment rule of a layer (for gate poly, the former `min_poly_abut_extension`), as a table like `spacing`. |
 | `global.region_spacing` | The spacing between the layer regions of two **different** cells, used by the `REFERENCE_PLACER` (see [Region spacing](#region-spacing) below). Optional. |
 | `local` | Values for devices of a certain size only (see below). |
@@ -203,9 +205,9 @@ A metal that has no rule here takes its spacing table from `connectivity.yaml`. 
 The process context answers the rule for a pair with `region_spacing(layer_a, layer_b, width=0.0, parallel_run=0.0, same_net=False)`:
 
 ```python
-# The copilot and the process context manager from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
+# The copilot and the process context manager from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -269,7 +271,7 @@ metals:
   # metal2 ... metal7
 ```
 
-- A key that a block does not take is an error, not ignored: the template is refused and the message names the block and lists the valid keys (a metal takes `name`, `dimensions`, `spacing`, `abut`, `euclidean`, `index` and `direction`). Older templates wrote the `abut` keys as `unit_abut` and `multi_abut`; rename them to `unit` and `multi`.
+- A key that a block does not take is an error, not ignored: the template is refused and the message names the block and lists the valid keys (a metal takes `name`, `dimensions`, `spacing`, `abut`, `euclidean`, `index` and `direction`). Older templates wrote the `abut` keys as `unit_abut` and `multi_abut`; rename them to `unit` and `multi`. `index` and `direction` are not read: the index comes from the metal's ID and the direction from its parity (odd metals run horizontally), and a template that writes a value that disagrees is refused, so leave them out. A metal's `dimensions.min_width` is required and must be a number (in µm).
 - A contact's `spacing` has one block per layer pair (`gate_poly|metal1`, `oxide_diffusion|metal1`), so a contact on poly and a contact on diffusion can have different rules. A file whose contact `spacing` still has `middle` and `edge` directly under it is in the old format and is refused.
 - `edge.multi_spacing` gives `[min, max]` enclosures: the smaller one on one axis and the larger on the other. With `use_unit_spacing: True`, `unit_spacing` is used on every side instead.
 - `abut` holds the outline rules of a metal. `multi` (`[[min width, axis 1, axis 2]]`) is the step check: at a corner, one of the two edges next to it must be at least `axis 1` and the other at least `axis 2`, either way round. The row is chosen by the narrow side of the wider piece, and `0.0, 0.0` checks nothing. `unit` (`[[min width, edge]]`) is the same with one value for both edges; it is used instead of `multi` when `use_unit_abut: true` is set (the default is `false`). `line_end` (`[[end width, required end gap, corner extension, min end edge]]`, the last value optional) is the line-end rule: an end edge shorter than `end width` (both its corners convex) needs `required end gap` to any metal in front of it, and the area checked reaches `corner extension` past each corner. An edge shorter than `min end edge` is a jog, not an end; it defaults to the larger `multi` margin.
@@ -367,12 +369,12 @@ DRC, LVS and export settings, under `Verification`.
 The loaded files can be read back from Python. The [Process Context]({{ site.baseurl }}/docs/setup/process/context.html) page explains the objects used here.
 
 ```python
-# The copilot and the process contexts from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
+# The copilot and the process contexts from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_TECH
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_TECH
 
 # Start the copilot for the process we want to read
 copilot = AiclCopilot(process_name='ihpSG13G2')

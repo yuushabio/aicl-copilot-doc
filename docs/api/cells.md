@@ -23,7 +23,7 @@ Cell
 
 ## Cell (common methods)
 
-`aicl_core.bin.core.engines.cell.Cell`. These methods are available on every cell.
+`analace_kernel.bin.core.engines.cell.Cell`. These methods are available on every cell.
 
 | Method | Description |
 |:--|:--|
@@ -46,7 +46,7 @@ Cell
 
 ## SCell
 
-`aicl_core.bin.core.engines.scell.SCell(Cell)`. This is the base of the device cells. Do not create it directly.
+`analace_kernel.bin.core.engines.scell.SCell(Cell)`. This is the base of the device cells. Do not create it directly.
 
 | Method | Description |
 |:--|:--|
@@ -63,7 +63,7 @@ Cell
 |:--|:--|
 | `get_device_class()` | The cell's `TRANSISTOR_CLASS`, `RESISTOR_CLASS` or `CAPACITOR_CLASS`. |
 | `get_device_tech()` | The cell's `TRANSISTOR_TECH`, `RESISTOR_TECH` or `CAPACITOR_TECH`. |
-| `set_device_class(device_class)` | Check the class against the process template, then rebuild the cell in place at the same position. Raises `ParameterError` when the process has no model for it. |
+| `set_device_class(device_class)` | Check the class against the process template, then rebuild the cell in place, at the same position and in the same orientation. Raises `ParameterError` when the process has no model for it. |
 | `set_device_tech(device_tech)` | The same for the technology. Raises `ParameterError` for a technology that cannot be built or that the process does not offer. |
 | `device_tech_key()` | The internal name of the cell's technology (`'MOSFET'`, `'Polysilicon'`, `'MetalInsulatorMetal'`). |
 | `device_limits()` | The process limits for the cell's technology (`min_length`, `min_finger_width`, `min_width`, ...). One set of limits applies to every device class. |
@@ -71,7 +71,7 @@ Cell
 ## TSCell
 
 ```
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 ```
 
 `TSCell(name='TS_0', parameters=None, device_class=None, device_tech=None, cell_structure=TRANSISTOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
@@ -88,12 +88,12 @@ There is no per-cell `context=` argument. To build a cell with a changed process
 | `get_via_clamps()` | The via counts of the terminals that did not fit and were lowered, as a list of `{'terminal', 'key', 'number_of_vias', 'used'}`. Empty when every count fitted. |
 | `get_diffusion_plan()` | For each row, the net of every source/drain diffusion and the dummy spans, or `None`. |
 
-`sensitive`, `noisy` and `allow_rotation` are stored on the cell. The core placers do not use them yet.
+`sensitive`, `noisy` and `allow_rotation` are stored on the cell. The placers do not use them yet.
 
 ## RSCell
 
 ```
-from aicl_core.bin.core.engines.resistor import RSCell
+from analace_kernel.bin.core.engines.resistor import RSCell
 ```
 
 `RSCell(name='RS_0', parameters=None, device_class=None, device_tech=None, cell_structure=RESISTOR_STRUCTURE_TYPE.STRAIGHT, sensitive=False, noisy=False, allow_rotation=False)`
@@ -112,12 +112,12 @@ from aicl_core.bin.core.engines.resistor import RSCell
 ## CSCell
 
 ```
-from aicl_core.bin.core.engines.capacitor import CSCell
+from analace_kernel.bin.core.engines.capacitor import CSCell
 ```
 
 `CSCell(name='CS_0', parameters=None, device_class=None, device_tech=None, cell_structure=CAPACITOR_STRUCTURE_TYPE.LINEAR, sensitive=False, noisy=False, allow_rotation=False)`
 
-`device_class` is a `CAPACITOR_CLASS` (default `STANDARD_2T`) and `device_tech` a `CAPACITOR_TECH` (default `CMIM`, the only technology the core package builds).
+`device_class` is a `CAPACITOR_CLASS` (default `STANDARD_2T`) and `device_tech` a `CAPACITOR_TECH` (default `CMIM`, the only technology ANALACE Lite builds).
 
 | Method | Description |
 |:--|:--|
@@ -135,13 +135,13 @@ The dictionaries a cell hands out (`get_parameters()` and `get_default_user_para
 - A `'name'` key in the dictionary names the cell when `name` is not given. The dictionary itself is not changed.
 
 ```python
-# The copilot and the S-Cell engines from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.scell import SCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the S-Cell engines from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.scell import SCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -164,7 +164,7 @@ print(type(pmos_copy).__name__, pmos_copy.get_name(), pmos_copy.get_device_class
 
 ## Cell classes
 
-`aicl_core.bin.core.engines.cell_classes` chooses the classes that the framework uses when it builds cells by itself, for example from a netlist (`MCellAtomic.build_mcell()`) or from `SCell.create_from_params`. Without registrations these are the core classes.
+`analace_kernel.bin.core.engines.cell_classes` chooses the classes that the framework uses when it builds cells by itself, for example from a netlist (`MCellAtomic.build_mcell()`) or from `SCell.create_from_params`. Without registrations these are the core classes.
 
 | Function | Description |
 |:--|:--|
@@ -175,7 +175,7 @@ print(type(pmos_copy).__name__, pmos_copy.get_name(), pmos_copy.get_device_class
 ## MCell
 
 ```
-from aicl_core.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.mcell import MCell
 ```
 
 `MCell(name: str, parameters: dict | None = None, sensitive=False, noisy=False, allow_rotation=False, quiet=False)`
@@ -219,7 +219,7 @@ from aicl_core.bin.core.engines.mcell import MCell
 ## Geometry
 
 ```
-from aicl_core.bin.utilities.geometryutils import Coord, Boundbox
+from analace_kernel.bin.utilities.geometryutils import Coord, Boundbox
 ```
 
 | Class | Description |
@@ -233,9 +233,9 @@ These objects are returned by the netlist import methods of `AiclCopilot`.
 
 | Class | Module | Members |
 |:--|:--|:--|
-| `Circuit` | `aicl_core.bin.netlisting.circuit` | `name`, `devices`, `sub_circuits`, `nets`, `ports`, `port_directions`, `get_sub_circuit(name)`, `get_circuit_device(name)`, `iter_descendants()` |
-| `CircuitDeviceGrouper` | `aicl_core.bin.netlisting.devicegrouping` | `create_transistor_group(device_names: list[str], group_name: str = '', composer_type: TRANSISTOR_COMPOSER = TRANSISTOR_COMPOSER.LINEAR)`, `get_sub_circuit(sub_circuit_name)` (the grouper of a sub-circuit), `get_default_group()`, `device_groups` |
-| `MCellAtomic` | `aicl_core.bin.netlisting.mcell_atomic` | `build_mcell() -> MCell`, `get_sub_atomic(name)`, `get_all_device_atomics()`, `get_transistor_atomic(name)`, `get_resistor_atomic(name)`, `get_capacitor_atomic(name)`, `get_transistor_atomic_with_device_name(device_name)`, `rename_transistor_atomic(atomic_name, new_name)`, `rename_transistor_atomic_with_device_name(device_name, new_name)` |
+| `Circuit` | `analace_kernel.bin.netlisting.circuit` | `name`, `devices`, `sub_circuits`, `nets`, `ports`, `port_directions`, `get_sub_circuit(name)`, `get_circuit_device(name)`, `iter_descendants()` |
+| `CircuitDeviceGrouper` | `analace_kernel.bin.netlisting.devicegrouping` | `create_transistor_group(device_names: list[str], group_name: str = '', composer_type: TRANSISTOR_COMPOSER = TRANSISTOR_COMPOSER.LINEAR)`, `get_sub_circuit(sub_circuit_name)` (the grouper of a sub-circuit), `get_default_group()`, `device_groups` |
+| `MCellAtomic` | `analace_kernel.bin.netlisting.mcell_atomic` | `build_mcell() -> MCell`, `get_sub_atomic(name)`, `get_all_device_atomics()`, `get_transistor_atomic(name)`, `get_resistor_atomic(name)`, `get_capacitor_atomic(name)`, `get_transistor_atomic_with_device_name(device_name)`, `rename_transistor_atomic(atomic_name, new_name)`, `rename_transistor_atomic_with_device_name(device_name, new_name)` |
 
 Each device group becomes one S-Cell, which is named after its devices joined with `_` (for example `XM1_XM2`). Devices that you do not group yourself are grouped by the structures the grouper finds, such as current mirrors, or they are left on their own. Rename a group's S-Cell with `rename_transistor_atomic_with_device_name` before calling `build_mcell()`.
 
@@ -243,8 +243,8 @@ Each device group becomes one S-Cell, which is named after its devices joined wi
 # os is a standard Python module, used here to build a file path
 import os
 
-# The copilot from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
+# The copilot from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

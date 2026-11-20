@@ -12,14 +12,14 @@ The `settings` section of the S-Cell parameters holds the options around the dev
 ## Guard ring, dummy fingers and dummy rows
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -60,7 +60,7 @@ copilot.preview_layout(nmos_scell, enable_culling=False)
 
 ![NMOS S-Cell with a guard ring, two dummy fingers on each side and dummy rows above and below]({{site.baseurl}}/assets/images/tscell_settings_lay.png){: width="520"}
 
-- `guard_ring`: `enable` draws a substrate/well ring around the cell. `offset` adds spacing between the devices and the ring, on top of the rule minimum.
+- `guard_ring`: `enable` draws a substrate/well ring around the cell. `offset` (0 or more, in µm) adds spacing between the devices and the ring, on top of the rule minimum; a negative or non-numeric `offset` is refused with a `ParameterError`.
 - `dummies`: every dummy setting of the cell.
     - `start` and `end`: the dummy fingers at the left and right end of each row. Each takes `fingers` (how many, default 0).
     - `rows`: a row of dummy devices above (`top`) and below (`bottom`) the active row. Each takes `enable`, `offset` (gap to the active row) and optionally `height` (dummy finger width). The height defaults to the process minimum.
@@ -73,13 +73,13 @@ Dummy devices are tied to the power rail of the cell, or to the bulk terminal wh
 The next example builds a pair that shares its source and has a terminal of its own for the bulk. It is built twice, once with the default dummy caps and once with caps on both sides:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -129,25 +129,26 @@ print('caps on both sides, height:', round(both_box.height, 2), 'um')
 - `location` is the side of the gate contacts: `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both` (or the names `'top'`, `'bottom'`, `'both'`). When it is not set, a PMOS has its gates at the bottom and an NMOS at the top. It can also be a mapping with one side per device type or class, for example `{'pmos': 'top', 'default': 'both'}`; see [Gate side]({% link docs/setup/template/parameters.md %}#gate-side) for the lookup order and a tested example.
 - `connect_gate_with_poly` joins the fingers with a poly strap instead of metal.
 - `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` set the contact density.
+- `number_of_contacts` sets the number of gate contacts per gate pad instead. The contacts go side by side across the gate first, and what does not fit goes into extra rows (three contacts where two fit across are drawn as two rows of two). It must be a whole number from 1; `None` (the default) uses the density keys.
 - `split_gate_poly_metal` splits the gate metal between fingers.
 
 `power` configures the rail that collects the pins no terminal claims (`VSS` for NMOS, `VDD` for PMOS):
 
 - `base_wire` sets the horizontal rail: `layer`, `width`, `offset`, `number_of_via_rows` and `number_of_via_cols`. Without a `track`, the rail goes to the side away from the gates (top for a PMOS, bottom for an NMOS, by default). A rail asked for over the source/drain region (an `SD_...` track) that has no room there moves to the side away from the gates, with a warning.
 - `stack_metals` stacks the rail on the metals above it. It is off by default.
-- `top_wire` is the vertical wire used when the cell is routed inside a module.
+- `top_wire` is the vertical wire used when the cell is routed inside a module. Its `track` is `None` by default, which leaves the power terminals their own default track; a `TOP_WIRE_TRACK` given here becomes the default track of the power and bulk rails.
 
 The next example writes out the gate side of a PMOS (the bottom, which is also its default) and widens the power rail:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -187,16 +188,16 @@ copilot.preview_layout(pmos_scell, enable_culling=False)
 | `dummies` | `start` and `end`: `{'fingers': 0}`; `gate_caps`: `'gate_side'`; `rows`: top and bottom `{'enable': False, 'offset': 0.0}` | Every dummy setting, see above |
 | `gate_poly` | `location` not set (PMOS bottom, NMOS top), 3 / 5 contacts per unit width | Gate strap, see above |
 | `default_number_of_vias` | 1 | Vias per connection when a wire does not say |
-| `multi_row_gate_contacts` | `False` | More than one row of gate contacts |
+| `via_orientation` | `'horizontal'` | How the cuts of a landing lie when there are two or more: side by side (`'horizontal'`) or stacked (`'vertical'`) |
 | `route_over_cell` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals a parent router may use over the cell |
 | `route_source_drain_over_poly` | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Metals source/drain wires may use over the gates |
 | `extend_source_drain_via_enclosures` | `False` | Keep the source/drain via enclosures flush with the ends of the metal, instead of moving the wire track for them |
 | `symmetric_geometry` | `False` | Draw the cell as its own mirror image where the construction allows, see below |
 | `matched_tracks` | `False` | In a single row, put the matched source/drain nets together over the devices, see below |
-| `bulk_rail_sides` | `'row'` | Where the body is tapped, `'row'` or `'left_right'`, see below |
+| `bulk_rail_sides` | `'row'` | Where the body is tapped, `'row'`, `'left_right'` or `'every_row'`, see below |
 | `power` | metal1 rail, `stack_metals` off | Power rail, see above |
 
-`route_over_cell` and `route_source_drain_over_poly` take a list `[enable, METAL_LAYER_SELECTION, layers]`. `METAL_LAYER_SELECTION.ALL` allows every metal. `METAL_LAYER_SELECTION.PART` allows only the listed layers, for example `[True, METAL_LAYER_SELECTION.PART, ['metal3', 'metal4']]`. The enum is in `aicl_core.bin.utilities.enums.metalenums`.
+`route_over_cell` and `route_source_drain_over_poly` take a list `[enable, METAL_LAYER_SELECTION, layers]`. `METAL_LAYER_SELECTION.ALL` allows every metal. `METAL_LAYER_SELECTION.PART` allows only the listed layers, for example `[True, METAL_LAYER_SELECTION.PART, ['metal3', 'metal4']]`. The enum is in `analace_kernel.bin.utilities.enums.metalenums`.
 
 ## Symmetric geometry, matched tracks and the bulk rail
 
@@ -204,16 +205,16 @@ Three more settings change how a single row is drawn:
 
 - `symmetric_geometry: True` spreads every contact, via and tap array symmetrically about its centre. The grid steps that are left over are shared from both ends inwards, instead of all going to the right end. The cell is then its own mirror image wherever the construction allows. It is off by default.
 - `matched_tracks: True` places the matched source/drain nets of a single row together, right after the power net, on the tracks over the devices. Matched nets are nets with the same pin roles and one device each, such as the two drains of a pair. The pair then leaves the cell at neighbouring heights. A net that no longer fits goes to the gate side. A cell with several rows always does this. It is off by default.
-- `bulk_rail_sides` says where the body is tapped. `'row'` (the default) draws a tap strip under the bulk rail along the row. `'left_right'` draws two contacted tap strips at the two ends of the row, tied to the bulk rail. The rail is then Metal1 alone and comes closer to the devices. Rows built this way carry their own identical rails and abut without sharing a tap. It applies to single-row cells without a guard ring or dummy rows; any other cell keeps `'row'` and logs a warning.
+- `bulk_rail_sides` says where the body is tapped. `'row'` (the default) draws a tap strip under the bulk rail along the row. `'left_right'` draws two contacted tap strips at the two ends of the row, tied to the bulk rail. The rail is then Metal1 alone and comes closer to the devices. Rows built this way carry their own identical rails and abut without sharing a tap. It applies to single-row cells without a guard ring or dummy rows; any other cell keeps `'row'` and logs a warning. `'every_row'` is for a cell of several rows: it taps the bulk rail of every row, the rails between the rows included, where `'row'` taps the outer rail (and every rail only when a row is farther from a tap than the latch-up distance). With one row it is the same as `'row'`.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -271,7 +272,7 @@ The cell's own values always win. A value you set in `SCellConfig` wins over bot
 {: .note }
 `SCellConfig` changes the cell *parameters* (`settings` and terminal wires). To try another *process rule*, such as a spacing or the gate poly strap height of `configuration.yaml`, build the cells inside a process variant instead (see [Process Context]({{ site.baseurl }}/docs/setup/process/context.html#trying-out-a-changed-value)).
 
-`SCellConfig` (`aicl_core.bin.config.global_config`) changes a default for every cell built after it, without editing a file. It has one block per cell kind:
+`SCellConfig` (`analace_kernel.bin.config.global_config`) changes a default for every cell built after it, without editing a file. It has one block per cell kind:
 
 | Block | Applies to |
 |:--|:--|
@@ -285,12 +286,12 @@ Inside a block, the keys are those of the `SCELL` block of the default files: `s
 The overrides also reach the S-Cells that are built from a netlist (see [Netlist to Layout]({% link docs/tutorials/netlist/index.md %})), so one line in your script can, for example, turn on the guard ring of every transistor in a netlist.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # The user overrides of the S-Cell defaults
-from aicl_core.bin.config.global_config import SCellConfig
+from analace_kernel.bin.config.global_config import SCellConfig
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -333,13 +334,16 @@ SCellConfig.reset()
 `SCellConfig.reset('tscell')` drops the overrides of one kind only.
 
 {: .note }
-The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read: a `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError` that tells you to rename it to `settings`. `SCellConfig` itself moved from `aicl_core.config.global_config` to `aicl_core.bin.config.global_config`.
+The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read: a `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError` that tells you to rename it to `settings`. `SCellConfig` itself moved from `analace_kernel.config.global_config` to `analace_kernel.bin.config.global_config`.
 
 {: .note }
 The dummy settings used to be separate keys, `number_of_dummy_fingers` and `dummy_rows`. They are now the `dummies` block, with the finger counts as `dummies.start.fingers` and `dummies.end.fingers`. The old names, and `terminal_sides`, are no longer read: a cell whose `settings` still have one is refused with a `ParameterError` that lists the valid keys, and the same happens to a `SCellConfig` override or a defaults file that has one. Move the values into `dummies`; `terminal_sides: 'both'` has no replacement. The `connect_bulk_to_source` default of the `terminals` block of the defaults files is gone too; it was never read.
 
 {: .note }
-Earlier releases had a `profile_name` setting that chose one of several characterization profiles of a device class. The core package reads one characterization per kind of device (see [Characterization]({% link docs/setup/process/device.md %}#characterization)), so the setting is gone. A cell whose `settings` still name a `profile_name` is refused with a `ParameterError`; remove the key.
+The `multi_row_gate_contacts` setting is gone. A cell whose `settings` still have it is refused with a `ParameterError` that lists the valid keys. Use `gate_poly.number_of_contacts` to set the number of gate contacts per gate pad.
+
+{: .note }
+Earlier releases had a `profile_name` setting that chose one of several characterization profiles of a device class. ANALACE Lite reads one characterization per kind of device (see [Characterization]({% link docs/setup/process/device.md %}#characterization)), so the setting is gone. A cell whose `settings` still name a `profile_name` is refused with a `ParameterError`; remove the key.
 
 ## Bulk connection and via limits
 

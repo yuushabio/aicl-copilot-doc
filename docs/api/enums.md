@@ -10,12 +10,12 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 ## Devices
 
-`from aicl_core.bin.utilities.enums.deviceenums import ...`
+`from analace_kernel.bin.utilities.enums.deviceenums import ...`
 
 | Enum | Members | Used in |
 |:--|:--|:--|
 | `TRANSISTOR_CLASS` | `STANDARD_NMOS`, `STANDARD_PMOS` | `TSCell(device_class=...)` |
-| `TRANSISTOR_TECH` | `MOSFET`, `FINFET` | `TSCell(device_tech=...)`. The core package builds `MOSFET`. |
+| `TRANSISTOR_TECH` | `MOSFET`, `FINFET` | `TSCell(device_tech=...)`. ANALACE Lite builds `MOSFET`. |
 | `TRANSISTOR_TYPE` | `NMOS`, `PMOS` | |
 | `TRANSISTOR_SD_CONNECTION_TYPE` | `CASCODE`, `COMMON_SOURCE`, `COMMON_DRAIN`, `SINGLE` | TSCell `specifications['devices'][i]['sd_connection_type']` |
 | `TRANSISTOR_STRUCTURE_TYPE` | `DIFFERENTIAL_PAIR`, `CURRENT_MIRROR`, `ACTIVE_LOAD`, `CROSS_COUPLED`, `CASCODE`, `MOS_CAP`, `LINEAR` | `TSCell(cell_structure=...)` |
@@ -24,12 +24,12 @@ Cell parameters, constraints and results use these enums. The member names are e
 | `RESISTOR_SEGMENT_CONNECTION` | `SERIES`, `PARALLEL` | RSCell `composer['segment_connection']` |
 | `RESISTOR_STRUCTURE_TYPE` | `STRAIGHT`, `MEANDER` | `RSCell(cell_structure=...)` |
 | `CAPACITOR_CLASS` | `STANDARD_2T`, `STANDARD_3T` | `CSCell(device_class=...)` |
-| `CAPACITOR_TECH` | `CMIM`, `CMOM` | `CSCell(device_tech=...)`. The core package builds `CMIM`. |
+| `CAPACITOR_TECH` | `CMIM`, `CMOM` | `CSCell(device_tech=...)`. ANALACE Lite builds `CMIM`. |
 | `CAPACITOR_STRUCTURE_TYPE` | `LINEAR` | `CSCell(cell_structure=...)` |
 
 ### Device classes
 
-`TRANSISTOR_CLASS`, `RESISTOR_CLASS` and `CAPACITOR_CLASS` are used like enums: `TRANSISTOR_CLASS.STANDARD_NMOS`, `TRANSISTOR_CLASS['STANDARD_NMOS']`, `list(TRANSISTOR_CLASS)` and `TRANSISTOR_CLASS('STANDARD_NMOS')` all work. Their members are `DeviceClass` objects (`aicl_core.bin.utilities.enums.device_class`), not `Enum` members. Each one carries:
+`TRANSISTOR_CLASS`, `RESISTOR_CLASS` and `CAPACITOR_CLASS` are used like enums: `TRANSISTOR_CLASS.STANDARD_NMOS`, `TRANSISTOR_CLASS['STANDARD_NMOS']`, `list(TRANSISTOR_CLASS)` and `TRANSISTOR_CLASS('STANDARD_NMOS')` all work. Their members are `DeviceClass` objects (`analace_kernel.bin.utilities.enums.device_class`), not `Enum` members. Each one carries:
 
 | Attribute | Example (`RESISTOR_CLASS.STANDARD_P3T`) |
 |:--|:--|
@@ -43,11 +43,11 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 ## Composers and placement
 
-`from aicl_core.bin.utilities.enums.primitives import ...`, and `DEVICE_SEPARATOR` from `aicl_core.bin.utilities.enums.composer`.
+`from analace_kernel.bin.utilities.enums.primitives import ...`, and `DEVICE_SEPARATOR` from `analace_kernel.bin.utilities.enums.composer`.
 
 | Enum | Members | Used in |
 |:--|:--|:--|
-| `TRANSISTOR_COMPOSER` | `LINEAR`, `INTER_DIGITATE`, `COMMON_CENTROID` | TSCell `composer['composer_type']`, `create_transistor_group(composer_type=...)`. The core package builds `LINEAR`. |
+| `TRANSISTOR_COMPOSER` | `LINEAR`, `INTER_DIGITATE`, `COMMON_CENTROID` | TSCell `composer['composer_type']`, `create_transistor_group(composer_type=...)`. ANALACE Lite builds `LINEAR`. |
 | `RESISTOR_COMPOSER` | `LINEAR`, `INTER_DIGITATE` | RSCell `composer['composer_type']` |
 | `CAPACITOR_COMPOSER` | `LINEAR` | CSCell `composer['composer_type']` |
 | `DEVICE_SEPARATOR` | `DUMMY`, `IMPLANT` | TSCell `composer['device_separator']` |
@@ -60,7 +60,7 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 ## Terminals
 
-`from aicl_core.bin.utilities.enums.terminals import ...`, and `METAL_LAYER_SELECTION` from `aicl_core.bin.utilities.enums.metalenums`.
+`from analace_kernel.bin.utilities.enums.terminals import ...`, and `METAL_LAYER_SELECTION` from `analace_kernel.bin.utilities.enums.metalenums`.
 
 | Enum | Members | Used in |
 |:--|:--|:--|
@@ -78,19 +78,19 @@ Cell parameters, constraints and results use these enums. The member names are e
 
 | Enum | Module | Members |
 |:--|:--|:--|
-| `RunStatus` | `aicl_core.bin.verification.results` | `NOT_AVAILABLE`, `ERROR`, `COMPLETED` |
-| `MatchStatus` | `aicl_core.bin.verification.results` | `MATCH`, `MISMATCH`, `UNKNOWN` |
-| `LOG_CLASS` | `aicl_core.bin.utilities.enums.loggerenums` | `INFO`, `WARNING`, `ERROR`: the level passed to `CopilotLogger.log(header, message, log_class)` |
+| `RunStatus` | `analace_kernel.bin.verification.results` | `NOT_AVAILABLE`, `ERROR`, `COMPLETED` |
+| `MatchStatus` | `analace_kernel.bin.verification.results` | `MATCH`, `MISMATCH`, `UNKNOWN` |
+| `LOG_CLASS` | `analace_kernel.bin.utilities.enums.loggerenums` | `INFO`, `WARNING`, `ERROR`: the level passed to `CopilotLogger.log(header, message, log_class)` |
 
 ## Example
 
 ```python
-# The copilot and the transistor S-Cell generator from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell generator from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# The list of cell orientations (an enum) from the core package
-from aicl_core.bin.utilities.enums.primitives import CELL_ORIENTATION
+# The list of cell orientations (an enum) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.primitives import CELL_ORIENTATION
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

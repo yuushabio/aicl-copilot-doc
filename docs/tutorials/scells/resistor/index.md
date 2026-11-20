@@ -7,7 +7,7 @@ nav_order: 5
 
 # Resistor S-Cells
 
-`RSCell` (`aicl_core.bin.core.engines.resistor`) builds a poly-silicon resistor from equal segments placed side by side. The parameter dictionary has the same four sections as a transistor S-Cell.
+`RSCell` (`analace_kernel.bin.core.engines.resistor`) builds a poly-silicon resistor from equal segments placed side by side. The parameter dictionary has the same four sections as a transistor S-Cell.
 
 ## Device class
 
@@ -55,14 +55,14 @@ Resistor pins are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. The keys of a te
 A four-segment series resistor with a bulk tap below it:
 
 ```python
-# The copilot and the resistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+# The copilot and the resistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -101,14 +101,14 @@ copilot.preview_layout(resistor, enable_culling=False)
 Change `segment_connection` to `RESISTOR_SEGMENT_CONNECTION.PARALLEL`, drop the bulk terminal and use a two-terminal class to build a two-terminal parallel resistor:
 
 ```python
-# The copilot and the resistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+# The copilot and the resistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -144,14 +144,14 @@ copilot.preview_layout(resistor)
 The same three-terminal resistor with a guard ring instead of the tap strip. The ring is joined to the `VSS` terminal:
 
 ```python
-# The copilot and the resistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+# The copilot and the resistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE, TERMINAL_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

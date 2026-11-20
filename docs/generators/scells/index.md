@@ -21,13 +21,13 @@ A catalogue of parameter recipes for common single-cell structures. Each block i
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -58,13 +58,13 @@ The reference device `M1` is diode-connected: its gate and drain are on `i_ref`,
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -92,13 +92,13 @@ copilot.preview_layout(mirror)
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_SD_CONNECTION_TYPE
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_SD_CONNECTION_TYPE
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -126,13 +126,13 @@ copilot.preview_layout(cascode)
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -157,13 +157,13 @@ copilot.preview_layout(mos_cap)
 
 ```python
 # The copilot and the resistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -189,13 +189,13 @@ copilot.preview_layout(resistor)
 
 ```python
 # The copilot and the capacitor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.capacitor import CSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.capacitor import CSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')

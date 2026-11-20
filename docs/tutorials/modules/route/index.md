@@ -30,19 +30,19 @@ Entries that name an unknown sub-cell or terminal are dropped with a warning. A 
 The call returns a `RouteResult`. Its `successful` and `failed` fields list the routed and the failed nets.
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um, and the helper that runs placers and routers
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -113,7 +113,7 @@ copilot.preview_layout(inverter, enable_culling=False)
 
 ![Inverter routed by the RMST router: v_in joins both gates and v_out both drains on Metal4]({{site.baseurl}}/assets/images/mcell_inverter_rmst_lay.png){: width="300"}
 
-The router is given the same three ways as a placer: an instance (`RouterManager.create_router('RMST_ROUTER')`), a class (`RectilinearMstMCellRouter` from `aicl_core.bin.routers.mcell`), or a registry name.
+The router is given the same three ways as a placer: an instance (`RouterManager.create_router('RMST_ROUTER')`), a class (`RectilinearMstMCellRouter` from `analace_kernel.bin.routers.mcell`), or a registry name.
 
 ### RMST constraints
 
@@ -154,19 +154,19 @@ Options include `grid_step`, `signal_top_layer` (default 5), `power_top_layer` (
 The example routes the same inverter with both routers. It passes options and constraints through `route_cell`:
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um, and the helper that runs placers and routers
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -257,25 +257,25 @@ copilot.preview_layout(magical_inverter, enable_culling=False)
 
 ![Inverter routed by the MAGICAL router]({{site.baseurl}}/assets/images/mcell_inverter_magical_lay.png){: width="300"}
 
-`RouterManager.get_router_options(name)` (in `aicl_core.bin.utilities.helpers.routers`) lists a router's options with their defaults and descriptions.
+`RouterManager.get_router_options(name)` (in `analace_kernel.bin.utilities.helpers.routers`) lists a router's options with their defaults and descriptions.
 
 ## Place and route in one call
 
 `PlaceAndRouteManager.place_and_route_cell` places the direct sub-cells, then routes every net. It returns `(PlaceResult, RouteResult)`. Symmetry found by the placer is handed to a router that can use it.
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # The helper that runs placers and routers
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

@@ -29,7 +29,7 @@ The `REFERENCE_PLACER` dictionary has this shape:
 
 ```python
 # Coordinates (x, y) in um
-from aicl_core.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.geometryutils import Coord
 
 # One section per M-Cell, keyed by the cell name, starting at the top cell
 placer_constraints = {
@@ -53,19 +53,19 @@ A sub-M-Cell without a section is placed with default entries, and a warning is 
 The buffer below holds two inverter M-Cells, `inv_1` and `inv_2`. The output of `inv_1` drives the input of `inv_2` through the internal net `v_mid`.
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um, and the helper that runs placers and routers
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')

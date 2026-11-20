@@ -56,19 +56,19 @@ A layout is built bottom-up: device S-Cells first, then M-Cells that contain the
 This script builds an inverter from two transistor S-Cells, places and routes it, and writes the GDS file. It then runs DRC and LVS if KLayout and the PDK are configured (see [Installation]({{ site.baseurl }}/docs/setup/install.html)).
 
 ```python
-# The copilot and the two cell types (S-Cell and M-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the two cell types (S-Cell and M-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import CELL_ABUT_SIDE
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import CELL_ABUT_SIDE
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
-# Helpers for x/y positions and for place-and-route, from the core package
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+# Helpers for x/y positions and for place-and-route, from ANALACE Lite
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # --- 0. Load the process ---
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -142,4 +142,4 @@ if drc_status.available:
     print(lvs.summary())
 ```
 
-To simulate the inverter, write its SPICE netlist with `copilot.generate_netlist(inverter, 'design_flow', 'inverter')` and load it in the simulator of your choice. Simulation itself is not part of the core package.
+To simulate the inverter, write its SPICE netlist with `copilot.generate_netlist(inverter, 'design_flow', 'inverter')` and load it in the simulator of your choice. Simulation itself is not part of ANALACE Lite.

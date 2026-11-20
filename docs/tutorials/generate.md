@@ -13,7 +13,7 @@ nav_order: 5
 - `enable_culling=True` leaves contacts and vias out of the drawing, which keeps large layouts responsive. Pass `False` to see them.
 - `wheel_zoom` lets the mouse wheel zoom. The toolbar's zoom tool works either way, and the **Wheel Zoom** button on the toolbar switches it on and off.
 
-The toolbar also has a **Pan** tool (drag with the left mouse button to move a zoomed view, drag with the right one to zoom) and a **Grid** button. The grid lies on the process's layout resolution and shows the layout coordinates along the axes. The label slider fades every label, including the cell names and the pin labels, so you can see the geometry behind them.
+The layout fills the canvas and keeps its aspect ratio when the window is resized. The view cannot zoom out past eight times the larger side of the layout. The toolbar also has a **Pan** tool (drag with the left mouse button to move a zoomed view, drag with the right one to zoom) and a **Grid** button. Dragging with the middle mouse button pans with any tool active. The grid lies on the process's layout resolution and shows the layout coordinates along the axes. The label slider fades every label, including the cell names and the pin labels, so you can see the geometry behind them.
 
 The viewer is a Qt window. The script continues when the window is closed. Under Wayland, Qt prints a line about its input method (`qt.qpa.wayland.textinput`) on every focus change; the viewer turns that category off, so it does not bury your script's output. Any rules you set yourself in `QT_LOGGING_RULES` are kept.
 
@@ -34,14 +34,14 @@ The GDS top cell is named `view_name`.
 # Python's built-in module for file paths and environment variables
 import os
 
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the IHP process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -99,13 +99,13 @@ A two-terminal resistor (`STANDARD_N2T`, `STANDARD_P2T`) has no `BULK` pin, but 
 The file is written to `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl` for CDL), and the method returns its path. `AICL_COP_SCH_DIR` is `<project_directory>/schematics`, or `~/.aicl_copilot/schematics` without a project directory. Pass `path=` to write somewhere else.
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the IHP process
 copilot = AiclCopilot(process_name='ihpSG13G2')

@@ -32,11 +32,11 @@ The parameter values are enum members. Import them from these modules:
 
 | Module | Enums |
 |:--|:--|
-| `aicl_core.bin.utilities.enums.deviceenums` | `TRANSISTOR_CLASS`, `TRANSISTOR_TECH`, `TRANSISTOR_SD_CONNECTION_TYPE`, `RESISTOR_CLASS`, `RESISTOR_TECH`, `RESISTOR_SEGMENT_CONNECTION`, `CAPACITOR_CLASS`, `CAPACITOR_TECH` |
-| `aicl_core.bin.utilities.enums.primitives` | `TRANSISTOR_COMPOSER`, `RESISTOR_COMPOSER`, `CAPACITOR_COMPOSER`, `TRANSISTOR_GATE_CONNECTOR`, `CELL_ABUT_SIDE`, `CELL_ABUT_ALIGN`, `CELL_ORIENTATION` |
-| `aicl_core.bin.utilities.enums.composer` | `DEVICE_SEPARATOR` |
-| `aicl_core.bin.utilities.enums.terminals` | `TRANSISTOR_PIN_TYPE`, `RESISTOR_PIN_TYPE`, `CAPACITOR_PIN_TYPE`, `BASE_WIRE_TRACK`, `TOP_WIRE_TRACK`, `TERMINAL_TYPE`, `PORT_DIRECTION` |
-| `aicl_core.bin.utilities.enums.metalenums` | `METAL_LAYER_SELECTION` |
+| `analace_kernel.bin.utilities.enums.deviceenums` | `TRANSISTOR_CLASS`, `TRANSISTOR_TECH`, `TRANSISTOR_SD_CONNECTION_TYPE`, `RESISTOR_CLASS`, `RESISTOR_TECH`, `RESISTOR_SEGMENT_CONNECTION`, `CAPACITOR_CLASS`, `CAPACITOR_TECH` |
+| `analace_kernel.bin.utilities.enums.primitives` | `TRANSISTOR_COMPOSER`, `RESISTOR_COMPOSER`, `CAPACITOR_COMPOSER`, `TRANSISTOR_GATE_CONNECTOR`, `CELL_ABUT_SIDE`, `CELL_ABUT_ALIGN`, `CELL_ORIENTATION` |
+| `analace_kernel.bin.utilities.enums.composer` | `DEVICE_SEPARATOR` |
+| `analace_kernel.bin.utilities.enums.terminals` | `TRANSISTOR_PIN_TYPE`, `RESISTOR_PIN_TYPE`, `CAPACITOR_PIN_TYPE`, `BASE_WIRE_TRACK`, `TOP_WIRE_TRACK`, `TERMINAL_TYPE`, `PORT_DIRECTION` |
+| `analace_kernel.bin.utilities.enums.metalenums` | `METAL_LAYER_SELECTION` |
 
 The member lists are in the [API reference]({{ site.baseurl }}/docs/api/enums.html).
 
@@ -49,15 +49,15 @@ Each S-Cell constructor takes two device arguments:
 | `device_class` | `TRANSISTOR_CLASS`, default `STANDARD_NMOS` | `RESISTOR_CLASS`, default `STANDARD_N2T` | `CAPACITOR_CLASS`, default `STANDARD_2T` |
 | `device_tech` | `TRANSISTOR_TECH`, default `MOSFET` | `RESISTOR_TECH`, default `POLYSILICON` | `CAPACITOR_TECH`, default `CMIM` |
 
-The core package builds the standard classes: `TRANSISTOR_CLASS.STANDARD_NMOS` and `STANDARD_PMOS`, the four `RESISTOR_CLASS` members and the two `CAPACITOR_CLASS` members. Both arguments are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`. The class may also be given by name, for example `device_class='STANDARD_PMOS'`.
+ANALACE Lite builds the standard classes: `TRANSISTOR_CLASS.STANDARD_NMOS` and `STANDARD_PMOS`, the four `RESISTOR_CLASS` members and the two `CAPACITOR_CLASS` members. Both arguments are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`. The class may also be given by name, for example `device_class='STANDARD_PMOS'`.
 
 ```python
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -107,8 +107,8 @@ Each entry of `devices`:
 
 | Key | Type | Description |
 |:--|:--|:--|
-| `composer_type` | `TRANSISTOR_COMPOSER` | `LINEAR` is the composer shipped with the core package. Other members of the enum are refused with a `ParameterError`. |
-| `device_separator` | list of `[DEVICE_SEPARATOR, int]` | One entry per gap between device groups: `[DEVICE_SEPARATOR.DUMMY, n]` puts `n` dummy fingers in the gap, `[DEVICE_SEPARATOR.IMPLANT, n]` breaks the diffusion. The default is an implant break. |
+| `composer_type` | `TRANSISTOR_COMPOSER` | `LINEAR` is the composer shipped with ANALACE Lite. Other members of the enum are refused with a `ParameterError`. |
+| `device_separator` | list of `[DEVICE_SEPARATOR, int]` | One entry per gap between device groups: `[DEVICE_SEPARATOR.DUMMY, n]` puts `n` dummy fingers in the gap, `[DEVICE_SEPARATOR.IMPLANT, n]` breaks the diffusion. The default is an implant break at the process minimum spacing (the value `None`); a number is the break's spacing in µm, never under that minimum. |
 | `number_of_rows` | int | Split every finger over this many rows (multi-row linear cell). Default `1`. |
 | `row_spacing` | float | Minimum gap between rows. It is raised to the wiring rule when needed. Default `0.0`. |
 
@@ -119,21 +119,21 @@ Each entry of `devices`:
 | `guard_ring` | dict | `{'enable': False, 'offset': 0.0}` | Draw a guard ring at `offset` from the devices. |
 | `dummies` | dict | see below | Every dummy setting. |
 | `default_number_of_vias` | int | `1` | Via count used when a wire does not give one. |
-| `multi_row_gate_contacts` | bool | `False` | Use several rows of gate contacts. |
 | `route_over_cell` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether terminal wires may cross the cell, and on which metals. |
 | `route_source_drain_over_poly` | list | `[True, METAL_LAYER_SELECTION.ALL, [...]]` | Whether source/drain wires may run over the gate poly. In a cell given no terminals, the default source/drain wires run over the source/drain region (`SD_TOP`) when they may, and on the gate track away from the gates when they may not. |
 | `extend_source_drain_via_enclosures` | bool | `False` | Draw the via enclosures of the source/drain metal flush with its ends, instead of moving the wire track to make room for them. |
 | `symmetric_geometry` | bool | `False` | Draw the cell as its own mirror image where the construction allows: contact, via and tap arrays are spread symmetrically about their centre. |
 | `matched_tracks` | bool | `False` | In a single row, place the matched source/drain nets (the same pin roles, one device each) together over the devices. A cell with several rows always does. |
-| `bulk_rail_sides` | str | `'row'` | Where the body is tapped: `'row'` (a tap strip under the bulk rail along the row) or `'left_right'` (two tap strips at the ends of the row, for a single row without guard ring or dummy rows). |
+| `bulk_rail_sides` | str | `'row'` | Where the body is tapped: `'row'` (a tap strip under the bulk rail along the row), `'left_right'` (two tap strips at the ends of the row, for a single row without guard ring or dummy rows) or `'every_row'` (a cell of several rows taps the bulk rail of every row, the rails between the rows included; with one row it is the same as `'row'`). |
+| `via_orientation` | str | `'horizontal'` | How the cuts of a landing lie when there are two or more: side by side along the wire (`'horizontal'`) or stacked along the strip (`'vertical'`). A horizontal row that does not fit (a short gate, a tight finger pitch) is stacked vertically at that landing. A terminal's `base_wire` can set its own `via_orientation`. |
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
 `dummies` keys: `start` and `end` (each `{'fingers': 0}`: the number of dummy fingers at that end of each row), `gate_caps` (`'gate_side'` or `'both'`: the sides on which a dummy finger's gate is capped) and `rows` (`{'top': {...}, 'bottom': {...}}`, each `{'enable': False, 'height': None, 'offset': 0.0}`: a row of dummy devices above or below the active row; `height` `None` is the process minimum). See [Configure]({% link docs/tutorials/scells/configure/index.md %}#guard-ring-dummy-fingers-and-dummy-rows). A key that is not listed is refused with a `ParameterError`.
 
-`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `split_gate_poly_metal` (bool), `location` (the side of the gate contacts, see [Gate side](#gate-side)), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
+`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `number_of_contacts` (the gate contacts per gate pad, a whole number from 1; they go side by side across the gate first and the rest in extra rows; `None`, the default, uses the `contacts_per_unit_*` density), `split_gate_poly_metal` (bool), `location` (the side of the gate contacts, see [Gate side](#gate-side)), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
 
-`power` keys: `stack_metals` (bool), `base_wire` (`layer`, `width`, `offset`, `number_of_via_rows`, `number_of_via_cols`), `base_to_top_wire` (`layer`, `number_of_vias`), and `top_wire` (`layer`, `width`, `track` as a `TOP_WIRE_TRACK`, `offset`).
+`power` keys: `stack_metals` (bool), `base_wire` (`layer`, `width`, `offset`, `number_of_via_rows`, `number_of_via_cols`), `base_to_top_wire` (`layer`, `number_of_vias`), and `top_wire` (`layer`, `width`, `track` as a `TOP_WIRE_TRACK`, `offset`). A `track` of `None` (the default) leaves the power terminals their own default track.
 
 ### Gate side (`gate_poly.location`)
 {: #gate-side }
@@ -155,16 +155,16 @@ The value can be set in each of the default layers (see [Defaults for every cell
 The example builds the same transistor as a PMOS and as an NMOS, first with the defaults, then with one side for all, then with a mapping:
 
 ```python
-# The copilot and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # The user overrides of the S-Cell defaults
-from aicl_core.bin.config.global_config import SCellConfig
+from analace_kernel.bin.config.global_config import SCellConfig
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -230,7 +230,7 @@ A list with one dict per terminal. Pins that no terminal names get a default ter
 | `name` | str | Terminal (net) name. A terminal named as a supply (`VSS`, `VSSA`, `GND`, `GNDA`, ... for NMOS; `VDD`, `VDDA`, `VCC`, `VCCA`, ... for PMOS; any case) is the power terminal. |
 | `pins` | list | `[[device_name, TRANSISTOR_PIN_TYPE, ...], ...]`. Pin types are `GATE`, `DRAIN`, `SOURCE` and `BULK`. Several types in one entry join those pins of the device, for example `['M1', BULK, SOURCE]`. |
 | `type` | `TERMINAL_TYPE` | Optional. Sets the port direction in generated netlists: `ANALOG_INPUT`, `ANALOG_OUTPUT`, `BIAS`, `SUPPLY`, `GROUND`, `CLOCK`, `REFERENCE`, and others. |
-| `base_wire` | dict | The wire that joins the pins: `layer`, `width`, `number_of_vias`, `track` (`BASE_WIRE_TRACK`: `GATE_TOP`, `GATE_BOTTOM`, `SD_TOP`, `SD_BOTTOM`, `SD_CENTER_UP`, `SD_CENTER_DOWN`, `ABS`), `offset`, `use_reference`, `reference_terminal`. |
+| `base_wire` | dict | The wire that joins the pins: `layer`, `width`, `number_of_vias`, `track` (`BASE_WIRE_TRACK`: `GATE_TOP`, `GATE_BOTTOM`, `SD_TOP`, `SD_BOTTOM`, `SD_CENTER_UP`, `SD_CENTER_DOWN`, `ABS`), `offset`, `via_orientation`, `use_reference`, `reference_terminal`. |
 | `base_to_top_wire` | dict | The via stack from the base wire up to the top wire: `layer`, `number_of_vias`. |
 | `top_wire` | dict | The wire the terminal is reached on from outside: `layer`, `width`, `track` (`TOP_WIRE_TRACK`: `ROUTE_LEFT`, `ROUTE_RIGHT`, `CELL_LEFT`, `CELL_RIGHT`, `CELL_CENTER_LEFT`, `CELL_CENTER_RIGHT`, `LOWER`, `MIDDLE`, `UPPER`, `ABS`), `offset`, `use_reference`, `reference_terminal`. |
 
@@ -241,14 +241,14 @@ A list with one dict per terminal. Pins that no terminal names get a default ter
 from pprint import pprint
 
 # The copilot and the transistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.composer import DEVICE_SEPARATOR
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_SD_CONNECTION_TYPE
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
+from analace_kernel.bin.utilities.enums.composer import DEVICE_SEPARATOR
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS, TRANSISTOR_SD_CONNECTION_TYPE
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, TRANSISTOR_GATE_CONNECTOR
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE, BASE_WIRE_TRACK, TOP_WIRE_TRACK
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -310,13 +310,13 @@ The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STAND
 
 ```python
 # The copilot and the resistor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.resistor import RSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.resistor import RSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
-from aicl_core.bin.utilities.enums.primitives import RESISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import RESISTOR_CLASS, RESISTOR_SEGMENT_CONNECTION
+from analace_kernel.bin.utilities.enums.primitives import RESISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import RESISTOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -364,13 +364,13 @@ The unit matrix belongs in `composer` and the multiplier in `specifications['dev
 
 ```python
 # The copilot and the capacitor S-Cell engine
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.capacitor import CSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.capacitor import CSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import CAPACITOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import CAPACITOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import CAPACITOR_PIN_TYPE
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -411,16 +411,16 @@ Placement and routing constraints are not cell parameters. They are passed to th
 
 ```python
 # The copilot and the cell engines (M-Cell and transistor S-Cell)
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
 # Option lists (enums) used in the parameters below
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # The tool that places and routes an M-Cell
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -462,4 +462,4 @@ copilot.preview_layout(mcell)
 
 ## Storing parameters
 
-A parameter dictionary is plain Python data (with enum members as values), so you can keep it in your own script or module and build the cell again later, also for another process. `create_from_params` rebuilds a cell from the dictionary that `get_parameters()` returns (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). The core package has no parameter library or cell database of its own.
+A parameter dictionary is plain Python data (with enum members as values), so you can keep it in your own script or module and build the cell again later, also for another process. `create_from_params` rebuilds a cell from the dictionary that `get_parameters()` returns (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). ANALACE Lite has no parameter library or cell database of its own.

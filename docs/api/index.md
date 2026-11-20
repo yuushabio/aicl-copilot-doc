@@ -6,7 +6,7 @@ has_children: true
 
 # API Reference
 
-These pages list the public classes and methods of the `aicl_core` package, with their signatures as they are in the source. They are grouped by task:
+These pages list the public classes and methods of the `analace_kernel` package, with their signatures as they are in the source. They are grouped by task:
 
 | Page | Contents |
 |:--|:--|
@@ -19,34 +19,34 @@ These pages list the public classes and methods of the `aicl_core` package, with
 
 | Name | Import |
 |:--|:--|
-| `AiclCopilot` | `from aicl_core.bin.core.copilot import AiclCopilot` |
-| `TSCell` | `from aicl_core.bin.core.engines.transistor import TSCell` |
-| `RSCell` | `from aicl_core.bin.core.engines.resistor import RSCell` |
-| `CSCell` | `from aicl_core.bin.core.engines.capacitor import CSCell` |
-| `MCell` | `from aicl_core.bin.core.engines.mcell import MCell` |
-| `ContextManager` | `from aicl_core.bin.core.contextmanager import ContextManager` |
-| `ProcessContext` | `from aicl_core.bin.core.context import ProcessContext` |
-| `SCellConfig` | `from aicl_core.bin.config.global_config import SCellConfig` |
-| `SCell`, `Cell` | `aicl_core.bin.core.engines.scell`, `aicl_core.bin.core.engines.cell` |
-| `register_cell_class`, `cell_class` | `from aicl_core.bin.core.engines.cell_classes import ...` |
-| `discover`, `template_dir`, `template_file` | `from aicl_core.bin.core.process_templates import ...` |
-| `active_config_dir` | `from aicl_core.bin.core.config_paths import active_config_dir` |
-| `layout_file`, `schematic_file` | `from aicl_core.bin.api.design_paths import ...` |
-| `Coord`, `Boundbox` | `from aicl_core.bin.utilities.geometryutils import Coord, Boundbox` |
-| `PlaceAndRouteManager` | `from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager` |
-| `PlacerManager` | `from aicl_core.bin.utilities.helpers.placers import PlacerManager` |
-| `RouterManager` | `from aicl_core.bin.utilities.helpers.routers import RouterManager` |
-| `PlaceRequest`, `RouteRequest`, `PlaceResult`, `RouteResult`, `OptionSpec`, `resolve_options`, `LevelSymmetry` | `from aicl_core.bin.pnr import ...` |
-| `CustomRPS`, `ReferencePlacer` | `aicl_core.bin.placers.customrps.customrps`, `aicl_core.bin.placers.reference_placer.referenceplacer` |
-| `RectilinearMstMCellRouter` | `from aicl_core.bin.routers.mcell import RectilinearMstMCellRouter` |
-| `AlignMCellRouter`, `MagicalMCellRouter` | `aicl_core.bin.routers.mcell.align.router`, `aicl_core.bin.routers.mcell.magical.router` |
-| `cell_to_spice` | `from aicl_core.bin.verification.celltospice import cell_to_spice` |
-| `CopilotLogger`, `LOG_CLASS` | `aicl_core.bin.utilities.logging.logger`, `aicl_core.bin.utilities.enums.loggerenums` |
+| `AiclCopilot` | `from analace_kernel.bin.core.copilot import AiclCopilot` |
+| `TSCell` | `from analace_kernel.bin.core.engines.transistor import TSCell` |
+| `RSCell` | `from analace_kernel.bin.core.engines.resistor import RSCell` |
+| `CSCell` | `from analace_kernel.bin.core.engines.capacitor import CSCell` |
+| `MCell` | `from analace_kernel.bin.core.engines.mcell import MCell` |
+| `ContextManager` | `from analace_kernel.bin.core.contextmanager import ContextManager` |
+| `ProcessContext` | `from analace_kernel.bin.core.context import ProcessContext` |
+| `SCellConfig` | `from analace_kernel.bin.config.global_config import SCellConfig` |
+| `SCell`, `Cell` | `analace_kernel.bin.core.engines.scell`, `analace_kernel.bin.core.engines.cell` |
+| `register_cell_class`, `cell_class` | `from analace_kernel.bin.core.engines.cell_classes import ...` |
+| `discover`, `template_dir`, `template_file` | `from analace_kernel.bin.core.process_templates import ...` |
+| `active_config_dir` | `from analace_kernel.bin.core.config_paths import active_config_dir` |
+| `layout_file`, `schematic_file` | `from analace_kernel.bin.api.design_paths import ...` |
+| `Coord`, `Boundbox` | `from analace_kernel.bin.utilities.geometryutils import Coord, Boundbox` |
+| `PlaceAndRouteManager` | `from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager` |
+| `PlacerManager` | `from analace_kernel.bin.utilities.helpers.placers import PlacerManager` |
+| `RouterManager` | `from analace_kernel.bin.utilities.helpers.routers import RouterManager` |
+| `PlaceRequest`, `RouteRequest`, `PlaceResult`, `RouteResult`, `OptionSpec`, `resolve_options`, `LevelSymmetry` | `from analace_kernel.bin.pnr import ...` |
+| `CustomRPS`, `ReferencePlacer` | `analace_kernel.bin.placers.customrps.customrps`, `analace_kernel.bin.placers.reference_placer.referenceplacer` |
+| `RectilinearMstMCellRouter` | `from analace_kernel.bin.routers.mcell import RectilinearMstMCellRouter` |
+| `AlignMCellRouter`, `MagicalMCellRouter` | `analace_kernel.bin.routers.mcell.align.router`, `analace_kernel.bin.routers.mcell.magical.router` |
+| `cell_to_spice` | `from analace_kernel.bin.verification.celltospice import cell_to_spice` |
+| `CopilotLogger`, `LOG_CLASS` | `analace_kernel.bin.utilities.logging.logger`, `analace_kernel.bin.utilities.enums.loggerenums` |
 
 ## Package map
 
 ```
-aicl_core/
+analace_kernel/
 ├── bin/
 │   ├── core/            AiclCopilot, the cell engines (engines/), composers, connectors, factories,
 │   │                    process_templates.py and config_paths.py (where the templates are found)

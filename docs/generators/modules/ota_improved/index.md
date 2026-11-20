@@ -19,7 +19,7 @@ The improved OTA in `templates/netlists/ota-improved.spice` is a telescopic casc
 
 ## Recipe
 
-With this many devices, the recipe leaves both the grouping and the floor-plan to the Co-pilot:
+With this many devices, the recipe leaves both the grouping and the floor-plan to ANALACE Lite:
 
 - The grouper finds the pairs, mirrors, cascodes and device stacks.
 - `CUSTOM_RPS_PLACER` packs the resulting S-Cells.
@@ -29,10 +29,10 @@ With this many devices, the recipe leaves both the grouping and the floor-plan t
 # Python's built-in module for file paths and environment variables
 import os
 
-# Copilot, placer factory and place-and-route helper from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
+# Copilot, placer factory and place-and-route helper from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
 
 # Where the layout goes: library 'generators', cell 'ota_improved'
 library_name = 'generators'

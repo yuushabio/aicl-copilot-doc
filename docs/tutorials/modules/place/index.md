@@ -20,18 +20,18 @@ The examples all start from the inverter of [Create]({% link docs/tutorials/modu
 `translate_sub_cells` takes a dictionary of sub-cell name to offset (`Coord`). The example stacks the PMOS 0.3 µm above the NMOS:
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um
-from aicl_core.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.geometryutils import Coord
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -101,19 +101,19 @@ copilot.preview_layout(inverter)
 A reference must be placed before the cells that use it, and a cell cannot reference itself. A sub-cell with no entry is placed at the origin. Keys left out are filled with defaults and a warning.
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER, CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um, and the helper that runs placers and routers
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -189,19 +189,19 @@ Two options change this. Pass them with `options=` (or `placer_options=` in `pla
 The next example places two PMOS cells side by side, once with their bulks on different nets and once on one net:
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import CELL_ABUT_SIDE, CELL_ABUT_ALIGN
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import CELL_ABUT_SIDE, CELL_ABUT_ALIGN
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Coordinates (x, y) in um, and the helper that runs placers and routers
-from aicl_core.bin.utilities.geometryutils import Coord
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.geometryutils import Coord
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -279,19 +279,19 @@ Its **options** tune the algorithm and are given when the placer is created:
 | `visualize` | `False` | Show the solved floor-plan |
 
 ```python
-# The copilot and the cell engines (M-Cell and transistor S-Cell) from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.engines.mcell import MCell
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot and the cell engines (M-Cell and transistor S-Cell) from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.engines.mcell import MCell
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
-from aicl_core.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.deviceenums import TRANSISTOR_CLASS
+from analace_kernel.bin.utilities.enums.primitives import TRANSISTOR_COMPOSER
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # The helpers that run placers and create placer objects
-from aicl_core.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
-from aicl_core.bin.utilities.helpers.placers import PlacerManager
+from analace_kernel.bin.utilities.helpers.place_and_route import PlaceAndRouteManager
+from analace_kernel.bin.utilities.helpers.placers import PlacerManager
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -346,7 +346,7 @@ copilot.preview_layout(inverter)
 The placer can be given in three ways:
 
 - An instance, as above.
-- A class, such as `CustomRPS` from `aicl_core.bin.placers.customrps.customrps`.
+- A class, such as `CustomRPS` from `analace_kernel.bin.placers.customrps.customrps`.
 - A registry name: `PlaceAndRouteManager.place_cell(cell, 'CUSTOM_RPS_PLACER', constraints=..., options={'seed': 120})`.
 
 Options go with the class or the name. Passing `options` next to an instance that already exists is an error. `PlacerManager.get_placer_options('CUSTOM_RPS_PLACER')` lists the options with their defaults.

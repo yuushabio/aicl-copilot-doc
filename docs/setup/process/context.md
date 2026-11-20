@@ -15,13 +15,15 @@ When an `AiclCopilot` starts, it reads every valid process template into a **pro
 
 ## Where the contexts are
 
-`ContextManager` (in `aicl_core.bin.core.contextmanager`) keeps the loaded processes:
+`ContextManager` (in `analace_kernel.bin.core.contextmanager`) keeps the loaded processes:
 
 | Name | What it is |
 |:--|:--|
 | `ContextManager.processes` | `{process name: context}`, one entry per valid template. |
 | `ContextManager.current` | The context of the active process (the one `AiclCopilot(process_name=...)` or `set_process(...)` chose). |
 | `ContextManager.get(process=None)` | The context of one process, or of the active one. An unknown name raises `ContextError`. |
+
+A process is loaded again each time an `AiclCopilot` is created. A template that you edited is therefore used by the next `AiclCopilot()` in the same Python session: the new context replaces the old one of the same name, and the active process follows it.
 
 A context is **read-only**. Its parts are read by attribute, and each part is one file of the template:
 
@@ -36,13 +38,13 @@ A context is **read-only**. Its parts are read by attribute, and each part is on
 | `devices` | `constraints/devices.yaml` | `to_data()` (the file as a dictionary), `entries()`, `netlist_spellings()` |
 | `cell_parameter_locals` | `constraints/cell_parameter_locals.yaml` | the `GLOBAL_CONFIG` block |
 
-A table of the template (a mapping) can be read by key or by attribute: `context.configuration.guard_ring.width['metal1']` and `context.configuration.guard_ring.width.metal1` are the same value. A layer ID can be written in any case (`'Metal2'` is `metal2`). To get plain Python dictionaries and lists back, pass any part to `thaw` from `aicl_core.bin.core.context`.
+A table of the template (a mapping) can be read by key or by attribute: `context.configuration.guard_ring.width['metal1']` and `context.configuration.guard_ring.width.metal1` are the same value. A layer ID can be written in any case (`'Metal2'` is `metal2`). To get plain Python dictionaries and lists back, pass any part to `thaw` from `analace_kernel.bin.core.context`.
 
 ```python
-# The copilot and the process contexts from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
-from aicl_core.bin.core.context import thaw
+# The copilot and the process contexts from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
+from analace_kernel.bin.core.context import thaw
 
 # Start the copilot; it loads every valid process template
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -74,7 +76,7 @@ variant = ContextManager.current.derive({'configuration.transistor.gate_poly.ext
 
 The values are checked when the variant is made: a path that does not exist, or a value of the wrong kind (a word for a number, for example), raises `ContextError` with the path in the message.
 
-A cell is always built with the context of the active process. To build cells with a variant, use one of the `with` blocks of `aicl_core.bin.core.context.testing`. Inside the block the variant is the active process; at the end of the block the original process comes back:
+A cell is always built with the context of the active process. To build cells with a variant, use one of the `with` blocks of `analace_kernel.bin.core.context.testing`. Inside the block the variant is the active process; at the end of the block the original process comes back:
 
 | Helper | What it does |
 |:--|:--|
@@ -86,14 +88,14 @@ A cell is always built with the context of the active process. To build cells wi
 The example below builds the same NMOS twice: once with the process's gap between the fingers and the gate poly strap, and once with a larger gap:
 
 ```python
-# The copilot, the process contexts and the transistor S-Cell engine from the core package
-from aicl_core.bin.core.copilot import AiclCopilot
-from aicl_core.bin.core.contextmanager import ContextManager
-from aicl_core.bin.core.context.testing import context_variant
-from aicl_core.bin.core.engines.transistor import TSCell
+# The copilot, the process contexts and the transistor S-Cell engine from ANALACE Lite
+from analace_kernel.bin.core.copilot import AiclCopilot
+from analace_kernel.bin.core.contextmanager import ContextManager
+from analace_kernel.bin.core.context.testing import context_variant
+from analace_kernel.bin.core.engines.transistor import TSCell
 
-# Option lists (enums) from the core package
-from aicl_core.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
+# Option lists (enums) from ANALACE Lite
+from analace_kernel.bin.utilities.enums.terminals import TRANSISTOR_PIN_TYPE
 
 # Start the copilot for the process we lay out in
 copilot = AiclCopilot(process_name='ihpSG13G2')
@@ -132,7 +134,7 @@ print('process value:', ContextManager.current.configuration.transistor.gate_pol
 ```
 
 {: .note }
-Earlier releases could attach a changed context to one cell (`TSCell(..., context=...)`) or to every cell of a kind (`ContextManager.add_override`). The core package no longer has these. Build the cells inside a `context_variant` block instead, or change the value in the template.
+Earlier releases could attach a changed context to one cell (`TSCell(..., context=...)`) or to every cell of a kind (`ContextManager.add_override`). ANALACE Lite no longer has these. Build the cells inside a `context_variant` block instead, or change the value in the template.
 
 {: .warning }
 A variant changes the rules the layout is drawn with, not the PDK. A value below a design rule of the PDK gives a layout that fails DRC. Use variants to make a layout more conservative, or to try a value before you change it in the template.
