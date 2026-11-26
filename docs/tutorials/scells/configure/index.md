@@ -12,7 +12,7 @@ The `settings` section of the S-Cell parameters holds the options around the dev
 ## Guard ring, dummy fingers and dummy rows
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -60,7 +60,7 @@ copilot.preview_layout(nmos_scell, enable_culling=False)
 
 ![NMOS S-Cell with a guard ring, two dummy fingers on each side and dummy rows above and below]({{site.baseurl}}/assets/images/tscell_settings_lay.png){: width="520"}
 
-- `guard_ring`: `enable` draws a substrate/well ring around the cell. `offset` (0 or more, in µm) adds spacing between the devices and the ring, on top of the rule minimum; a negative or non-numeric `offset` is refused with a `ParameterError`.
+- `guard_ring`: `enable` draws a substrate/well ring around the cell. `offset` (0 or more, in µm) adds spacing between the devices and the ring, on top of the rule minimum. A negative or non-numeric `offset` is refused with a `ParameterError`.
 - `dummies`: every dummy setting of the cell.
     - `start` and `end`: the dummy fingers at the left and right end of each row. Each takes `fingers` (how many, default 0).
     - `rows`: a row of dummy devices above (`top`) and below (`bottom`) the active row. Each takes `enable`, `offset` (gap to the active row) and optionally `height` (dummy finger width). The height defaults to the process minimum.
@@ -73,7 +73,7 @@ Dummy devices are tied to the power rail of the cell, or to the bulk terminal wh
 The next example builds a pair that shares its source and has a terminal of its own for the bulk. It is built twice, once with the default dummy caps and once with caps on both sides:
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -141,7 +141,7 @@ print('caps on both sides, height:', round(both_box.height, 2), 'um')
 The next example writes out the gate side of a PMOS (the bottom, which is also its default) and widens the power rail:
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -205,10 +205,10 @@ Three more settings change how a single row is drawn:
 
 - `symmetric_geometry: True` spreads every contact, via and tap array symmetrically about its centre. The grid steps that are left over are shared from both ends inwards, instead of all going to the right end. The cell is then its own mirror image wherever the construction allows. It is off by default.
 - `matched_tracks: True` places the matched source/drain nets of a single row together, right after the power net, on the tracks over the devices. Matched nets are nets with the same pin roles and one device each, such as the two drains of a pair. The pair then leaves the cell at neighbouring heights. A net that no longer fits goes to the gate side. A cell with several rows always does this. It is off by default.
-- `bulk_rail_sides` says where the body is tapped. `'row'` (the default) draws a tap strip under the bulk rail along the row. `'left_right'` draws two contacted tap strips at the two ends of the row, tied to the bulk rail. The rail is then Metal1 alone and comes closer to the devices. Rows built this way carry their own identical rails and abut without sharing a tap. It applies to single-row cells without a guard ring or dummy rows; any other cell keeps `'row'` and logs a warning. `'every_row'` is for a cell of several rows: it taps the bulk rail of every row, the rails between the rows included, where `'row'` taps the outer rail (and every rail only when a row is farther from a tap than the latch-up distance). With one row it is the same as `'row'`.
+- `bulk_rail_sides` says where the body is tapped. `'row'` (the default) draws a tap strip under the bulk rail along the row. `'left_right'` draws two contacted tap strips at the two ends of the row, tied to the bulk rail. The rail is then Metal1 alone and comes closer to the devices. Rows built this way carry their own identical rails and abut without sharing a tap. It applies to single-row cells without a guard ring or dummy rows. Any other cell keeps `'row'` and logs a warning. `'every_row'` is for a cell of several rows: it taps the bulk rail of every row, the rails between the rows included. `'row'` taps only the outer rail, and taps every rail only when a row is farther from a tap than the latch-up distance. With one row it is the same as `'row'`.
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -283,10 +283,10 @@ The cell's own values always win. A value you set in `SCellConfig` wins over bot
 
 Inside a block, the keys are those of the `SCELL` block of the default files: `settings` holds the cell `settings`, and `terminals.signals` / `terminals.power` hold the default wires. You can set a value in three ways: as attributes (`SCellConfig.TSCELL.settings.guard_ring.enable = True`), with a dotted path (`SCellConfig.set('tscell', 'settings.guard_ring.enable', True)`), or with a nested dictionary (`SCellConfig.update('tscell', {...})`). Key names are not case-sensitive.
 
-The overrides also reach the S-Cells that are built from a netlist (see [Netlist to Layout]({% link docs/tutorials/netlist/index.md %})), so one line in your script can, for example, turn on the guard ring of every transistor in a netlist.
+The overrides also reach the S-Cells that are built from a netlist (see [Netlist to Layout]({% link docs/tutorials/netlist/index.md %})). So one line in your script can, for example, turn on the guard ring of every transistor in a netlist.
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -334,10 +334,10 @@ SCellConfig.reset()
 `SCellConfig.reset('tscell')` drops the overrides of one kind only.
 
 {: .note }
-The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read: a `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError` that tells you to rename it to `settings`. `SCellConfig` itself moved from `analace_kernel.config.global_config` to `analace_kernel.bin.config.global_config`.
+The settings block used to be called `config` (`SCellConfig.TSCELL.config...`, and `config:` in the YAML files). That name is no longer read. A `config` block in `SCellConfig` or in a defaults file stops the next cell with a `ValueError`, which tells you to rename it to `settings`. `SCellConfig` itself moved from `analace_kernel.config.global_config` to `analace_kernel.bin.config.global_config`.
 
 {: .note }
-The dummy settings used to be separate keys, `number_of_dummy_fingers` and `dummy_rows`. They are now the `dummies` block, with the finger counts as `dummies.start.fingers` and `dummies.end.fingers`. The old names, and `terminal_sides`, are no longer read: a cell whose `settings` still have one is refused with a `ParameterError` that lists the valid keys, and the same happens to a `SCellConfig` override or a defaults file that has one. Move the values into `dummies`; `terminal_sides: 'both'` has no replacement. The `connect_bulk_to_source` default of the `terminals` block of the defaults files is gone too; it was never read.
+The dummy settings used to be separate keys, `number_of_dummy_fingers` and `dummy_rows`. They are now the `dummies` block, with the finger counts as `dummies.start.fingers` and `dummies.end.fingers`. The old names, and `terminal_sides`, are no longer read. A cell whose `settings` still have one is refused with a `ParameterError` that lists the valid keys. The same happens to a `SCellConfig` override or a defaults file that has one. Move the values into `dummies`; `terminal_sides: 'both'` has no replacement. The `connect_bulk_to_source` default of the `terminals` block of the defaults files is gone too; it was never read.
 
 {: .note }
 The `multi_row_gate_contacts` setting is gone. A cell whose `settings` still have it is refused with a `ParameterError` that lists the valid keys. Use `gate_poly.number_of_contacts` to set the number of gate contacts per gate pad.

@@ -65,7 +65,7 @@ capacitors:
 
 When `create_circuit_from_netlist` reads a device line with one of the other names, it treats it as the first one. The shipped templates use single names only.
 
-When the process maps one model to both a two-terminal and a three-terminal class of a resistor or capacitor, the class follows the node count of the netlist line: a line with a bulk node is read as the three-terminal class, one without as the two-terminal class.
+A process may map one model to both a two-terminal and a three-terminal class of a resistor or capacitor. The class then follows the node count of the netlist line. A line with a bulk node is read as the three-terminal class, and one without as the two-terminal class.
 
 ## Classes ANALACE Lite builds
 

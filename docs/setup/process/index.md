@@ -69,8 +69,14 @@ When an `AiclCopilot` is created, every process directory under `process_templat
 A template also fails to load, and is listed in `invalid_processes`, when:
 
 - `technology.yaml` names a `process_name` that is not the directory's name, or a `process_tech` (family) that is not the folder it is in.
-- A file is still in the old template format: a `config.yaml`, a top-level `Configuration`, `Connectivity`, `Primitives` or `primitive_construction` key, a `configuration.yaml` that still holds the technology keys (`process_name`, `layout_resolution`, `transistors`, ...), CamelCase sections such as `Transistors:` in `devices.yaml`, old characterization file names (`MOS.yaml`, `RES.yaml`, `CAP.yaml`), or characterization folders with one profile per device class (`characterization/transistor/<class>/<profile>.yaml`).
-- A file gives values per device class where ANALACE Lite reads one value per kind: a `polygon_profiles` block or a per-class `device_scaling` in a primitives file, or a P-cell limit written as `{default: ..., <class key>: ...}` in `technology.yaml`.
+- A file is still in the old template format. That is one of these:
+  - a `config.yaml`;
+  - a top-level `Configuration`, `Connectivity`, `Primitives` or `primitive_construction` key;
+  - a `configuration.yaml` that still holds the technology keys (`process_name`, `layout_resolution`, `transistors`, ...);
+  - CamelCase sections such as `Transistors:` in `devices.yaml`;
+  - old characterization file names (`MOS.yaml`, `RES.yaml`, `CAP.yaml`);
+  - characterization folders with one profile per device class (`characterization/transistor/<class>/<profile>.yaml`).
+- A file gives values per device class where ANALACE Lite reads one value per kind. That is a `polygon_profiles` block or a per-class `device_scaling` in a primitives file. It is also a P-cell limit written as `{default: ..., <class key>: ...}` in `technology.yaml`.
 
 - A file has a key that its loader does not know: the message names the file, the key and the valid keys, so a misspelt key is never ignored silently.
 - A value is of the wrong kind where the loaders do not check it yet: the template is listed as invalid with the Python error as its reason, and the other templates still load.
@@ -98,7 +104,13 @@ print('layout resolution:   ', technology.layout_resolution)
 If the requested process has a template that is invalid, `AiclCopilot` raises a `SetupException` that gives the reason, for example `process template ihpSG13G2 is invalid: metals.metal1.abut: unknown key 'unit_abut' (valid: ...)`. It does not fall back to another process. The reasons of all invalid templates are also in `copilot.invalid_reasons`, a dictionary of process name to message. Only a name that has no template at all falls back, with a warning, to another valid process. Check `copilot.current_process` when you add a new template.
 
 {: .warning }
-Older templates used other file names: `config.yaml` (later `configuration.yaml`, and now `technology.yaml`; see the note below), `mos.yaml`, `resistor.yaml` and `capacitor.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`), and `characterization/MOS.yaml`, `RES.yaml` and `CAP.yaml` (now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`, see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)). A template that still uses an old name is not loaded, and an error names the files to rename.
+Older templates used other file names:
+
+- `config.yaml`, later `configuration.yaml`, is now `technology.yaml` (see the note below).
+- `mos.yaml`, `resistor.yaml` and `capacitor.yaml` are now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml`.
+- `characterization/MOS.yaml`, `RES.yaml` and `CAP.yaml` are now `transistor.yaml`, `poly_resistor.yaml` and `mim_capacitor.yaml` (see [Characterization]({{ site.baseurl }}/docs/setup/process/device.html#characterization)).
+
+A template that still uses an old name is not loaded, and an error names the files to rename.
 
 {: .note }
 In the current release the file that used to be called `configuration.yaml` is **`technology.yaml`**. The name `configuration.yaml` now belongs to a new file: the device configuration (guard rings, body taps, gate poly and the layer spacing rules), which used to sit in the `configuration` blocks of the `primitives/*.yaml` files. To update an older template, rename its `configuration.yaml` to `technology.yaml`, move `min_poly_spacing`, `min_distance_poly_to_implant` and `min_poly_abut_extension` out of it, and write a new `configuration.yaml` (see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)). The error message of a template in the old layout says which key goes where.
@@ -158,7 +170,7 @@ The sky130A KLayout DRC deck is not complete. Its own README says it does not ch
 The process is used like any other:
 
 ```python
-# The copilot, the process contexts and the transistor S-Cell engine from ANALACE Lite
+# The copilot, the process contexts and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.contextmanager import ContextManager
 from analace_kernel.bin.core.engines.transistor import TSCell

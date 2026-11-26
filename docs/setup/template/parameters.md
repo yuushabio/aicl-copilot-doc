@@ -17,7 +17,13 @@ Every cell is built from a parameter dictionary. S-Cells (`TSCell`, `RSCell`, `C
 | `settings` | yes | | Cell-wide options: guard ring, dummies, gate poly, power wires, via limits. |
 | `terminals` | yes | yes | For an S-Cell, which device pins are joined into each terminal and how its wires are drawn. For an M-Cell, which sub-cell terminals each net connects. |
 
-Any section can be left out. A missing section or key is filled from the defaults: the `SCellConfig` overrides set in the script, then the process defaults (`cell_parameter_locals.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#cell_parameter_localsyaml)), then the defaults for every process (`cell_parameter_globals.yaml`). For a transistor S-Cell, a size outside the process limits is an error: a `length`, `finger_width` or number of fingers below the minimum (or a length or number of fingers above the maximum) raises `ParameterError` with the limit in the message. A `finger_width` above the maximum is split over several rows of the linear composer (see [Layout Composer]({{ site.baseurl }}/docs/tutorials/scells/composer/)). A resistor or capacitor size below the process minimum is raised to it, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
+Any section can be left out. A missing section or key is filled from the defaults, in this order:
+
+1. the `SCellConfig` overrides set in the script;
+2. the process defaults (`cell_parameter_locals.yaml`, see [Constraints]({{ site.baseurl }}/docs/setup/process/constraints.html#cell_parameter_localsyaml));
+3. the defaults for every process (`cell_parameter_globals.yaml`).
+
+For a transistor S-Cell, a size outside the process limits is an error. A `length`, `finger_width` or number of fingers below the minimum raises `ParameterError`, and so does a length or number of fingers above the maximum. The message gives the limit. A `finger_width` above the maximum is split over several rows of the linear composer (see [Layout Composer]({{ site.baseurl }}/docs/tutorials/scells/composer/)). A resistor or capacitor size below the process minimum is raised to it, and a warning is logged. The realized dictionary, with every default filled in, is returned by `cell.get_parameters()`.
 
 The device class (for example `TRANSISTOR_CLASS.STANDARD_PMOS`) and the device technology are not part of the dictionary. They are constructor arguments, `device_class=` and `device_tech=`; see [Device class and technology](#device-class-and-technology).
 
@@ -52,7 +58,7 @@ Each S-Cell constructor takes two device arguments:
 ANALACE Lite builds the standard classes: `TRANSISTOR_CLASS.STANDARD_NMOS` and `STANDARD_PMOS`, the four `RESISTOR_CLASS` members and the two `CAPACITOR_CLASS` members. Both arguments are checked against the process template when the cell is built. A class that `devices.yaml` maps to no PDK model, or a technology that the framework cannot build, raises a `ParameterError` that names what the process offers. For example, `ihpSG13G2` has no model for `RESISTOR_CLASS.STANDARD_N3T`. The class may also be given by name, for example `device_class='STANDARD_PMOS'`.
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -129,9 +135,22 @@ Each entry of `devices`:
 | `gate_poly` | dict | see below | Gate connection. |
 | `power` | dict | see below | The power (bulk) wire. |
 
-`dummies` keys: `start` and `end` (each `{'fingers': 0}`: the number of dummy fingers at that end of each row), `gate_caps` (`'gate_side'` or `'both'`: the sides on which a dummy finger's gate is capped) and `rows` (`{'top': {...}, 'bottom': {...}}`, each `{'enable': False, 'height': None, 'offset': 0.0}`: a row of dummy devices above or below the active row; `height` `None` is the process minimum). See [Configure]({% link docs/tutorials/scells/configure/index.md %}#guard-ring-dummy-fingers-and-dummy-rows). A key that is not listed is refused with a `ParameterError`.
+`dummies` keys:
 
-`gate_poly` keys: `connect_gate_with_poly` (bool, join the gates in poly), `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int), `number_of_contacts` (the gate contacts per gate pad, a whole number from 1; they go side by side across the gate first and the rest in extra rows; `None`, the default, uses the `contacts_per_unit_*` density), `split_gate_poly_metal` (bool), `location` (the side of the gate contacts, see [Gate side](#gate-side)), and `device_sides` (`{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom; a gate net may then join devices of one side only).
+- `start` and `end`, each `{'fingers': 0}`: the number of dummy fingers at that end of each row.
+- `gate_caps`, `'gate_side'` or `'both'`: the sides on which a dummy finger's gate is capped.
+- `rows`, `{'top': {...}, 'bottom': {...}}`, each `{'enable': False, 'height': None, 'offset': 0.0}`: a row of dummy devices above or below the active row. A `height` of `None` is the process minimum.
+
+See [Configure]({% link docs/tutorials/scells/configure/index.md %}#guard-ring-dummy-fingers-and-dummy-rows). A key that is not listed is refused with a `ParameterError`.
+
+`gate_poly` keys:
+
+- `connect_gate_with_poly` (bool): join the gates in poly.
+- `contacts_per_unit_gate_width` and `contacts_per_unit_finger_width` (int).
+- `number_of_contacts`: the gate contacts per gate pad, a whole number from 1. They go side by side across the gate first, and the rest in extra rows. `None`, the default, uses the `contacts_per_unit_*` density.
+- `split_gate_poly_metal` (bool).
+- `location`: the side of the gate contacts (see [Gate side](#gate-side)).
+- `device_sides`, `{device_name: TRANSISTOR_GATE_CONNECTOR.top or .bottom}`: each device's gates are contacted on its own side only, so the row is mirrored top to bottom. A gate net may then join devices of one side only.
 
 `power` keys: `stack_metals` (bool), `base_wire` (`layer`, `width`, `offset`, `number_of_via_rows`, `number_of_via_cols`), `base_to_top_wire` (`layer`, `number_of_vias`), and `top_wire` (`layer`, `width`, `track` as a `TOP_WIRE_TRACK`, `offset`). A `track` of `None` (the default) leaves the power terminals their own default track.
 
@@ -146,16 +165,24 @@ Each entry of `devices`:
 | a side | `TRANSISTOR_GATE_CONNECTOR.top`, `.bottom` or `.both`, or its name as a string: `'top'`, `'bottom'`, `'both'`. Strings are what a YAML defaults file can hold. |
 | a mapping | One side per kind of device: `{<class key>: side, 'pmos': side, 'nmos': side, 'default': side}`. A cell looks up its class key first (for example `'standard_pmos'` or `'low_threshold_nmos'`; the keys are listed in the process's `devices.yaml`), then its type (`'pmos'` or `'nmos'`), then `'default'`. When none of them is given, the cell takes the built-in default above. |
 
-The side without gate contacts is kept compact. When the gates are contacted on one side only, the other side holds no gate caps on the dummy fingers (unless `dummies.gate_caps` is `'both'`), the implant ends at the poly-to-implant distance from the poly, and the rails on that side start at the poly end.
+The side without gate contacts is kept compact. When the gates are contacted on one side only, the other side is drawn like this:
 
-Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`) and the power rail goes to the top; with the gates at the top, a source/drain wire takes `SD_CENTER_DOWN` and the rail goes to the bottom. A cell given no terminals at all follows the same sides: each gate wire runs on the gate track (`GATE_TOP` with the gates at the top or on both sides, `GATE_BOTTOM` with the gates at the bottom), the bulk wire on the other gate track, and each source/drain wire on `SD_TOP` (see [`route_source_drain_over_poly`](#settings)).
+- it holds no gate caps on the dummy fingers, unless `dummies.gate_caps` is `'both'`;
+- the implant ends at the poly-to-implant distance from the poly;
+- the rails on that side start at the poly end.
 
-The value can be set in each of the default layers (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)): `cell_parameter_globals.yaml` (where it is `location: null`), the process's `cell_parameter_locals.yaml`, `SCellConfig` in your script, or the cell's own `settings`. The cell's own value wins. A misspelt side (`'up'`) or a mapping key that is neither a class key of the process nor `pmos`, `nmos` or `default` (`'pmoss'`) is refused with a `ParameterError`, so a typo never falls back to the default without notice.
+Wires that do not name a `track` follow the gate side. With the gates at the bottom, a source/drain wire takes the upper half of the source/drain region (`SD_CENTER_UP`), and the power rail goes to the top. With the gates at the top, a source/drain wire takes `SD_CENTER_DOWN`, and the rail goes to the bottom. A cell given no terminals at all follows the same sides:
+
+- each gate wire runs on the gate track: `GATE_TOP` with the gates at the top or on both sides, `GATE_BOTTOM` with the gates at the bottom;
+- the bulk wire runs on the other gate track;
+- each source/drain wire runs on `SD_TOP` (see [`route_source_drain_over_poly`](#settings)).
+
+The value can be set in each of the default layers (see [Defaults for every cell]({% link docs/tutorials/scells/configure/index.md %}#defaults-for-every-cell)): `cell_parameter_globals.yaml` (where it is `location: null`), the process's `cell_parameter_locals.yaml`, `SCellConfig` in your script, or the cell's own `settings`. The cell's own value wins. A misspelt side (`'up'`) is refused with a `ParameterError`. So is a mapping key that is neither a class key of the process nor `pmos`, `nmos` or `default` (`'pmoss'`). A typo never falls back to the default without notice.
 
 The example builds the same transistor as a PMOS and as an NMOS, first with the defaults, then with one side for all, then with a mapping:
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -240,7 +267,7 @@ A list with one dict per terminal. Pins that no terminal names get a default ter
 # pprint prints a dictionary spread over several lines, which is easier to read
 from pprint import pprint
 
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -309,7 +336,7 @@ The class is the `device_class=` argument: `RESISTOR_CLASS.STANDARD_N2T`, `STAND
 | | `base_wire` | dict | `layer`, `width`, `number_of_vias`, `offset`, `track` (`None`). |
 
 ```python
-# The copilot and the resistor S-Cell engine
+# The copilot and the resistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 
@@ -363,7 +390,7 @@ The class is the `device_class=` argument: `CAPACITOR_CLASS.STANDARD_2T`, or `ST
 The unit matrix belongs in `composer` and the multiplier in `specifications['devices']`. A `multiplier` in `composer` or a `matrix` in `settings` is refused with a `ParameterError`.
 
 ```python
-# The copilot and the capacitor S-Cell engine
+# The copilot and the capacitor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.capacitor import CSCell
 
@@ -462,4 +489,4 @@ copilot.preview_layout(mcell)
 
 ## Storing parameters
 
-A parameter dictionary is plain Python data (with enum members as values), so you can keep it in your own script or module and build the cell again later, also for another process. `create_from_params` rebuilds a cell from the dictionary that `get_parameters()` returns (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). ANALACE Lite has no parameter library or cell database of its own.
+A parameter dictionary is plain Python data, with enum members as values. So you can keep it in your own script or module, and build the cell again later, also for another process. `create_from_params` rebuilds a cell from the dictionary that `get_parameters()` returns (see [S-Cell classes]({% link docs/api/cells.md %}#rebuilding-from-a-parameter-dictionary)). ANALACE Lite has no parameter library or cell database of its own.

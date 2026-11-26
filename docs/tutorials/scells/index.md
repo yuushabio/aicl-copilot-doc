@@ -7,7 +7,7 @@ has_children: true
 
 # Super Cells (S-Cells)
 
-An S-Cell is the smallest block ANALACE Lite lays out: one or more devices of the same kind, composed into a single DRC-aware layout with its own wiring, guard ring and pins. ANALACE Lite has three S-Cell engines:
+An S-Cell is the smallest block ANALACE Lite lays out: one or more devices of the same kind, composed into a single DRC-aware layout with its own wiring, guard ring and pins. ANALACE Lite has three S-Cell classes:
 
 | Class | Module | Devices |
 |:--|:--|:--|

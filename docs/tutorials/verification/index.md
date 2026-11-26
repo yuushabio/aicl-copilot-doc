@@ -89,7 +89,7 @@ if drc_magic.status is RunStatus.COMPLETED and not drc_magic.clean:
 
 - `clean`: `True` when the deck found nothing.
 - `violations`, `counts_by_rule` and `rules()`: what fired.
-- Each violation's `locations`: where it is, as boxes (`BBox`, in µm) in the top cell's coordinates, one per placement of the cell it was found in. `report()` lists the first few per rule, so you can find them in the layout without opening the tool's database.
+- Each violation's `locations`: where it is, as boxes (`BBox`, in µm) in the top cell's coordinates. There is one box per placement of the cell it was found in. `report()` lists the first few per rule, so you can find them in the layout without opening the tool's database.
 - `summary()` gives one line and `report()` a readable report.
 - `caveats()` lists the ways a result is narrower than it looks.
 - `artifacts.directory` is the run directory, with the report database and the log.

@@ -20,7 +20,7 @@ A catalogue of parameter recipes for common single-cell structures. Each block i
 ## Differential pair
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -57,7 +57,7 @@ copilot.preview_layout(diff_pair)
 The reference device `M1` is diode-connected: its gate and drain are on `i_ref`, so both devices share the gate net.
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -91,7 +91,7 @@ copilot.preview_layout(mirror)
 ## Cascode stack
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -125,7 +125,7 @@ copilot.preview_layout(cascode)
 ## MOS capacitor
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -156,7 +156,7 @@ copilot.preview_layout(mos_cap)
 ## Resistor
 
 ```python
-# The copilot and the resistor S-Cell engine
+# The copilot and the resistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 
@@ -188,7 +188,7 @@ copilot.preview_layout(resistor)
 ## Capacitor array
 
 ```python
-# The copilot and the capacitor S-Cell engine
+# The copilot and the capacitor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.capacitor import CSCell
 

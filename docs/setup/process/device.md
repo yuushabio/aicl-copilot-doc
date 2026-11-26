@@ -22,7 +22,11 @@ The files in `primitives/` describe the geometry of one unit device: which layer
 {: .note }
 These files were called `mos.yaml`, `resistor.yaml` and `capacitor.yaml` before. A template with the old names is not loaded; rename the files.
 
-Every file has its keys at the top level: `device_scaling`, `device_orientation`, `layers` and `polygons`. A file in an older format is refused, and the error says what to change: a top key `Primitives` or `primitive_construction`, a `polygon_profiles` block (one block per device class; give one `polygons` block instead), or a `configuration` block (now in [`constraints/configuration.yaml`]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml)).
+Every file has its keys at the top level: `device_scaling`, `device_orientation`, `layers` and `polygons`. A file in an older format is refused, and the error says what to change. An older format has one of these:
+
+- a top key `Primitives` or `primitive_construction`;
+- a `polygon_profiles` block, with one block per device class. Give one `polygons` block instead;
+- a `configuration` block. It is now in [`constraints/configuration.yaml`]({{ site.baseurl }}/docs/setup/process/constraints.html#configurationyaml).
 
 ## Common sections
 

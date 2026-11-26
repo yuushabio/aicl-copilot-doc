@@ -27,7 +27,7 @@ copilot = AiclCopilot(process_name='ihpSG13G2')
 A `TSCell` created without arguments uses the process defaults: one minimum-size NMOS device named `dev_0`. `preview_layout` opens the layout viewer on the cell.
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -43,7 +43,7 @@ copilot.preview_layout(nmos_scell)
 
 ![Default transistor S-Cell with one minimum-size NMOS device]({{site.baseurl}}/assets/images/tscell_default_lay.png){: width="220"}
 
-The default cell names each device pin after the device (`dev_0_G`, `dev_0_S`, `dev_0_D`). The pins that no terminal claims go to the power rail: `VSS` for NMOS, `VDD` for PMOS. The gate wire runs on the side of the gate contacts (the top for an NMOS, the bottom for a PMOS, by default), the bulk wire on the other side, and the source and drain wires over the source/drain region (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %}#wire-keys)).
+The default cell names each device pin after the device (`dev_0_G`, `dev_0_S`, `dev_0_D`). The pins that no terminal claims go to the power rail: `VSS` for NMOS, `VDD` for PMOS. The gate wire runs on the side of the gate contacts: by default the top for an NMOS and the bottom for a PMOS. The bulk wire runs on the other side, and the source and drain wires over the source/drain region (see [Terminals]({% link docs/tutorials/scells/terminals/index.md %}#wire-keys)).
 
 ## Name and parameters
 
@@ -64,7 +64,7 @@ Each entry in `devices` has:
 The example below builds one NMOS with four fingers and names two terminals. The type of transistor is not in the dictionary: it is the `device_class` argument of `TSCell` (see [Device class and technology](#device-class-and-technology)). The `composer` section selects the linear composer (see [Layout Composer]({% link docs/tutorials/scells/composer/index.md %})).
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -110,7 +110,7 @@ The source pin is not named in `terminals`, so it is tied to `VSS`. `enable_cull
 Put several names in one `devices` entry to build devices that share diffusion, such as a differential pair with a common source. Use separate entries to build devices that sit side by side with a separator between them. The next example builds a PMOS pair with a common source, three fingers per device.
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -160,7 +160,7 @@ Every S-Cell constructor (`TSCell`, `RSCell`, `CSCell`) takes two device argumen
 The process template maps each class to a PDK device (see [Mapping]({% link docs/setup/process/mapping.md %})). Both arguments are checked when the cell is built: a class the process has no device for raises a `ParameterError` that lists the classes it does have. The values can be read back and changed later:
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 

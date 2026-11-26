@@ -21,7 +21,7 @@ The templates call `preview_layout`, which opens the interactive layout viewer. 
 ## Transistor S-Cell (TSCell)
 
 ```python
-# The copilot and the transistor S-Cell engine
+# The copilot and the transistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -77,7 +77,7 @@ copilot.preview_layout(scell)
 ## Resistor S-Cell (RSCell)
 
 ```python
-# The copilot and the resistor S-Cell engine
+# The copilot and the resistor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 
@@ -126,7 +126,7 @@ copilot.preview_layout(scell)
 ## Capacitor S-Cell (CSCell)
 
 ```python
-# The copilot and the capacitor S-Cell engine
+# The copilot and the capacitor S-Cell class
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.capacitor import CSCell
 
@@ -266,7 +266,11 @@ copilot.preview_layout(inverter)
 
 ## M-Cell from a SPICE netlist
 
-A circuit can also start from a SPICE netlist. The netlist is parsed into a `Circuit`, its devices are grouped by the device grouper (each group becomes one S-Cell), and the resulting hierarchy is built into an M-Cell that is placed and routed level by level.
+A circuit can also start from a SPICE netlist. It takes three steps:
+
+1. The netlist is parsed into a `Circuit`.
+2. The device grouper groups its devices. Each group becomes one S-Cell.
+3. The resulting hierarchy is built into an M-Cell, which is placed and routed level by level.
 
 The template uses `templates/netlists/ota-5t.spice`, which ships with the repository. `create_circuit_from_netlist` needs an absolute path, so the template builds it from `AICL_COP_WORK_DIR` (the repository root).
 

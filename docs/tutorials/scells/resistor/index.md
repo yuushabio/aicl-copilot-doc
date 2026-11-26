@@ -43,8 +43,8 @@ The resistor composer is `RESISTOR_COMPOSER.LINEAR`. It has these options:
 
 ## Settings
 
-- `bulk_tap`: `{'side': 'auto' | 'vertical' | 'horizontal', 'offset': µm}` places the substrate tap of a three-terminal resistor. `'vertical'` puts it on the left or right side, `'horizontal'` on the bottom or top side, and `'auto'` (the process default in `ihpSG13G2`) on the two shorter sides: left or right for a wide resistor, bottom or top for a tall one. Of the two sides, the tap takes the one nearer the terminal its `BULK` pin shares, else the one nearer the minus terminal. Any other value (also `'left'`, `'bottom'`, ...) is replaced by the process default, with a warning.
-- `guard_ring`: `{'enable': True, 'offset': µm}` draws a guard ring around the resistor instead of a tap on one side: the same tie, on all four sides. `offset` adds space between the resistor and the ring, on top of the process's tap gap. The ring is off by default.
+- `bulk_tap`: `{'side': 'auto' | 'vertical' | 'horizontal', 'offset': µm}` places the substrate tap of a three-terminal resistor. `'vertical'` puts it on the left or right side, and `'horizontal'` on the bottom or top side. `'auto'` (the process default in `ihpSG13G2`) puts it on one of the two shorter sides: left or right for a wide resistor, bottom or top for a tall one. Of the two sides, the tap takes the one nearer the terminal its `BULK` pin shares, else the one nearer the minus terminal. Any other value (also `'left'`, `'bottom'`, ...) is replaced by the process default, with a warning.
+- `guard_ring`: `{'enable': True, 'offset': µm}` draws a guard ring around the resistor instead of a tap on one side. It is the same tie, on all four sides. `offset` adds space between the resistor and the ring, on top of the process's tap gap. The ring is off by default.
 
 ## Terminals
 
@@ -55,7 +55,7 @@ Resistor pins are `RESISTOR_PIN_TYPE.PLUS`, `MINUS` and `BULK`. The keys of a te
 A four-segment series resistor with a bulk tap below it:
 
 ```python
-# The copilot and the resistor S-Cell engine from ANALACE Lite
+# The copilot and the resistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 
@@ -101,7 +101,7 @@ copilot.preview_layout(resistor, enable_culling=False)
 Change `segment_connection` to `RESISTOR_SEGMENT_CONNECTION.PARALLEL`, drop the bulk terminal and use a two-terminal class to build a two-terminal parallel resistor:
 
 ```python
-# The copilot and the resistor S-Cell engine from ANALACE Lite
+# The copilot and the resistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 
@@ -144,7 +144,7 @@ copilot.preview_layout(resistor)
 The same three-terminal resistor with a guard ring instead of the tap strip. The ring is joined to the `VSS` terminal:
 
 ```python
-# The copilot and the resistor S-Cell engine from ANALACE Lite
+# The copilot and the resistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.resistor import RSCell
 

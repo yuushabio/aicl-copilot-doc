@@ -34,7 +34,7 @@ The GDS top cell is named `view_name`.
 # Python's built-in module for file paths and environment variables
 import os
 
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 
@@ -94,12 +94,12 @@ M-Cells are generated the same way, flattened into one top cell.
 - `style='spice'` (the default) writes a SPICE netlist in the dialect that the process's LVS tool reads.
 - `style='cdl'` writes an auCdl netlist (`.SUBCKT`, `*.PININFO`) for commercial LVS tools.
 
-A two-terminal resistor (`STANDARD_N2T`, `STANDARD_P2T`) has no `BULK` pin, but its device model has a third, substrate terminal. The substrate is one body, so the netlist puts that terminal on the net the substrate is tied to: the net most of the cell's substrate ties reach (the bulk of the standard NMOS devices, or the tap of a passive device in a process with P taps, such as `ihpSG13G2`). That is usually `vss`, which is what the LVS extractor finds too. When nothing in the cell ties the substrate, the terminal is on an internal net called `__substrate`. (Earlier releases gave each such terminal a net of its own, `<device>__bulk`, which LVS reported as a mismatch.)
+A two-terminal resistor (`STANDARD_N2T`, `STANDARD_P2T`) has no `BULK` pin, but its device model has a third, substrate terminal. The substrate is one body, so the netlist puts that terminal on the net the substrate is tied to. That is the net most of the cell's substrate ties reach: the bulk of the standard NMOS devices, or the tap of a passive device in a process with P taps, such as `ihpSG13G2`. That is usually `vss`, which is what the LVS extractor finds too. When nothing in the cell ties the substrate, the terminal is on an internal net called `__substrate`. (Earlier releases gave each such terminal a net of its own, `<device>__bulk`, which LVS reported as a mismatch.)
 
 The file is written to `$AICL_COP_SCH_DIR/<process>/<library_name>/<view_name>.spice` (`.cdl` for CDL), and the method returns its path. `AICL_COP_SCH_DIR` is `<project_directory>/schematics`, or `~/.aicl_copilot/schematics` without a project directory. Pass `path=` to write somewhere else.
 
 ```python
-# The copilot and the transistor S-Cell engine from ANALACE Lite
+# The copilot and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.transistor import TSCell
 

@@ -177,7 +177,7 @@ copilot.preview_layout(inverter)
 
 ### Region spacing
 
-The reference placer keeps the process's *region spacing* between cells (see [Region spacing]({% link docs/setup/process/constraints.md %}#region-spacing)). An abutment does not end where the two bounding boxes touch, but where the layers that face each other are far enough apart: for example the N-wells of two PMOS cells, or an N-well and the diffusion of an NMOS. A cell slid off another one keeps the same gap. The `offset` of an entry still counts: the placer only adds what the rules need beyond it. In the inverter above, the PMOS still sits 0.5 µm above the NMOS, because that offset already covers the rules.
+The reference placer keeps the process's *region spacing* between cells (see [Region spacing]({% link docs/setup/process/constraints.md %}#region-spacing)). An abutment does not end where the two bounding boxes touch. It ends where the layers that face each other are far enough apart, for example the N-wells of two PMOS cells, or an N-well and the diffusion of an NMOS. A cell slid off another one keeps the same gap. The `offset` of an entry still counts: the placer only adds what the rules need beyond it. In the inverter above, the PMOS still sits 0.5 µm above the NMOS, because that offset already covers the rules.
 
 Two options change this. Pass them with `options=` (or `placer_options=` in `place_and_route_cell`):
 

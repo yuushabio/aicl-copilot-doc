@@ -55,17 +55,17 @@ The wires of a plate terminal are built like this:
 
 - Every row of the matrix has a **connecting wire** for each plate terminal: a horizontal wire on the plate's own metal, across the plates of the row. `connecting_wire_width` in the composer sets its width.
 - The `base_wire` sits on the connecting wire. When it is on the plate's metal (`metal6` for `PLUS`, `metal5` for `MINUS`), it is the connecting wire itself. On another metal it is a pad on the connecting wire, joined to it by a via stack. `number_of_via_rows` and `number_of_via_cols` set the size of that via array, and `width` the pad's height.
-- `track` says where along the row the pad sits: `CAPACITOR_TRACK.LEFT` (the left end), `RIGHT` (the right end) or `MIDDLE`. `PLUS` is on the right and `MINUS` on the left by default. `offset` moves the pad from there: a positive value moves it outwards (to the left from `LEFT`, to the right from `RIGHT` and `MIDDLE`), and the connecting wire is drawn on to it.
+- `track` says where along the row the pad sits: `CAPACITOR_TRACK.LEFT` (the left end), `RIGHT` (the right end) or `MIDDLE`. `PLUS` is on the right and `MINUS` on the left by default. `offset` moves the pad from there. A positive value moves it outwards: to the left from `LEFT`, and to the right from `RIGHT` and `MIDDLE`. The connecting wire is drawn on to it.
 - With more than one row, a vertical `top_wire` through the pads joins the rows. It is as wide as the connecting wires unless you give a `width`. A top wire on a horizontal metal is moved to the nearest vertical one, with a warning. With one row there is no top wire.
 
-When a pad's via stack would pass through the other plate's metal (for example a `PLUS` pad on `metal4`, whose stack up to `metal6` crosses the bottom plates on `metal5`), the pad is moved out past the plates, and the move is logged. At `MIDDLE` it cannot be moved, so the cell stops with a `ParameterError`. A base wire without a `layer` is on `metal4`.
+A pad's via stack may pass through the other plate's metal. For example, a `PLUS` pad on `metal4` has a stack up to `metal6` that crosses the bottom plates on `metal5`. The pad is then moved out past the plates, and the move is logged. At `MIDDLE` it cannot be moved, so the cell stops with a `ParameterError`. A base wire without a `layer` is on `metal4`.
 
 ## Example
 
 Four 6 µm × 6 µm MIM units as a 2 × 2 matrix. The plus terminal is the top plates' own connecting wire on `metal6`, at the right end. The minus terminal is a `metal4` pad below the bottom plates, in the middle of each row:
 
 ```python
-# The copilot and the capacitor S-Cell engine from ANALACE Lite
+# The copilot and the capacitor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.capacitor import CSCell
 
@@ -123,7 +123,7 @@ A `STANDARD_3T` capacitor has a `BULK` pin, and the cell draws a substrate tap f
 With `'side': 'auto'` the tap goes along the shorter sides of the matrix: left or right for a wide matrix, bottom or top for a tall one. Of the two, it takes the side nearer the terminal its bulk pin shares (here `vss`, on the left), else the side nearer the minus terminal. Give `'vertical'` (left or right) or `'horizontal'` (bottom or top) to choose the direction yourself.
 
 ```python
-# The copilot and the capacitor S-Cell engine from ANALACE Lite
+# The copilot and the capacitor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.capacitor import CSCell
 

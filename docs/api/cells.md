@@ -135,7 +135,7 @@ The dictionaries a cell hands out (`get_parameters()` and `get_default_user_para
 - A `'name'` key in the dictionary names the cell when `name` is not given. The dictionary itself is not changed.
 
 ```python
-# The copilot and the S-Cell engines from ANALACE Lite
+# The copilot and the S-Cell classes from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.engines.scell import SCell
 from analace_kernel.bin.core.engines.transistor import TSCell

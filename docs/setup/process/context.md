@@ -74,7 +74,7 @@ To see what a different value in the template would do, without editing the temp
 variant = ContextManager.current.derive({'configuration.transistor.gate_poly.extension_height': 0.5})
 ```
 
-The values are checked when the variant is made: a path that does not exist, or a value of the wrong kind (a word for a number, for example), raises `ContextError` with the path in the message.
+The values are checked when the variant is made. A path that does not exist, or a value of the wrong kind (a word for a number, for example), raises `ContextError`. The message names the path.
 
 A cell is always built with the context of the active process. To build cells with a variant, use one of the `with` blocks of `analace_kernel.bin.core.context.testing`. Inside the block the variant is the active process; at the end of the block the original process comes back:
 
@@ -88,7 +88,7 @@ A cell is always built with the context of the active process. To build cells wi
 The example below builds the same NMOS twice: once with the process's gap between the fingers and the gate poly strap, and once with a larger gap:
 
 ```python
-# The copilot, the process contexts and the transistor S-Cell engine from ANALACE Lite
+# The copilot, the process contexts and the transistor S-Cell class from ANALACE Lite
 from analace_kernel.bin.core.copilot import AiclCopilot
 from analace_kernel.bin.core.contextmanager import ContextManager
 from analace_kernel.bin.core.context.testing import context_variant
